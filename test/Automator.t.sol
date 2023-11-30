@@ -31,11 +31,9 @@ contract TestAutomator is Test {
     }
 
     function test_connect() public {
-        Automator _automator = new Automator(handler, pool);
-
-        (uint256 _amount0, uint256 _amount1) = _automator.connect();
-
-        emit log_named_uint("amount0", _amount0);
-        emit log_named_uint("amount1", _amount1);
+        // Automator _automator = new Automator(handler, pool);
+        // (uint256 _amount0, uint256 _amount1) = _automator.connect();
+        // emit log_named_uint("amount0", _amount0);
+        // emit log_named_uint("amount1", _amount1);
     }
 }

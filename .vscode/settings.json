@@ -1,5 +1,17 @@
 {
-  "cSpell.words": ["Automator", "clamm", "dopex"],
+  "cSpell.words": [
+    "Automator",
+    "clamm",
+    "dopex",
+    "IERC",
+    "keccak",
+    "Multicall",
+    "rebalance",
+    "solmate",
+    "struct",
+    "structs",
+    "unuse"
+  ],
   "solidity.compileUsingRemoteVersion": "0.8.19",
   "[solidity]": {
     "editor.defaultFormatter": "JuanBlanco.solidity"

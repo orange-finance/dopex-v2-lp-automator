@@ -28,9 +28,18 @@ interface IUniswapV3SingleTickLiquidityHandler is IHandler, IERC1155 {
         uint128 liquidity;
     }
 
+    struct BurnPositionParams {
+        address pool;
+        int24 tickLower;
+        int24 tickUpper;
+        uint128 shares;
+    }
+
     function tokenIds(uint256) external view returns (TokenIdInfo memory);
 
     function convertToShares(uint128 liquidity, uint256 tokenId) external view returns (uint128 shares);
 
     function convertToAssets(uint128 shares, uint256 tokenId) external view returns (uint128 liquidity);
+
+    function lockedBlockDuration() external view returns (uint64);
 }
