@@ -2,9 +2,6 @@
 
 pragma solidity 0.8.19;
 
-import {IUniswapV3SingleTickLiquidityHandler} from "./vendor/dopexV2/IUniswapV3SingleTickLiquidityHandler.sol";
-import {UniswapV3SingleTickLiquidityLib} from "./lib/UniswapV3SingleTickLiquidityLib.sol";
-import {IDopexV2PositionManager} from "./vendor/dopexV2/IDopexV2PositionManager.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -14,6 +11,10 @@ import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {AccessControlEnumerable} from "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import {ERC20} from "solmate/src/tokens/ERC20.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
+
+import {IUniswapV3SingleTickLiquidityHandler} from "./vendor/dopexV2/IUniswapV3SingleTickLiquidityHandler.sol";
+import {UniswapV3SingleTickLiquidityLib} from "./lib/UniswapV3SingleTickLiquidityLib.sol";
+import {IDopexV2PositionManager} from "./vendor/dopexV2/IDopexV2PositionManager.sol";
 
 interface IMulticallProvider {
     function multicall(bytes[] calldata data) external returns (bytes[] memory results);
@@ -57,7 +58,10 @@ contract Automator is ERC20, AccessControlEnumerable {
         ISwapRouter router_,
         IUniswapV3Pool pool_,
         IERC20 asset_
-    ) ERC20("Automator", "AUTO", 18) {
+    )
+        // TODO: change name and symbol
+        ERC20("Automator", "AUTO", 18)
+    {
         manager = manager_;
         handler = handler_;
         router = router_;
@@ -69,11 +73,28 @@ contract Automator is ERC20, AccessControlEnumerable {
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
     }
 
-    // TODO: implement
-    function totalAssets() public view returns (uint256) {}
+    function totalAssets() public view returns (uint256) {
+        uint256 _length = activeTicks.length();
+        uint256 _totalAssets;
+        int24 _lt;
+        uint256 _tid;
+
+        for (uint256 i = 0; i < _length; ) {
+            _lt = int24(uint24(activeTicks.at(i)));
+            _tid = handler.tokenId(address(pool), _lt, _lt + poolTickSpacing);
+
+            _totalAssets += handler.convertToAssets((handler.balanceOf(address(this), _tid)).toUint128(), _tid);
+
+            unchecked {
+                i++;
+            }
+        }
+
+        return _totalAssets;
+    }
 
     // TODO: implement
-    function previewRedeem() public view returns (uint256, LockedDopexShares[] memory) {}
+    // function previewRedeem() public view returns (uint256 assets, LockedDopexShares[] memory lockedDopexShares) {}
 
     function convertToShares(uint256 assets) public view returns (uint256) {
         uint256 _supply = totalSupply;
