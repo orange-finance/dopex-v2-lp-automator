@@ -25,6 +25,11 @@ contract Automator is ERC20 {
     using EnumerableSet for EnumerableSet.UintSet;
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandler;
 
+    struct LockedDopexShares {
+        uint256 tokenId;
+        uint256 shares;
+    }
+
     IDopexV2PositionManager public immutable manager;
     IUniswapV3SingleTickLiquidityHandler public immutable handler;
 
@@ -73,7 +78,11 @@ contract Automator is ERC20 {
         return (_amounts[0], _amounts[1]);
     }
 
+    // TODO: implement
     function totalAssets() public view returns (uint256) {}
+
+    // TODO: implement
+    function previewRedeem() public view returns (uint256, LockedDopexShares[] memory) {}
 
     function convertToShares(uint256 assets) public view returns (uint256) {
         uint256 _supply = totalSupply;
@@ -101,18 +110,6 @@ contract Automator is ERC20 {
 
         asset.safeTransferFrom(msg.sender, address(this), assets);
     }
-
-    struct LockedDopexShares {
-        uint256 tokenId;
-        uint256 shares;
-    }
-
-    // struct Cache {
-    //     int24 tick;
-    //     uint256 tokenId;
-    //     uint256 shareLocked;
-    //     uint256 shareRedeemable;
-    // }
 
     function redeem(
         uint256 shares,
