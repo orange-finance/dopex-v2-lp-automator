@@ -147,7 +147,7 @@ contract Automator is ERC20, AccessControlEnumerable {
             }
         }
 
-        uint256 _payBase = counterAsset.balanceOf(address(this)) - _preQuote;
+        uint256 _payBase = counterAsset.balanceOf(address(this)) - _preBase;
 
         router.exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
@@ -162,7 +162,7 @@ contract Automator is ERC20, AccessControlEnumerable {
             })
         );
 
-        if ((assets = asset.balanceOf(address(this)) - _preBase) < minAssets) revert MinAssetsRequired();
+        if ((assets = asset.balanceOf(address(this)) - _preQuote) < minAssets) revert MinAssetsRequired();
 
         _burn(msg.sender, shares);
 
