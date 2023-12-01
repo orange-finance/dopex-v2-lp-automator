@@ -11,6 +11,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import {AccessControlEnumerable} from "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import {ERC20} from "solmate/src/tokens/ERC20.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 
@@ -18,7 +19,7 @@ interface IMulticallProvider {
     function multicall(bytes[] calldata data) external returns (bytes[] memory results);
 }
 
-contract Automator is ERC20 {
+contract Automator is ERC20, AccessControlEnumerable {
     using FixedPointMathLib for uint256;
     using SafeERC20 for IERC20;
     using SafeCast for uint256;
@@ -29,6 +30,8 @@ contract Automator is ERC20 {
         uint256 tokenId;
         uint256 shares;
     }
+
+    bytes32 public constant STRATEGIST_ROLE = keccak256("STRATEGIST_ROLE");
 
     IDopexV2PositionManager public immutable manager;
     IUniswapV3SingleTickLiquidityHandler public immutable handler;
@@ -48,6 +51,7 @@ contract Automator is ERC20 {
     error MinAssetsRequired();
 
     constructor(
+        address admin,
         IDopexV2PositionManager manager_,
         IUniswapV3SingleTickLiquidityHandler handler_,
         ISwapRouter router_,
@@ -61,6 +65,8 @@ contract Automator is ERC20 {
         asset = asset_;
         counterAsset = pool_.token0() == address(asset_) ? IERC20(pool_.token1()) : IERC20(pool_.token0());
         poolTickSpacing = pool_.tickSpacing();
+
+        _grantRole(DEFAULT_ADMIN_ROLE, admin);
     }
 
     // TODO: implement
@@ -173,7 +179,10 @@ contract Automator is ERC20 {
         uint128 shares;
     }
 
-    function rebalance(MintParams[] calldata mintParams, BurnParams[] calldata burnParams) external {
+    function rebalance(
+        MintParams[] calldata mintParams,
+        BurnParams[] calldata burnParams
+    ) external onlyRole(STRATEGIST_ROLE) {
         uint256 _mintLength = mintParams.length;
         uint256 _burnLength = burnParams.length;
 
