@@ -10,7 +10,8 @@
     "solmate",
     "struct",
     "structs",
-    "unuse"
+    "unuse",
+    "USDCE"
   ],
   "solidity.compileUsingRemoteVersion": "0.8.19",
   "[solidity]": {

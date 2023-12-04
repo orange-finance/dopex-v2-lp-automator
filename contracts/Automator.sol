@@ -4,6 +4,10 @@ pragma solidity 0.8.19;
 
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import {LiquidityAmounts} from "./vendor/uniswapV3/LiquidityAmounts.sol";
+import {TickMath} from "./vendor/uniswapV3/TickMath.sol";
+import {OracleLibrary} from "./vendor/uniswapV3/OracleLibrary.sol";
+
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -14,10 +18,15 @@ import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 
 import {IUniswapV3SingleTickLiquidityHandler} from "./vendor/dopexV2/IUniswapV3SingleTickLiquidityHandler.sol";
 import {UniswapV3SingleTickLiquidityLib} from "./lib/UniswapV3SingleTickLiquidityLib.sol";
+import {UniswapV3PoolLib} from "./lib/UniswapV3PoolLib.sol";
 import {IDopexV2PositionManager} from "./vendor/dopexV2/IDopexV2PositionManager.sol";
 
 interface IMulticallProvider {
     function multicall(bytes[] calldata data) external returns (bytes[] memory results);
+}
+
+interface IERC20Decimals {
+    function decimals() external view returns (uint8);
 }
 
 contract Automator is ERC20, AccessControlEnumerable {
@@ -25,6 +34,8 @@ contract Automator is ERC20, AccessControlEnumerable {
     using SafeERC20 for IERC20;
     using SafeCast for uint256;
     using EnumerableSet for EnumerableSet.UintSet;
+    using TickMath for int24;
+    using UniswapV3PoolLib for IUniswapV3Pool;
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandler;
 
     struct LockedDopexShares {
@@ -45,11 +56,16 @@ contract Automator is ERC20, AccessControlEnumerable {
 
     int24 public immutable poolTickSpacing;
 
+    uint256 public immutable minDepositAssets;
+    uint256 public depositCap;
+
     EnumerableSet.UintSet activeTicks;
 
     error LengthMismatch();
     error InvalidRebalanceParams();
     error MinAssetsRequired();
+    error TokenAddressMismatch();
+    error DepositTooSmall();
 
     constructor(
         address admin,
@@ -57,11 +73,14 @@ contract Automator is ERC20, AccessControlEnumerable {
         IUniswapV3SingleTickLiquidityHandler handler_,
         ISwapRouter router_,
         IUniswapV3Pool pool_,
-        IERC20 asset_
+        IERC20 asset_,
+        uint256 minDepositAssets_
     )
         // TODO: change name and symbol
         ERC20("Automator", "AUTO", 18)
     {
+        if (asset_ != IERC20(pool_.token0()) && asset_ != IERC20(pool_.token1())) revert TokenAddressMismatch();
+
         manager = manager_;
         handler = handler_;
         router = router_;
@@ -71,26 +90,60 @@ contract Automator is ERC20, AccessControlEnumerable {
         poolTickSpacing = pool_.tickSpacing();
 
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
+
+        minDepositAssets = minDepositAssets_;
+    }
+
+    function setDepositCap(uint256 _depositCap) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        depositCap = _depositCap;
     }
 
     function totalAssets() public view returns (uint256) {
+        // 1. calculate the total assets in Dopex pools
         uint256 _length = activeTicks.length();
-        uint256 _totalAssets;
-        int24 _lt;
         uint256 _tid;
+        uint128 _liquidity;
+        (int24 _lt, int24 _ut) = (0, 0);
+        (uint256 _a0, uint256 _a1) = (0, 0);
 
         for (uint256 i = 0; i < _length; ) {
             _lt = int24(uint24(activeTicks.at(i)));
-            _tid = handler.tokenId(address(pool), _lt, _lt + poolTickSpacing);
+            _ut = _lt + poolTickSpacing;
+            _tid = handler.tokenId(address(pool), _lt, _ut);
 
-            _totalAssets += handler.convertToAssets((handler.balanceOf(address(this), _tid)).toUint128(), _tid);
+            _liquidity = handler.convertToAssets((handler.balanceOf(address(this), _tid)).toUint128(), _tid);
+
+            _a0 += LiquidityAmounts.getAmount0ForLiquidity(
+                _lt.getSqrtRatioAtTick(),
+                _ut.getSqrtRatioAtTick(),
+                _liquidity
+            );
+
+            _a1 += LiquidityAmounts.getAmount1ForLiquidity(
+                _lt.getSqrtRatioAtTick(),
+                _ut.getSqrtRatioAtTick(),
+                _liquidity
+            );
 
             unchecked {
                 i++;
             }
         }
 
-        return _totalAssets;
+        // 2. merge into the total assets in the automator
+        (uint256 _base, uint256 _quote) = (counterAsset.balanceOf(address(this)), asset.balanceOf(address(this)));
+
+        if (address(asset) == pool.token0()) {
+            _base += _a1;
+            _quote += _a0;
+        } else {
+            _base += _a0;
+            _quote += _a1;
+        }
+
+        return
+            _quote +
+            OracleLibrary.getQuoteAtTick(pool.currentTick(), _base.toUint128(), address(counterAsset), address(asset));
     }
 
     // TODO: implement
@@ -111,8 +164,12 @@ contract Automator is ERC20, AccessControlEnumerable {
     function deposit(uint256 assets) external returns (uint256 shares) {
         if (totalSupply == 0) {
             uint256 _dead = 10 ** decimals / 1000;
-            shares = assets - _dead;
+            if (assets < _dead) revert DepositTooSmall();
 
+            unchecked {
+                shares = assets - _dead;
+            }
+            _mint(address(0), _dead);
             _mint(msg.sender, shares);
         } else {
             shares = convertToShares(assets);
