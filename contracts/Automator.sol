@@ -61,11 +61,14 @@ contract Automator is ERC20, AccessControlEnumerable {
 
     EnumerableSet.UintSet activeTicks;
 
+    error AmountZero();
     error LengthMismatch();
     error InvalidRebalanceParams();
-    error MinAssetsRequired();
+    error MinAssetsRequired(uint256 minAssets, uint256 actualAssets);
     error TokenAddressMismatch();
     error DepositTooSmall();
+    error DepositCapExceeded();
+    error SharesTooSmall();
 
     constructor(
         address admin,
@@ -162,9 +165,12 @@ contract Automator is ERC20, AccessControlEnumerable {
     }
 
     function deposit(uint256 assets) external returns (uint256 shares) {
+        if (assets == 0) revert AmountZero();
+        if (assets < minDepositAssets) revert DepositTooSmall();
+        if (assets > depositCap) revert DepositCapExceeded();
+
         if (totalSupply == 0) {
             uint256 _dead = 10 ** decimals / 1000;
-            if (assets < _dead) revert DepositTooSmall();
 
             unchecked {
                 shares = assets - _dead;
@@ -184,6 +190,13 @@ contract Automator is ERC20, AccessControlEnumerable {
         uint256 shares,
         uint256 minAssets // use sqrtPriceLimitX96 instead ?
     ) external returns (uint256 assets, LockedDopexShares[] memory lockedDopexShares) {
+        if (shares == 0) revert AmountZero();
+
+        assets = convertToAssets(shares);
+
+        // avoid rounding to 0
+        if (assets == 0) revert SharesTooSmall();
+
         uint256 _length = activeTicks.length();
         int24 _lt;
         uint256 _tid;
@@ -227,20 +240,22 @@ contract Automator is ERC20, AccessControlEnumerable {
 
         uint256 _payBase = counterAsset.balanceOf(address(this)) - _preBase;
 
-        router.exactInputSingle(
-            ISwapRouter.ExactInputSingleParams({
-                tokenIn: address(counterAsset),
-                tokenOut: address(asset),
-                fee: pool.fee(),
-                recipient: address(this),
-                deadline: block.timestamp,
-                amountIn: _payBase,
-                amountOutMinimum: 0,
-                sqrtPriceLimitX96: 0
-            })
-        );
+        if (_payBase > 0)
+            router.exactInputSingle(
+                ISwapRouter.ExactInputSingleParams({
+                    tokenIn: address(counterAsset),
+                    tokenOut: address(asset),
+                    fee: pool.fee(),
+                    recipient: address(this),
+                    deadline: block.timestamp,
+                    amountIn: _payBase,
+                    amountOutMinimum: 0,
+                    sqrtPriceLimitX96: 0
+                })
+            );
 
-        if ((assets = asset.balanceOf(address(this)) - _preQuote) < minAssets) revert MinAssetsRequired();
+        if ((assets += (asset.balanceOf(address(this)) - _preQuote)) < minAssets)
+            revert MinAssetsRequired(minAssets, assets);
 
         _burn(msg.sender, shares);
 

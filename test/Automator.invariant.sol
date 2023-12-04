@@ -97,7 +97,8 @@ contract AutomatorHandler is Test {
     }
 
     function deposit(uint256 assets, uint256 actorIndex) external useActor(actorIndex) {
-        assets = bound(assets, automator.minDepositAssets(), automator.depositCap());
+        // assets = bound(assets, automator.minDepositAssets(), automator.depositCap());
+        assets = bound(assets, 0, automator.depositCap() * 2);
 
         IERC20 _asset = automator.asset();
         deal(address(_asset), currentActor, assets);
@@ -108,7 +109,36 @@ contract AutomatorHandler is Test {
         uint256 _preShares = automator.balanceOf(currentActor);
         uint256 _sharesMinted;
 
-        // case: first deposit
+        /*////////////////////////////////////////////////////////////
+                        case: zero deposit will revert
+        ////////////////////////////////////////////////////////////*/
+        if (assets == 0) {
+            vm.expectRevert(Automator.AmountZero.selector);
+            automator.deposit(assets);
+            return;
+        }
+
+        /*////////////////////////////////////////////////////////////
+                        case: too small deposit will revert
+        ////////////////////////////////////////////////////////////*/
+        if (assets < automator.minDepositAssets()) {
+            vm.expectRevert(Automator.DepositTooSmall.selector);
+            automator.deposit(assets);
+            return;
+        }
+
+        /*////////////////////////////////////////////////////////////
+                        case: deposit cap exceeded will revert
+        ////////////////////////////////////////////////////////////*/
+        if (assets > automator.depositCap()) {
+            vm.expectRevert(Automator.DepositCapExceeded.selector);
+            automator.deposit(assets);
+            return;
+        }
+
+        /*////////////////////////////////////////////////////////////
+                        case: first deposit
+        ////////////////////////////////////////////////////////////*/
         if (automator.totalSupply() == 0) {
             _sharesMinted = automator.deposit(assets);
             uint256 _sharesDead = 10 ** automator.decimals() / 1000;
@@ -125,7 +155,9 @@ contract AutomatorHandler is Test {
             return;
         }
 
-        // case: not first deposit
+        /*////////////////////////////////////////////////////////////
+                        case: not first deposit
+        ////////////////////////////////////////////////////////////*/
         uint256 _totalAssets = automator.totalAssets();
         uint256 _totalSupply = automator.totalSupply();
         emit log_named_uint("total assets", _totalAssets);
@@ -136,5 +168,54 @@ contract AutomatorHandler is Test {
         assertEq(_sharesMinted, assets.mulDivDown(_totalSupply, _totalAssets), "not first deposit: shares minted");
 
         totalMinted += _sharesMinted;
+    }
+
+    function redeem(uint256 shares, uint256 actorIndex) external useActor(actorIndex) {
+        shares = bound(shares, 0, automator.balanceOf(currentActor) * 2);
+
+        /*////////////////////////////////////////////////////////////
+                        case: zero shares will revert
+        ////////////////////////////////////////////////////////////*/
+        if (shares == 0) {
+            vm.expectRevert(Automator.AmountZero.selector);
+            automator.redeem(shares, 0);
+            return;
+        }
+
+        /*////////////////////////////////////////////////////////////
+                        case: shares > balance will revert
+        ////////////////////////////////////////////////////////////*/
+        if (shares > automator.balanceOf(currentActor)) {
+            vm.expectRevert();
+            automator.redeem(shares, 0);
+            return;
+        }
+
+        /*////////////////////////////////////////////////////////////
+                        case: too small shares will revert
+        ////////////////////////////////////////////////////////////*/
+        if (automator.convertToAssets(shares) == 0) {
+            vm.expectRevert(Automator.SharesTooSmall.selector);
+            automator.redeem(shares, 0);
+            return;
+        }
+
+        /*////////////////////////////////////////////////////////////
+                        case: normal redeem
+        ////////////////////////////////////////////////////////////*/
+        uint256 _minAssets = automator.convertToAssets(shares);
+        uint256 _totalAssets = automator.totalAssets();
+        uint256 _totalSupply = automator.totalSupply();
+
+        uint256 _preAssets = automator.asset().balanceOf(currentActor);
+        uint256 _preShares = automator.balanceOf(currentActor);
+
+        (uint256 _assets, ) = automator.redeem(shares, _minAssets);
+        assertEq(_assets, shares.mulDivDown(_totalAssets, _totalSupply), "redeem: assets");
+
+        assertEq(automator.asset().balanceOf(currentActor), _preAssets + _assets, "redeem: user assets transferred");
+        assertEq(automator.balanceOf(currentActor), _preShares - shares, "redeem: user shares burned");
+
+        totalMinted -= shares;
     }
 }
