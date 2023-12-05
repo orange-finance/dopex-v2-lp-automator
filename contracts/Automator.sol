@@ -9,6 +9,7 @@ import {TickMath} from "./vendor/uniswapV3/TickMath.sol";
 import {OracleLibrary} from "./vendor/uniswapV3/OracleLibrary.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Receiver.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
@@ -29,7 +30,7 @@ interface IERC20Decimals {
     function decimals() external view returns (uint8);
 }
 
-contract Automator is ERC20, AccessControlEnumerable {
+contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
     using FixedPointMathLib for uint256;
     using SafeERC20 for IERC20;
     using SafeCast for uint256;
@@ -95,6 +96,12 @@ contract Automator is ERC20, AccessControlEnumerable {
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
 
         minDepositAssets = minDepositAssets_;
+
+        asset_.safeApprove(address(manager), type(uint256).max);
+        asset_.safeApprove(address(router), type(uint256).max);
+
+        counterAsset.safeApprove(address(router), type(uint256).max);
+        counterAsset.safeApprove(address(pool_), type(uint256).max);
     }
 
     function setDepositCap(uint256 _depositCap) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -325,17 +332,93 @@ contract Automator is ERC20, AccessControlEnumerable {
                 activeTicks.remove(uint256(uint24(_lt)));
         }
 
-        IMulticallProvider(address(handler)).multicall(_mintCalldataBatch);
-        IMulticallProvider(address(handler)).multicall(_burnCalldataBatch);
+        IMulticallProvider(address(manager)).multicall(_mintCalldataBatch);
+        IMulticallProvider(address(manager)).multicall(_burnCalldataBatch);
     }
 
-    // function rebalance(
-    //     bytes[] calldata mintBatchCalldata,
-    //     bytes[] calldata burnBatchCalldata,
-    //     int24[] calldata activeTicks,
-    //     int24[] calldata inactiveTicks
-    // ) external {
-    //     IMulticallProvider(address(handler)).multicall(mintBatchCalldata);
-    //     IMulticallProvider(address(handler)).multicall(burnBatchCalldata);
-    // }
+    function rebalanceNoBatch(
+        MintParams[] calldata mintParams,
+        BurnParams[] calldata burnParams
+    ) external onlyRole(STRATEGIST_ROLE) {
+        uint256 _mintLength = mintParams.length;
+        uint256 _burnLength = burnParams.length;
+
+        int24 _lt;
+        int24 _ut;
+        uint256 _posId;
+        for (uint256 i = 0; i < _mintLength; i++) {
+            _lt = mintParams[i].tick;
+            _ut = _lt + poolTickSpacing;
+
+            // If the position is not active, push it to the active ticks
+            _posId = uint256(keccak256(abi.encode(handler, pool, _lt, _ut)));
+            if (handler.balanceOf(address(this), _posId) == 0) activeTicks.add(uint256(uint24(_lt)));
+
+            manager.mintPosition(
+                handler,
+                abi.encode(
+                    IUniswapV3SingleTickLiquidityHandler.MintPositionParams({
+                        pool: address(pool),
+                        tickLower: _lt,
+                        tickUpper: _ut,
+                        liquidity: mintParams[i].liquidity
+                    })
+                )
+            );
+        }
+
+        for (uint256 i = 0; i < _burnLength; i++) {
+            _lt = burnParams[i].tick;
+            _ut = _lt + poolTickSpacing;
+
+            // if all shares will be burned, pop the active tick
+            _posId = uint256(keccak256(abi.encode(handler, pool, _lt, _ut)));
+            if (handler.balanceOf(address(this), _posId) - burnParams[i].shares == 0)
+                activeTicks.remove(uint256(uint24(_lt)));
+
+            manager.burnPosition(
+                handler,
+                abi.encode(
+                    IUniswapV3SingleTickLiquidityHandler.BurnPositionParams({
+                        pool: address(pool),
+                        tickLower: _lt,
+                        tickUpper: _ut,
+                        shares: burnParams[i].shares
+                    })
+                )
+            );
+        }
+    }
+
+    /**
+     * @dev should be called by strategist when creating rebalance params.
+     * @dev this is a hack to avoid mint error in a Dopex UniV3 Handler.
+     * the handler will revert when accumulated fees are less than 10.
+     * this is because the liquidity calculation is rounded down to 0 against the accumulated fees, then mint for 0 will revert.
+     */
+    function checkMintValidity(int24 lowerTick, int24 upperTick) external view returns (bool) {
+        (, , , uint128 _owed0, uint128 _owed1) = pool.positions(
+            keccak256(abi.encodePacked(address(handler), lowerTick, upperTick))
+        );
+
+        if (_owed0 > 0 && _owed0 < 10) return false;
+
+        if (_owed1 > 0 && _owed1 < 10) return false;
+
+        return true;
+    }
+
+    function onERC1155Received(address, address, uint256, uint256, bytes calldata) external pure returns (bytes4) {
+        return this.onERC1155Received.selector;
+    }
+
+    function onERC1155BatchReceived(
+        address,
+        address,
+        uint256[] calldata,
+        uint256[] calldata,
+        bytes calldata
+    ) external pure returns (bytes4) {
+        return this.onERC1155BatchReceived.selector;
+    }
 }

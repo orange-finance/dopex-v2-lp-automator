@@ -22,4 +22,6 @@ interface IDopexV2PositionManager {
         IHandler _handler,
         bytes calldata _donatePosition
     ) external returns (uint256[] memory amounts, uint256 liquidity);
+
+    function updateWhitelistHandlerWithApp(address handler, address app, bool status) external;
 }
