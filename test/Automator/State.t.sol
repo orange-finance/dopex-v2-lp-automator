@@ -26,7 +26,7 @@ contract TestAutomatorState is Fixture {
         assertEq(automator.totalAssets(), _expected);
     }
 
-    function test_totalAssets_hasDopexPosition() public {
+    function test_totalAssets_hasDopexPositions() public {
         deal(address(WETH), address(automator), 1.3 ether);
         deal(address(USDCE), address(automator), 1200e6);
 
@@ -80,6 +80,136 @@ contract TestAutomatorState is Fixture {
                 _positionToAssets(_oor_belowLower, address(automator)) +
                 _positionToAssets(_oor_aboveLower, address(automator)),
             1
+        );
+    }
+
+    function test_convertToAssets_noDopexPosition() public {
+        /*///////////////////////////////////////////////////////
+                        case: 1 depositor (single token)
+        ///////////////////////////////////////////////////////*/
+        uint256 _aliceDeposit = 1.3 ether;
+        uint256 _deadInFirstDeposit = 10 ** automator.decimals() / 1000;
+
+        deal(address(WETH), alice, _aliceDeposit);
+
+        vm.startPrank(alice);
+        WETH.approve(address(automator), type(uint256).max);
+        uint256 _aliceShares = automator.deposit(_aliceDeposit);
+
+        assertEq(
+            automator.convertToAssets(_aliceShares),
+            _aliceDeposit - automator.convertToAssets(_deadInFirstDeposit),
+            "first deposit"
+        );
+
+        /*///////////////////////////////////////////////////////
+                        case: 1 depositor (pair token)
+        ///////////////////////////////////////////////////////*/
+        uint256 _usdceInVault = 1200e6;
+        deal(address(USDCE), address(automator), _usdceInVault);
+
+        uint256 _aliceAssets = _aliceDeposit -
+            automator.convertToAssets(_deadInFirstDeposit) +
+            _getQuote(address(USDCE), address(WETH), uint128(_usdceInVault));
+
+        assertApproxEqAbs(automator.convertToAssets(_aliceShares), _aliceAssets, 1, "automator allocation changed");
+
+        /*///////////////////////////////////////////////////////
+                        case: 2 depositors (pair token)
+        ///////////////////////////////////////////////////////*/
+
+        uint256 _bobDeposit = 1 ether;
+        deal(address(WETH), bob, _bobDeposit);
+
+        vm.startPrank(bob);
+        WETH.approve(address(automator), type(uint256).max);
+        uint256 _bobShares = automator.deposit(_bobDeposit);
+
+        assertApproxEqAbs(automator.convertToAssets(_bobShares), _bobDeposit, 1, "bob entered");
+        assertApproxEqAbs(automator.convertToAssets(_aliceShares), _aliceAssets, 1, "alice assets unchanged");
+    }
+
+    function test_convertToAssets_hasDopexPositions() public {
+        /*///////////////////////////////////////////////////////
+                        case: 1 depositor (single token)
+        ///////////////////////////////////////////////////////*/
+        uint256 _aliceDeposit = 1.3 ether;
+        uint256 _deadInFirstDeposit = 10 ** automator.decimals() / 1000;
+
+        deal(address(WETH), alice, _aliceDeposit);
+
+        vm.startPrank(alice);
+        WETH.approve(address(automator), type(uint256).max);
+        uint256 _aliceShares = automator.deposit(_aliceDeposit);
+        vm.stopPrank();
+
+        assertEq(
+            automator.convertToAssets(_aliceShares),
+            _aliceDeposit - automator.convertToAssets(_deadInFirstDeposit),
+            "first deposit"
+        );
+
+        /*///////////////////////////////////////////////////////
+                        case: 1 depositor (pair token)
+        ///////////////////////////////////////////////////////*/
+        uint256 _usdceInVault = 1200e6;
+        deal(address(USDCE), address(automator), _usdceInVault);
+
+        uint256 _aliceAssets = _aliceDeposit -
+            automator.convertToAssets(_deadInFirstDeposit) +
+            _getQuote(address(USDCE), address(WETH), uint128(_usdceInVault));
+
+        assertApproxEqAbs(automator.convertToAssets(_aliceShares), _aliceAssets, 1, "automator allocation changed");
+
+        /*///////////////////////////////////////////////////////
+                        case: 2 depositors (pair token)
+        ///////////////////////////////////////////////////////*/
+
+        uint256 _bobDeposit = 1 ether;
+        deal(address(WETH), bob, _bobDeposit);
+
+        vm.startPrank(bob);
+        WETH.approve(address(automator), type(uint256).max);
+        uint256 _bobShares = automator.deposit(_bobDeposit);
+        vm.stopPrank();
+
+        assertApproxEqAbs(automator.convertToAssets(_bobShares), _bobDeposit, 1, "bob entered");
+        assertApproxEqAbs(automator.convertToAssets(_aliceShares), _aliceAssets, 1, "alice assets unchanged");
+
+        /*///////////////////////////////////////////////////////
+                        case: dopex position minted
+        ///////////////////////////////////////////////////////*/
+
+        (int24 _oor_belowLower, ) = _outOfRangeBelow(1);
+        (int24 _oor_aboveLower, ) = _outOfRangeAbove(1);
+
+        uint256 _a0below = WETH.balanceOf(address(automator)) / 3;
+        uint256 _a1below = USDCE.balanceOf(address(automator)) / 3;
+
+        uint256 _a0above = WETH.balanceOf(address(automator)) / 3;
+        uint256 _a1above = USDCE.balanceOf(address(automator)) / 3;
+
+        Automator.MintParams[] memory _mintParams = new Automator.MintParams[](2);
+        _mintParams[0] = Automator.MintParams({
+            tick: _oor_belowLower,
+            liquidity: _toSingleTickLiquidity(_oor_belowLower, _a0below, _a1below)
+        });
+
+        _mintParams[1] = Automator.MintParams({
+            tick: _oor_aboveLower,
+            liquidity: _toSingleTickLiquidity(_oor_aboveLower, _a0above, _a1above)
+        });
+
+        automator.rebalance(_mintParams, new Automator.BurnParams[](0));
+
+        assertEq(
+            automator.convertToAssets(_aliceShares),
+            (_aliceShares * automator.totalAssets()) / automator.totalSupply()
+        );
+
+        assertEq(
+            automator.convertToAssets(_bobShares),
+            (_bobShares * automator.totalAssets()) / automator.totalSupply()
         );
     }
 }

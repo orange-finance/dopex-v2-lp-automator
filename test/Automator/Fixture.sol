@@ -38,6 +38,11 @@ abstract contract Fixture is Test {
     IERC20 constant WETH = IERC20(0x82aF49447D8a07e3bd95BD0d56f35241523fBab1);
     IERC20 constant USDCE = IERC20(0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8);
 
+    address alice = makeAddr("alice");
+    address bob = makeAddr("bob");
+    address carol = makeAddr("carol");
+    address dave = makeAddr("dave");
+
     function setUp() public virtual {
         automator = new Automator({
             admin: address(this),
@@ -49,6 +54,7 @@ abstract contract Fixture is Test {
             minDepositAssets_: 0.01 ether
         });
 
+        automator.setDepositCap(100 ether);
         automator.grantRole(automator.STRATEGIST_ROLE(), address(this));
 
         vm.label(address(uniV3Handler), "dopexUniV3Handler");
