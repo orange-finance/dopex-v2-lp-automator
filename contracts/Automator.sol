@@ -217,8 +217,10 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
         for (uint256 i = 0; i < _length; i++) {
             _lt = int24(uint24(activeTicks.at(i)));
             _tid = handler.tokenId(address(pool), _lt, _lt + poolTickSpacing);
-            _shareRedeemable = handler.myRedeemableLiquidity(_tid);
-            _shareLocked = handler.myLockedLiquidity(_tid);
+            _shareRedeemable = uint256(handler.convertToShares(handler.myRedeemableLiquidity(_tid).toUint128(), _tid))
+                .mulDivDown(shares, totalSupply);
+            _shareLocked = uint256(handler.convertToShares(handler.myLockedLiquidity(_tid).toUint128(), _tid))
+                .mulDivDown(shares, totalSupply);
 
             // locked share is transferred to the user
             if (_shareLocked > 0) {
