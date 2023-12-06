@@ -26,7 +26,7 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture {
         );
     }
 
-    function test_myRedeemableLiquidity() public {
+    function test_redeemableLiquidity() public {
         deal(address(WETH), address(this), 10000 ether);
         deal(address(USDCE), address(this), 1000_000e6);
 
@@ -50,7 +50,7 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture {
 
         uint256 _liquidity = 1000e6;
         _mintDopexPosition(_tickLower, _tickUpper, uint128(_liquidity));
-        uint256 _redeemable = uniV3Handler.myRedeemableLiquidity(_tokenId);
+        uint256 _redeemable = uniV3Handler.redeemableLiquidity(address(this), _tokenId);
 
         // NOTE: liquidity is rounded down when shares are converted to liquidity
         assertEq(_redeemable, _liquidity - 1, "all liquidity redeemable (rounded down)");
@@ -68,7 +68,7 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture {
         /////////////////////////////////////////////////////////////*/
 
         _useDopexPosition(_tickLower, _tickUpper, 774636314000000);
-        _redeemable = uniV3Handler.myRedeemableLiquidity(_tokenId);
+        _redeemable = uniV3Handler.redeemableLiquidity(address(this), _tokenId);
         _tokenIdInfo = uniV3Handler.tokenIds(_tokenId);
 
         emit log_named_uint(
@@ -85,7 +85,7 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture {
         /////////////////////////////////////////////////////////////*/
 
         _useDopexPosition(_tickLower, _tickUpper, 278352);
-        _redeemable = uniV3Handler.myRedeemableLiquidity(_tokenId);
+        _redeemable = uniV3Handler.redeemableLiquidity(address(this), _tokenId);
         _tokenIdInfo = uniV3Handler.tokenIds(_tokenId);
 
         emit log_named_uint(
@@ -122,7 +122,7 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture {
 
         uint256 _liquidity = 1000e6;
         _mintDopexPosition(_tickLower, _tickUpper, uint128(_liquidity));
-        uint256 _locked = uniV3Handler.myLockedLiquidity(_tokenId);
+        uint256 _locked = uniV3Handler.lockedLiquidity(address(this), _tokenId);
 
         // NOTE: liquidity is rounded down when shares are converted to liquidity
         assertEq(_locked, 0, "no liquidity locked");
@@ -140,7 +140,7 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture {
         /////////////////////////////////////////////////////////////*/
 
         _useDopexPosition(_tickLower, _tickUpper, 774636314000000);
-        _locked = uniV3Handler.myLockedLiquidity(_tokenId);
+        _locked = uniV3Handler.lockedLiquidity(address(this), _tokenId);
         _tokenIdInfo = uniV3Handler.tokenIds(_tokenId);
 
         emit log_named_uint(
@@ -161,7 +161,7 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture {
         /////////////////////////////////////////////////////////////*/
 
         _useDopexPosition(_tickLower, _tickUpper, 278352);
-        _locked = uniV3Handler.myLockedLiquidity(_tokenId);
+        _locked = uniV3Handler.lockedLiquidity(address(this), _tokenId);
         _tokenIdInfo = uniV3Handler.tokenIds(_tokenId);
 
         emit log_named_uint(

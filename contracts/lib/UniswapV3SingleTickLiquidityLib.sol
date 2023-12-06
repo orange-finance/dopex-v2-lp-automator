@@ -20,11 +20,12 @@ library UniswapV3SingleTickLiquidityLib {
      * but it doesn't mean that all of them can be withdrawn. Some of them can be locked.
      * So we need to calculate the amount of liquidity that can be withdrawn.
      */
-    function myRedeemableLiquidity(
+    function redeemableLiquidity(
         IUniswapV3SingleTickLiquidityHandler handler,
+        address owner,
         uint256 tokenId_
     ) internal view returns (uint256 liquidity) {
-        uint256 _shares = handler.balanceOf(address(this), tokenId_);
+        uint256 _shares = handler.balanceOf(owner, tokenId_);
         IUniswapV3SingleTickLiquidityHandler.TokenIdInfo memory _tki = handler.tokenIds(tokenId_);
 
         liquidity = Math.min(
@@ -33,11 +34,12 @@ library UniswapV3SingleTickLiquidityLib {
         );
     }
 
-    function myLockedLiquidity(
+    function lockedLiquidity(
         IUniswapV3SingleTickLiquidityHandler handler,
+        address owner,
         uint256 tokenId_
     ) internal view returns (uint256) {
-        uint256 _shares = handler.balanceOf(address(this), tokenId_);
+        uint256 _shares = handler.balanceOf(owner, tokenId_);
         IUniswapV3SingleTickLiquidityHandler.TokenIdInfo memory _tki = handler.tokenIds(tokenId_);
 
         uint256 _maxRedeem = handler.convertToAssets(uint128(_shares), tokenId_);
@@ -48,6 +50,7 @@ library UniswapV3SingleTickLiquidityLib {
         return _maxRedeem - _freeLiquidity;
     }
 
+    /// @dev currently unused
     function donationLocked(
         IUniswapV3SingleTickLiquidityHandler handler,
         uint256 tokenId_

@@ -9,5 +9,4 @@ cache_path  = 'cache_forge'
 arb = "${ARB_RPC_URL}"
 
 [invariant]
-# runs = 10
 fail_on_revert = true

@@ -22,6 +22,8 @@ import {UniswapV3SingleTickLiquidityLib} from "./lib/UniswapV3SingleTickLiquidit
 import {UniswapV3PoolLib} from "./lib/UniswapV3PoolLib.sol";
 import {IDopexV2PositionManager} from "./vendor/dopexV2/IDopexV2PositionManager.sol";
 
+import "forge-std/console2.sol";
+
 interface IMulticallProvider {
     function multicall(bytes[] calldata data) external returns (bytes[] memory results);
 }
@@ -97,11 +99,11 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
 
         minDepositAssets = minDepositAssets_;
 
-        asset_.safeApprove(address(manager), type(uint256).max);
-        asset_.safeApprove(address(router), type(uint256).max);
+        asset_.safeApprove(address(manager_), type(uint256).max);
+        asset_.safeApprove(address(router_), type(uint256).max);
 
-        counterAsset.safeApprove(address(router), type(uint256).max);
-        counterAsset.safeApprove(address(pool_), type(uint256).max);
+        counterAsset.safeApprove(address(manager_), type(uint256).max);
+        counterAsset.safeApprove(address(router_), type(uint256).max);
     }
 
     function setDepositCap(uint256 _depositCap) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -217,10 +219,12 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
         for (uint256 i = 0; i < _length; i++) {
             _lt = int24(uint24(activeTicks.at(i)));
             _tid = handler.tokenId(address(pool), _lt, _lt + poolTickSpacing);
-            _shareRedeemable = uint256(handler.convertToShares(handler.myRedeemableLiquidity(_tid).toUint128(), _tid))
-                .mulDivDown(shares, totalSupply);
-            _shareLocked = uint256(handler.convertToShares(handler.myLockedLiquidity(_tid).toUint128(), _tid))
-                .mulDivDown(shares, totalSupply);
+            _shareRedeemable = uint256(
+                handler.convertToShares(handler.redeemableLiquidity(address(this), _tid).toUint128(), _tid)
+            ).mulDivDown(shares, totalSupply);
+            _shareLocked = uint256(
+                handler.convertToShares(handler.lockedLiquidity(address(this), _tid).toUint128(), _tid)
+            ).mulDivDown(shares, totalSupply);
 
             // locked share is transferred to the user
             if (_shareLocked > 0) {
@@ -297,6 +301,7 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
             _ut = _lt + poolTickSpacing;
             _mintCalldataBatch[i] = abi.encodeWithSelector(
                 IDopexV2PositionManager.mintPosition.selector,
+                handler,
                 abi.encode(
                     IUniswapV3SingleTickLiquidityHandler.MintPositionParams({
                         pool: address(pool),
@@ -318,6 +323,7 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
             _ut = _lt + poolTickSpacing;
             _burnCalldataBatch[i] = abi.encodeWithSelector(
                 IDopexV2PositionManager.burnPosition.selector,
+                handler,
                 abi.encode(
                     IUniswapV3SingleTickLiquidityHandler.BurnPositionParams({
                         pool: address(pool),
@@ -334,11 +340,12 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
                 activeTicks.remove(uint256(uint24(_lt)));
         }
 
-        IMulticallProvider(address(manager)).multicall(_mintCalldataBatch);
-        IMulticallProvider(address(manager)).multicall(_burnCalldataBatch);
+        if (_mintLength > 0) IMulticallProvider(address(manager)).multicall(_mintCalldataBatch);
+        if (_burnLength > 0) IMulticallProvider(address(manager)).multicall(_burnCalldataBatch);
     }
 
-    function rebalanceNoBatch(
+    /// @dev this is a test utility function to make debug easier
+    function inefficientRebalance(
         MintParams[] calldata mintParams,
         BurnParams[] calldata burnParams
     ) external onlyRole(STRATEGIST_ROLE) {

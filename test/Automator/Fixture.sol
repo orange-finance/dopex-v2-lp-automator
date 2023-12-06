@@ -15,6 +15,7 @@ import {LiquidityAmounts} from "../../contracts/vendor/uniswapV3/LiquidityAmount
 import {TickMath} from "../../contracts/vendor/uniswapV3/TickMath.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 abstract contract Fixture is Test {
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandler;
@@ -45,6 +46,8 @@ abstract contract Fixture is Test {
             asset_: WETH,
             minDepositAssets_: 0.01 ether
         });
+
+        automator.grantRole(automator.STRATEGIST_ROLE(), address(this));
 
         vm.label(address(uniV3Handler), "dopexUniV3Handler");
         vm.label(address(pool), "weth_usdc.e");
@@ -101,12 +104,9 @@ abstract contract Fixture is Test {
             );
     }
 
-    function _positionToAssets(int24 lowerTick) internal view returns (uint256) {
+    function _positionToAssets(int24 lowerTick, address account) internal view returns (uint256) {
         uint256 _tokenId = uniV3Handler.tokenId(address(pool), lowerTick, lowerTick + pool.tickSpacing());
-        uint128 _liquidity = uniV3Handler.convertToAssets(
-            uint128(uniV3Handler.balanceOf(address(automator), _tokenId)),
-            _tokenId
-        );
+        uint128 _liquidity = uniV3Handler.convertToAssets(uint128(uniV3Handler.balanceOf(account, _tokenId)), _tokenId);
 
         (, int24 _currentTick, , , , , ) = pool.slot0();
 
@@ -122,9 +122,49 @@ abstract contract Fixture is Test {
             ? IERC20(pool.token0())
             : IERC20(pool.token1());
 
+        uint256 _base = pool.token0() == address(automator.asset()) ? _amount1 : _amount0;
+        uint256 _quote = pool.token0() == address(automator.asset()) ? _amount0 : _amount1;
+
+        return _quote + _getQuote(address(_baseAsset), address(_quoteAsset), uint128(_base));
+    }
+
+    function _positionToFreeAssets(int24 lowerTick, address account) internal view returns (uint256) {
+        uint256 _tokenId = uniV3Handler.tokenId(address(pool), lowerTick, lowerTick + pool.tickSpacing());
+
+        uint256 _liquidity = uniV3Handler.redeemableLiquidity(account, _tokenId);
+        (, int24 _currentTick, , , , , ) = pool.slot0();
+
+        (uint256 _amount0, uint256 _amount1) = LiquidityAmounts.getAmountsForLiquidity(
+            _currentTick.getSqrtRatioAtTick(),
+            lowerTick.getSqrtRatioAtTick(),
+            (lowerTick + pool.tickSpacing()).getSqrtRatioAtTick(),
+            uint128(_liquidity)
+        );
+
+        IERC20 _baseAsset = pool.token0() == address(automator.asset()) ? IERC20(pool.token1()) : IERC20(pool.token0());
+        IERC20 _quoteAsset = pool.token0() == address(automator.asset())
+            ? IERC20(pool.token0())
+            : IERC20(pool.token1());
+
         uint256 _quote = pool.token0() == address(automator.asset()) ? _amount0 : _amount1;
         uint256 _base = pool.token0() == address(automator.asset()) ? _amount1 : _amount0;
 
         return _quote + _getQuote(address(_baseAsset), address(_quoteAsset), uint128(_base));
+    }
+
+    function _outOfRangeBelow(int24 mulOffset) internal view returns (int24 tick, uint256 tokenId) {
+        (, int24 _currentTick, , , , , ) = pool.slot0();
+        int24 _spacing = pool.tickSpacing();
+
+        tick = _currentTick - (_currentTick % _spacing) - _spacing * (mulOffset + 1);
+        tokenId = uniV3Handler.tokenId(address(pool), tick, tick + _spacing);
+    }
+
+    function _outOfRangeAbove(int24 mulOffset) internal view returns (int24 tick, uint256 tokenId) {
+        (, int24 _currentTick, , , , , ) = pool.slot0();
+        int24 _spacing = pool.tickSpacing();
+
+        tick = _currentTick - (_currentTick % _spacing) + _spacing * mulOffset;
+        tokenId = uniV3Handler.tokenId(address(pool), tick, tick + _spacing);
     }
 }

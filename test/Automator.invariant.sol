@@ -387,6 +387,6 @@ contract AutomatorHandler is Test {
         }
 
         vm.prank(address(this));
-        automator.rebalanceNoBatch(_mintParamsShorted, _burnParamsShorted);
+        automator.inefficientRebalance(_mintParamsShorted, _burnParamsShorted);
     }
 }
