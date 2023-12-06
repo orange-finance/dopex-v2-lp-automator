@@ -204,12 +204,144 @@ contract TestAutomatorState is Fixture {
 
         assertEq(
             automator.convertToAssets(_aliceShares),
-            (_aliceShares * automator.totalAssets()) / automator.totalSupply()
+            (_aliceShares * automator.totalAssets()) / automator.totalSupply(),
+            "alice assets includes dopex positions"
         );
 
         assertEq(
             automator.convertToAssets(_bobShares),
-            (_bobShares * automator.totalAssets()) / automator.totalSupply()
+            (_bobShares * automator.totalAssets()) / automator.totalSupply(),
+            "bob assets includes dopex positions"
+        );
+    }
+
+    function test_convertToShares_noDopexPosition() public {
+        /*///////////////////////////////////////////////////////
+                        case: 1 depositor (single token)
+        ///////////////////////////////////////////////////////*/
+        uint256 _aliceDeposit = 1.3 ether;
+        uint256 _deadInFirstDeposit = 10 ** automator.decimals() / 1000;
+
+        deal(address(WETH), alice, _aliceDeposit);
+
+        vm.startPrank(alice);
+        WETH.approve(address(automator), type(uint256).max);
+        uint256 _aliceShares = automator.deposit(_aliceDeposit);
+        vm.stopPrank();
+
+        assertEq(automator.convertToShares(1.3 ether), _aliceShares + _deadInFirstDeposit, "first deposit");
+
+        /*///////////////////////////////////////////////////////
+                        case: 1 depositor (pair token)
+        ///////////////////////////////////////////////////////*/
+        uint256 _usdceInVault = 1200e6;
+        deal(address(USDCE), address(automator), _usdceInVault);
+
+        uint256 _aliceAssets = _aliceDeposit -
+            automator.convertToAssets(_deadInFirstDeposit) +
+            _getQuote(address(USDCE), address(WETH), uint128(_usdceInVault));
+
+        assertEq(automator.convertToShares(_aliceAssets), _aliceShares, "automator allocation changed");
+
+        /*///////////////////////////////////////////////////////
+                        case: 2 depositors (pair token)
+        ///////////////////////////////////////////////////////*/
+
+        uint256 _bobDeposit = 1 ether;
+        deal(address(WETH), bob, _bobDeposit);
+
+        vm.startPrank(bob);
+        WETH.approve(address(automator), type(uint256).max);
+        uint256 _bobShares = automator.deposit(_bobDeposit);
+        vm.stopPrank();
+
+        assertApproxEqAbs(automator.convertToShares(_bobDeposit), _bobShares, 1, "bob entered");
+        assertApproxEqAbs(automator.convertToShares(_aliceAssets), _aliceShares, 1, "alice assets unchanged");
+    }
+
+    function test_convertToShares_hasDopexPositions() public {
+        /*///////////////////////////////////////////////////////
+                        case: 1 depositor (single token)
+        ///////////////////////////////////////////////////////*/
+        uint256 _aliceDeposit = 1.3 ether;
+        uint256 _deadInFirstDeposit = 10 ** automator.decimals() / 1000;
+
+        deal(address(WETH), alice, _aliceDeposit);
+
+        vm.startPrank(alice);
+        WETH.approve(address(automator), type(uint256).max);
+        uint256 _aliceShares = automator.deposit(_aliceDeposit);
+        vm.stopPrank();
+
+        assertEq(automator.convertToShares(1.3 ether), _aliceShares + _deadInFirstDeposit, "first deposit");
+
+        /*///////////////////////////////////////////////////////
+                        case: 1 depositor (pair token)
+        ///////////////////////////////////////////////////////*/
+        uint256 _usdceInVault = 1200e6;
+        deal(address(USDCE), address(automator), _usdceInVault);
+
+        uint256 _aliceAssets = _aliceDeposit -
+            automator.convertToAssets(_deadInFirstDeposit) +
+            _getQuote(address(USDCE), address(WETH), uint128(_usdceInVault));
+
+        assertEq(automator.convertToShares(_aliceAssets), _aliceShares, "automator allocation changed");
+
+        /*///////////////////////////////////////////////////////
+                        case: 2 depositors (pair token)
+        ///////////////////////////////////////////////////////*/
+
+        uint256 _bobDeposit = 1 ether;
+        deal(address(WETH), bob, _bobDeposit);
+
+        vm.startPrank(bob);
+        WETH.approve(address(automator), type(uint256).max);
+        uint256 _bobShares = automator.deposit(_bobDeposit);
+        vm.stopPrank();
+
+        assertApproxEqAbs(automator.convertToShares(_bobDeposit), _bobShares, 1, "bob entered");
+        assertApproxEqAbs(automator.convertToShares(_aliceAssets), _aliceShares, 1, "alice assets unchanged");
+
+        /*///////////////////////////////////////////////////////
+                        case: dopex position minted
+        ///////////////////////////////////////////////////////*/
+
+        (int24 _oor_belowLower, ) = _outOfRangeBelow(1);
+        (int24 _oor_aboveLower, ) = _outOfRangeAbove(1);
+
+        Automator.MintParams[] memory _mintParams = new Automator.MintParams[](2);
+        _mintParams[0] = Automator.MintParams({
+            tick: _oor_belowLower,
+            liquidity: _toSingleTickLiquidity(
+                _oor_belowLower,
+                WETH.balanceOf(address(automator)) / 3,
+                USDCE.balanceOf(address(automator)) / 3
+            )
+        });
+
+        _mintParams[1] = Automator.MintParams({
+            tick: _oor_aboveLower,
+            liquidity: _toSingleTickLiquidity(
+                _oor_aboveLower,
+                WETH.balanceOf(address(automator)) / 3,
+                USDCE.balanceOf(address(automator)) / 3
+            )
+        });
+
+        automator.rebalance(_mintParams, new Automator.BurnParams[](0));
+
+        assertApproxEqAbs(
+            automator.convertToShares((_aliceShares * automator.totalAssets()) / automator.totalSupply()),
+            _aliceShares,
+            1,
+            "alice shares includes dopex positions"
+        );
+
+        assertApproxEqAbs(
+            automator.convertToShares((_bobShares * automator.totalAssets()) / automator.totalSupply()),
+            _bobShares,
+            1,
+            "bob shares includes dopex positions"
         );
     }
 }
