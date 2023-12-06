@@ -116,7 +116,10 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
         uint256 _tid;
         uint128 _liquidity;
         (int24 _lt, int24 _ut) = (0, 0);
+        (uint256 _sum0, uint256 _sum1) = (0, 0);
         (uint256 _a0, uint256 _a1) = (0, 0);
+
+        (uint160 _sqrtRatioX96, , , , , , ) = pool.slot0();
 
         for (uint256 i = 0; i < _length; ) {
             _lt = int24(uint24(activeTicks.at(i)));
@@ -125,17 +128,15 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
 
             _liquidity = handler.convertToAssets((handler.balanceOf(address(this), _tid)).toUint128(), _tid);
 
-            _a0 += LiquidityAmounts.getAmount0ForLiquidity(
+            (_a0, _a1) = LiquidityAmounts.getAmountsForLiquidity(
+                _sqrtRatioX96,
                 _lt.getSqrtRatioAtTick(),
                 _ut.getSqrtRatioAtTick(),
                 _liquidity
             );
 
-            _a1 += LiquidityAmounts.getAmount1ForLiquidity(
-                _lt.getSqrtRatioAtTick(),
-                _ut.getSqrtRatioAtTick(),
-                _liquidity
-            );
+            _sum0 += _a0;
+            _sum1 += _a1;
 
             unchecked {
                 i++;
@@ -146,11 +147,11 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
         (uint256 _base, uint256 _quote) = (counterAsset.balanceOf(address(this)), asset.balanceOf(address(this)));
 
         if (address(asset) == pool.token0()) {
-            _base += _a1;
-            _quote += _a0;
+            _base += _sum1;
+            _quote += _sum0;
         } else {
-            _base += _a0;
-            _quote += _a1;
+            _base += _sum0;
+            _quote += _sum1;
         }
 
         return

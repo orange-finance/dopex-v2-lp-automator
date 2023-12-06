@@ -17,6 +17,8 @@ import {TickMath} from "../../contracts/vendor/uniswapV3/TickMath.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
+import "forge-std/console2.sol";
+
 abstract contract Fixture is Test {
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandler;
     using TickMath for int24;
@@ -108,10 +110,10 @@ abstract contract Fixture is Test {
         uint256 _tokenId = uniV3Handler.tokenId(address(pool), lowerTick, lowerTick + pool.tickSpacing());
         uint128 _liquidity = uniV3Handler.convertToAssets(uint128(uniV3Handler.balanceOf(account, _tokenId)), _tokenId);
 
-        (, int24 _currentTick, , , , , ) = pool.slot0();
+        (uint160 _sqrtPriceX96, , , , , , ) = pool.slot0();
 
         (uint256 _amount0, uint256 _amount1) = LiquidityAmounts.getAmountsForLiquidity(
-            _currentTick.getSqrtRatioAtTick(),
+            _sqrtPriceX96,
             lowerTick.getSqrtRatioAtTick(),
             (lowerTick + pool.tickSpacing()).getSqrtRatioAtTick(),
             _liquidity

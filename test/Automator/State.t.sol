@@ -73,11 +73,13 @@ contract TestAutomatorState is Fixture {
 
         emit log_named_uint("assets in automator", _assetsInAutomator);
 
-        assertEq(
+        // allow bit of error because rounding will happen from different position => assets calculations
+        assertApproxEqAbs(
             automator.totalAssets(),
             _assetsInAutomator +
                 _positionToAssets(_oor_belowLower, address(automator)) +
-                _positionToAssets(_oor_aboveLower, address(automator))
+                _positionToAssets(_oor_aboveLower, address(automator)),
+            1
         );
     }
 }
