@@ -7,31 +7,34 @@ import {LiquidityAmounts} from "../vendor/uniswapV3/LiquidityAmounts.sol";
 import {TickMath} from "../vendor/uniswapV3/TickMath.sol";
 
 library UniswapV3PoolLib {
+    error BurnLiquidityExceedsMint();
+
     function currentTick(IUniswapV3Pool pool) internal view returns (int24 tick) {
         (, tick, , , , , ) = pool.slot0();
     }
 
-    struct MintParams {
+    struct Position {
         int24 tickLower;
         int24 tickUpper;
         uint128 liquidity;
     }
 
-    function estimateTotalAmountsToMint(
+    function estimateTotalTokensFromPositions(
         IUniswapV3Pool pool,
-        MintParams[] memory mintParams
+        Position[] memory positions
     ) internal view returns (uint256 totalAmount0, uint256 totalAmount1) {
         uint256 _a0;
         uint256 _a1;
 
         (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
 
-        for (uint256 i = 0; i < mintParams.length; i++) {
+        uint256 _pLen = positions.length;
+        for (uint256 i = 0; i < _pLen; i++) {
             (_a0, _a1) = LiquidityAmounts.getAmountsForLiquidity(
                 sqrtPriceX96,
-                TickMath.getSqrtRatioAtTick(mintParams[i].tickLower),
-                TickMath.getSqrtRatioAtTick(mintParams[i].tickUpper),
-                mintParams[i].liquidity
+                TickMath.getSqrtRatioAtTick(positions[i].tickLower),
+                TickMath.getSqrtRatioAtTick(positions[i].tickUpper),
+                positions[i].liquidity
             );
 
             totalAmount0 += _a0;

@@ -72,6 +72,7 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
     error DepositTooSmall();
     error DepositCapExceeded();
     error SharesTooSmall();
+    error InvalidPositionConstruction();
 
     constructor(
         address admin,
@@ -174,10 +175,58 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
         return _supply == 0 ? shares : shares.mulDivDown(totalAssets(), _supply);
     }
 
-    function estimateTotalAmountsToMint(
-        UniswapV3PoolLib.MintParams[] memory mintParams
-    ) public view returns (uint256 totalAmount0, uint256 totalAmount1) {
-        return pool.estimateTotalAmountsToMint(mintParams);
+    struct SwapAmounts {
+        uint256 assetsShortage;
+        uint256 counterAssetsShortage;
+        uint256 maxCounterAssetsUseForSwap;
+        uint256 maxAssetsUseForSwap;
+    }
+
+    function calculateSwapAmountsInRebalance(
+        UniswapV3PoolLib.Position[] memory mintPositions,
+        UniswapV3PoolLib.Position[] memory burnPositions
+    ) external view returns (SwapAmounts memory) {
+        uint256 _mintAssets;
+        uint256 _mintCAssets;
+        uint256 _burnAssets;
+        uint256 _burnCAssets;
+
+        if (pool.token0() == address(asset)) {
+            (_mintAssets, _mintCAssets) = pool.estimateTotalTokensFromPositions(mintPositions);
+            (_burnAssets, _burnCAssets) = pool.estimateTotalTokensFromPositions(burnPositions);
+        } else {
+            (_mintCAssets, _mintAssets) = pool.estimateTotalTokensFromPositions(mintPositions);
+            (_burnCAssets, _burnAssets) = pool.estimateTotalTokensFromPositions(burnPositions);
+        }
+
+        uint256 _freeAssets = _burnAssets + asset.balanceOf(address(this));
+        uint256 _freeCAssets = _burnCAssets + counterAsset.balanceOf(address(this));
+
+        uint256 _assetsShortage;
+        if (_mintAssets > _freeAssets) _assetsShortage = _mintAssets - _freeAssets;
+
+        uint256 _counterAssetsShortage;
+        if (_mintCAssets > _freeCAssets) _counterAssetsShortage = _mintCAssets - _freeCAssets;
+
+        if (_assetsShortage > 0 && _counterAssetsShortage > 0) revert InvalidPositionConstruction();
+
+        uint256 _maxCounterAssetsUseForSwap;
+        if (_assetsShortage > 0) {
+            _maxCounterAssetsUseForSwap = _freeCAssets - _mintCAssets;
+        }
+
+        uint256 _maxAssetsUseForSwap;
+        if (_counterAssetsShortage > 0) {
+            _maxAssetsUseForSwap = _freeAssets - _mintAssets;
+        }
+
+        return
+            SwapAmounts({
+                assetsShortage: _assetsShortage,
+                counterAssetsShortage: _counterAssetsShortage,
+                maxCounterAssetsUseForSwap: _maxCounterAssetsUseForSwap,
+                maxAssetsUseForSwap: _maxAssetsUseForSwap
+            });
     }
 
     function deposit(uint256 assets) external returns (uint256 shares) {
@@ -422,6 +471,36 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
         if (_owed1 > 0 && _owed1 < 10) return false;
 
         return true;
+    }
+
+    function _swapToRedeemAssets(uint256 counterAssetsIn) internal {
+        router.exactInputSingle(
+            ISwapRouter.ExactInputSingleParams({
+                tokenIn: address(counterAsset),
+                tokenOut: address(asset),
+                fee: pool.fee(),
+                recipient: address(this),
+                deadline: block.timestamp,
+                amountIn: counterAssetsIn,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0
+            })
+        );
+    }
+
+    function _swapToFillShortage(uint256 counterAssetsShortage, uint256 maxAssetsUseForSwap) internal {
+        router.exactOutputSingle(
+            ISwapRouter.ExactOutputSingleParams({
+                tokenIn: address(asset),
+                tokenOut: address(counterAsset),
+                fee: pool.fee(),
+                recipient: address(this),
+                deadline: block.timestamp,
+                amountOut: counterAssetsShortage,
+                amountInMaximum: maxAssetsUseForSwap,
+                sqrtPriceLimitX96: 0
+            })
+        );
     }
 
     function onERC1155Received(address, address, uint256, uint256, bytes calldata) external pure returns (bytes4) {

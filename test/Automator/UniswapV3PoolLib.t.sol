@@ -27,12 +27,12 @@ contract TestUniswapV3PoolLib is Test {
         assertEq(tick, tickFromSlot, "get current tick");
     }
 
-    function test_estimateTotalAmountsForMint() public {
+    function test_estimateTotalTokensFromPositions() public {
         /*/////////////////////////////////////////////////////////////
                             case: single mint
         /////////////////////////////////////////////////////////////*/
 
-        UniswapV3PoolLib.MintParams[] memory mintParams = new UniswapV3PoolLib.MintParams[](1);
+        UniswapV3PoolLib.Position[] memory mintParams = new UniswapV3PoolLib.Position[](1);
         mintParams[0].tickLower = -199310;
         mintParams[0].tickUpper = -199300;
         mintParams[0].liquidity = 1e18;
@@ -49,7 +49,7 @@ contract TestUniswapV3PoolLib is Test {
             1e18
         );
 
-        (uint256 totalAmount0, uint256 totalAmount1) = UniswapV3PoolLib.estimateTotalAmountsToMint(
+        (uint256 totalAmount0, uint256 totalAmount1) = UniswapV3PoolLib.estimateTotalTokensFromPositions(
             wethUsdce,
             mintParams
         );
@@ -65,7 +65,7 @@ contract TestUniswapV3PoolLib is Test {
                             case: multiple mint
         /////////////////////////////////////////////////////////////*/
 
-        mintParams = new UniswapV3PoolLib.MintParams[](2);
+        mintParams = new UniswapV3PoolLib.Position[](2);
         mintParams[0].tickLower = -199310;
         mintParams[0].tickUpper = -199300;
         mintParams[0].liquidity = 1e18;
@@ -91,7 +91,7 @@ contract TestUniswapV3PoolLib is Test {
             2e18
         );
 
-        (totalAmount0, totalAmount1) = UniswapV3PoolLib.estimateTotalAmountsToMint(wethUsdce, mintParams);
+        (totalAmount0, totalAmount1) = UniswapV3PoolLib.estimateTotalTokensFromPositions(wethUsdce, mintParams);
 
         emit log_named_uint("multiple mint total amount0", totalAmount0);
         emit log_named_uint("multiple mint total amount1", totalAmount1);
