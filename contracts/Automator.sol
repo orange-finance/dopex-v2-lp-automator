@@ -429,8 +429,9 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
                 activeTicks.remove(uint256(uint24(_lt)));
         }
 
-        if (_mintLength > 0) IMulticallProvider(address(manager)).multicall(_mintCalldataBatch);
+        // NOTE: burn should be called before mint to receive the assets from the burned position
         if (_burnLength > 0) IMulticallProvider(address(manager)).multicall(_burnCalldataBatch);
+        if (_mintLength > 0) IMulticallProvider(address(manager)).multicall(_mintCalldataBatch);
     }
 
     function _swapBeforeRebalance(RebalanceSwapParams calldata swapParams) internal {
@@ -512,16 +513,6 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
         int24 _lt;
         int24 _ut;
         uint256 _posId;
-        for (uint256 i = 0; i < _mintLength; i++) {
-            _lt = mintParams[i].tick;
-            _ut = _lt + poolTickSpacing;
-
-            // If the position is not active, push it to the active ticks
-            _posId = uint256(keccak256(abi.encode(handler, pool, _lt, _ut)));
-            if (handler.balanceOf(address(this), _posId) == 0) activeTicks.add(uint256(uint24(_lt)));
-
-            _mintPosition(_lt, _ut, mintParams[i].liquidity);
-        }
 
         for (uint256 i = 0; i < _burnLength; i++) {
             _lt = burnParams[i].tick;
@@ -533,6 +524,17 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
                 activeTicks.remove(uint256(uint24(_lt)));
 
             _burnPosition(_lt, _ut, burnParams[i].shares);
+        }
+
+        for (uint256 i = 0; i < _mintLength; i++) {
+            _lt = mintParams[i].tick;
+            _ut = _lt + poolTickSpacing;
+
+            // If the position is not active, push it to the active ticks
+            _posId = uint256(keccak256(abi.encode(handler, pool, _lt, _ut)));
+            if (handler.balanceOf(address(this), _posId) == 0) activeTicks.add(uint256(uint24(_lt)));
+
+            _mintPosition(_lt, _ut, mintParams[i].liquidity);
         }
     }
 
