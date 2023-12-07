@@ -13,9 +13,9 @@ contract TestRebalance is Fixture {
         manager.updateWhitelistHandlerWithApp(address(uniV3Handler), address(this), true);
     }
 
-    // function test_calculateSwapAmountsInRebalance() public {
+    // function test_calculateRebalanceSwapParamsInRebalance() public {
     // UniswapV3PoolLib.Position[] memory _mintPositions = new UniswapV3PoolLib.Position[](1);
     // _mintPositions[0].tickLower = -199310;
-    // Automator.SwapAmounts _swapAmounts = automator.calculateSwapAmountsInRebalance(_mintPositions, _burnPositions);
+    // Automator.RebalanceSwapParams _swapAmounts = automator.calculateRebalanceSwapParamsInRebalance(_mintPositions, _burnPositions);
     // }
 }

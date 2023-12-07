@@ -101,6 +101,11 @@ contract AutomatorHandler is Test {
 
     constructor(Automator automator_) {
         automator = automator_;
+
+        vm.label(address(alice), "alice");
+        vm.label(address(bob), "bob");
+        vm.label(address(carol), "carol");
+        vm.label(address(dave), "dave");
     }
 
     function deposit(uint256 assets, uint256 actorIndex) external useActor(actorIndex) {
@@ -252,7 +257,7 @@ contract AutomatorHandler is Test {
 
     //     // create params
     //     Automator.MintParams[] memory _mintParams = new Automator.MintParams[](positions);
-    //     Automator.BurnParams[] memory _burnParams = new Automator.BurnParams[](positions);
+    //     Automator.RebalanceBurnParams[] memory _burnParams = new Automator.RebalanceBurnParams[](positions);
 
     //     int24 _lt = lowerTick;
     //     int24 _ut = lowerTick + int24(tickSpacing);
@@ -287,7 +292,7 @@ contract AutomatorHandler is Test {
 
     //         if (shares > 0) {
     //             shares = bound(shares, 0, shares);
-    //             _burnParams[j++] = Automator.BurnParams({tick: _lt, shares: uint128(shares)});
+    //             _burnParams[j++] = Automator.RebalanceBurnParams({tick: _lt, shares: uint128(shares)});
     //         }
 
     //         _lt += int24(tickSpacing);
@@ -301,7 +306,7 @@ contract AutomatorHandler is Test {
     //     }
 
     //     // shorted _burnParams
-    //     Automator.BurnParams[] memory _burnParamsShorted = new Automator.BurnParams[](j);
+    //     Automator.RebalanceBurnParams[] memory _burnParamsShorted = new Automator.RebalanceBurnParams[](j);
     //     for (uint256 i = 0; i < j; i++) {
     //         _burnParamsShorted[i] = _burnParams[i];
     //     }
@@ -330,8 +335,8 @@ contract AutomatorHandler is Test {
         ////////////////////////////////////////////////////////////*/
 
         // create params
-        Automator.MintParams[] memory _mintParams = new Automator.MintParams[](positions);
-        Automator.BurnParams[] memory _burnParams = new Automator.BurnParams[](positions);
+        Automator.RebalanceMintParams[] memory _mintParams = new Automator.RebalanceMintParams[](positions);
+        Automator.RebalanceBurnParams[] memory _burnParams = new Automator.RebalanceBurnParams[](positions);
 
         int24 _lt = lowerTick;
         int24 _ut = lowerTick + int24(tickSpacing);
@@ -359,7 +364,7 @@ contract AutomatorHandler is Test {
             // FIXME: too small liquidity will revert
             // if (liquidity > 0 && automator.checkMintValidity(_lt, _ut))
             if (liquidity > 10000 && automator.checkMintValidity(_lt, _ut))
-                _mintParams[k++] = Automator.MintParams({tick: _lt, liquidity: liquidity});
+                _mintParams[k++] = Automator.RebalanceMintParams({tick: _lt, liquidity: liquidity});
 
             // create burn params
             shares = automator.handler().balanceOf(
@@ -369,7 +374,7 @@ contract AutomatorHandler is Test {
 
             if (shares > 0) {
                 shares = bound(shares, 0, shares);
-                _burnParams[j++] = Automator.BurnParams({tick: _lt, shares: uint128(shares)});
+                _burnParams[j++] = Automator.RebalanceBurnParams({tick: _lt, shares: uint128(shares)});
             }
 
             _lt += int24(tickSpacing);
@@ -377,18 +382,22 @@ contract AutomatorHandler is Test {
         }
 
         // shorted _mintParams
-        Automator.MintParams[] memory _mintParamsShorted = new Automator.MintParams[](k);
+        Automator.RebalanceMintParams[] memory _mintParamsShorted = new Automator.RebalanceMintParams[](k);
         for (uint256 i = 0; i < k; i++) {
             _mintParamsShorted[i] = _mintParams[i];
         }
 
         // shorted _burnParams
-        Automator.BurnParams[] memory _burnParamsShorted = new Automator.BurnParams[](j);
+        Automator.RebalanceBurnParams[] memory _burnParamsShorted = new Automator.RebalanceBurnParams[](j);
         for (uint256 i = 0; i < j; i++) {
             _burnParamsShorted[i] = _burnParams[i];
         }
 
         vm.prank(address(this));
-        automator.inefficientRebalance(_mintParamsShorted, _burnParamsShorted);
+        automator.inefficientRebalance(
+            _mintParamsShorted,
+            _burnParamsShorted,
+            Automator.RebalanceSwapParams(0, 0, 0, 0)
+        );
     }
 }

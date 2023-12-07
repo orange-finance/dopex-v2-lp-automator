@@ -56,17 +56,21 @@ contract TestAutomatorState is Fixture {
         uint256 _a0above = WETH.balanceOf(address(automator)) / 3;
         uint256 _a1above = USDCE.balanceOf(address(automator)) / 3;
 
-        Automator.MintParams[] memory _mintParams = new Automator.MintParams[](2);
-        _mintParams[0] = Automator.MintParams({
+        Automator.RebalanceMintParams[] memory _mintParams = new Automator.RebalanceMintParams[](2);
+        _mintParams[0] = Automator.RebalanceMintParams({
             tick: _oor_belowLower,
             liquidity: _toSingleTickLiquidity(_oor_belowLower, _a0below, _a1below)
         });
-        _mintParams[1] = Automator.MintParams({
+        _mintParams[1] = Automator.RebalanceMintParams({
             tick: _oor_aboveLower,
             liquidity: _toSingleTickLiquidity(_oor_aboveLower, _a0above, _a1above)
         });
 
-        automator.rebalance(_mintParams, new Automator.BurnParams[](0));
+        automator.rebalance(
+            _mintParams,
+            new Automator.RebalanceBurnParams[](0),
+            Automator.RebalanceSwapParams(0, 0, 0, 0)
+        );
 
         uint256 _assetsInAutomator = WETH.balanceOf(address(automator)) +
             _getQuote(address(USDCE), address(WETH), uint128(USDCE.balanceOf(address(automator))));
@@ -189,18 +193,22 @@ contract TestAutomatorState is Fixture {
         uint256 _a0above = WETH.balanceOf(address(automator)) / 3;
         uint256 _a1above = USDCE.balanceOf(address(automator)) / 3;
 
-        Automator.MintParams[] memory _mintParams = new Automator.MintParams[](2);
-        _mintParams[0] = Automator.MintParams({
+        Automator.RebalanceMintParams[] memory _mintParams = new Automator.RebalanceMintParams[](2);
+        _mintParams[0] = Automator.RebalanceMintParams({
             tick: _oor_belowLower,
             liquidity: _toSingleTickLiquidity(_oor_belowLower, _a0below, _a1below)
         });
 
-        _mintParams[1] = Automator.MintParams({
+        _mintParams[1] = Automator.RebalanceMintParams({
             tick: _oor_aboveLower,
             liquidity: _toSingleTickLiquidity(_oor_aboveLower, _a0above, _a1above)
         });
 
-        automator.rebalance(_mintParams, new Automator.BurnParams[](0));
+        automator.rebalance(
+            _mintParams,
+            new Automator.RebalanceBurnParams[](0),
+            Automator.RebalanceSwapParams(0, 0, 0, 0)
+        );
 
         assertEq(
             automator.convertToAssets(_aliceShares),
@@ -309,8 +317,8 @@ contract TestAutomatorState is Fixture {
         (int24 _oor_belowLower, ) = _outOfRangeBelow(1);
         (int24 _oor_aboveLower, ) = _outOfRangeAbove(1);
 
-        Automator.MintParams[] memory _mintParams = new Automator.MintParams[](2);
-        _mintParams[0] = Automator.MintParams({
+        Automator.RebalanceMintParams[] memory _mintParams = new Automator.RebalanceMintParams[](2);
+        _mintParams[0] = Automator.RebalanceMintParams({
             tick: _oor_belowLower,
             liquidity: _toSingleTickLiquidity(
                 _oor_belowLower,
@@ -319,7 +327,7 @@ contract TestAutomatorState is Fixture {
             )
         });
 
-        _mintParams[1] = Automator.MintParams({
+        _mintParams[1] = Automator.RebalanceMintParams({
             tick: _oor_aboveLower,
             liquidity: _toSingleTickLiquidity(
                 _oor_aboveLower,
@@ -328,7 +336,11 @@ contract TestAutomatorState is Fixture {
             )
         });
 
-        automator.rebalance(_mintParams, new Automator.BurnParams[](0));
+        automator.rebalance(
+            _mintParams,
+            new Automator.RebalanceBurnParams[](0),
+            Automator.RebalanceSwapParams(0, 0, 0, 0)
+        );
 
         assertApproxEqAbs(
             automator.convertToShares((_aliceShares * automator.totalAssets()) / automator.totalSupply()),
