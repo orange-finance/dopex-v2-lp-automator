@@ -174,6 +174,12 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
         return _supply == 0 ? shares : shares.mulDivDown(totalAssets(), _supply);
     }
 
+    function estimateTotalAmountsToMint(
+        UniswapV3PoolLib.MintParams[] memory mintParams
+    ) public view returns (uint256 totalAmount0, uint256 totalAmount1) {
+        return pool.estimateTotalAmountsToMint(mintParams);
+    }
+
     function deposit(uint256 assets) external returns (uint256 shares) {
         if (assets == 0) revert AmountZero();
         if (assets < minDepositAssets) revert DepositTooSmall();
