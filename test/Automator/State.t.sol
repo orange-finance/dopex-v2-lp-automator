@@ -356,4 +356,52 @@ contract TestAutomatorState is Fixture {
             "bob shares includes dopex positions"
         );
     }
+
+    function test_getTickAllLiquidity() public {
+        deal(address(WETH), address(automator), 1.3 ether);
+        deal(address(USDCE), address(automator), 1200e6);
+
+        (int24 _oor_belowLower, ) = _outOfRangeBelow(1);
+        (int24 _oor_aboveLower, ) = _outOfRangeAbove(1);
+
+        uint256 _a0below = WETH.balanceOf(address(automator)) / 3;
+        uint256 _a1below = USDCE.balanceOf(address(automator)) / 3;
+
+        uint256 _a0above = WETH.balanceOf(address(automator)) / 3;
+        uint256 _a1above = USDCE.balanceOf(address(automator)) / 3;
+
+        Automator.RebalanceMintParams[] memory _mintParams = new Automator.RebalanceMintParams[](2);
+        _mintParams[0] = Automator.RebalanceMintParams({
+            tick: _oor_belowLower,
+            liquidity: _toSingleTickLiquidity(_oor_belowLower, _a0below, _a1below)
+        });
+
+        _mintParams[1] = Automator.RebalanceMintParams({
+            tick: _oor_aboveLower,
+            liquidity: _toSingleTickLiquidity(_oor_aboveLower, _a0above, _a1above)
+        });
+
+        automator.inefficientRebalance(
+            _mintParams,
+            new Automator.RebalanceBurnParams[](0),
+            Automator.RebalanceSwapParams(0, 0, 0, 0)
+        );
+
+        uint256 _belowId = uniV3Handler.tokenId(address(pool), _oor_belowLower, _oor_belowLower + pool.tickSpacing());
+        uint256 _aboveId = uniV3Handler.tokenId(address(pool), _oor_aboveLower, _oor_aboveLower + pool.tickSpacing());
+
+        assertEq(
+            automator.getTickAllLiquidity(_oor_belowLower),
+            uniV3Handler.convertToAssets(uint128(uniV3Handler.balanceOf(address(automator), _belowId)), _belowId),
+            "below liquidity"
+        );
+
+        assertEq(
+            automator.getTickAllLiquidity(_oor_aboveLower),
+            uniV3Handler.convertToAssets(uint128(uniV3Handler.balanceOf(address(automator), _aboveId)), _aboveId),
+            "above liquidity"
+        );
+
+        assertEq(automator.getTickAllLiquidity(-200000), 0, "tick no position");
+    }
 }

@@ -216,6 +216,13 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
         return _supply == 0 ? shares : shares.mulDivDown(totalAssets(), _supply);
     }
 
+    function getTickAllLiquidity(int24 tick) external view returns (uint128) {
+        uint256 _share = handler.balanceOf(address(this), handler.tokenId(address(pool), tick, tick + poolTickSpacing));
+
+        return
+            handler.convertToAssets(_share.toUint128(), handler.tokenId(address(pool), tick, tick + poolTickSpacing));
+    }
+
     function calculateRebalanceSwapParamsInRebalance(
         UniswapV3PoolLib.Position[] memory mintPositions,
         UniswapV3PoolLib.Position[] memory burnPositions
