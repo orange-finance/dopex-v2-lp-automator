@@ -14,6 +14,7 @@ import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Po
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
+import {IAutomator} from "../contracts/interfaces/IAutomator.sol";
 
 interface IERC20Decimals {
     function decimals() external view returns (uint8);
@@ -335,8 +336,8 @@ contract AutomatorHandler is Test {
         ////////////////////////////////////////////////////////////*/
 
         // create params
-        Automator.RebalanceTickInfo[] memory _ticksMint = new Automator.RebalanceTickInfo[](positions);
-        Automator.RebalanceTickInfo[] memory _ticksBurn = new Automator.RebalanceTickInfo[](positions);
+        IAutomator.RebalanceTickInfo[] memory _ticksMint = new IAutomator.RebalanceTickInfo[](positions);
+        IAutomator.RebalanceTickInfo[] memory _ticksBurn = new IAutomator.RebalanceTickInfo[](positions);
 
         int24 _lt = lowerTick;
         int24 _ut = lowerTick + int24(tickSpacing);
@@ -364,7 +365,7 @@ contract AutomatorHandler is Test {
             // FIXME: too small liquidity will revert
             // if (liquidity > 0 && automator.checkMintValidity(_lt, _ut))
             if (liquidity > 10000 && automator.checkMintValidity(_lt, _ut))
-                _ticksMint[k++] = Automator.RebalanceTickInfo({tick: _lt, liquidity: liquidity});
+                _ticksMint[k++] = IAutomator.RebalanceTickInfo({tick: _lt, liquidity: liquidity});
 
             // create burn params
             shares = automator.handler().balanceOf(
@@ -374,7 +375,7 @@ contract AutomatorHandler is Test {
 
             if (shares > 0) {
                 shares = bound(shares, 0, shares);
-                _ticksBurn[j++] = Automator.RebalanceTickInfo({
+                _ticksBurn[j++] = IAutomator.RebalanceTickInfo({
                     tick: _lt,
                     liquidity: automator.handler().convertToAssets(
                         uint128(shares),
@@ -388,18 +389,22 @@ contract AutomatorHandler is Test {
         }
 
         // shorted _ticksMint
-        Automator.RebalanceTickInfo[] memory _ticksMintShorted = new Automator.RebalanceTickInfo[](k);
+        IAutomator.RebalanceTickInfo[] memory _ticksMintShorted = new IAutomator.RebalanceTickInfo[](k);
         for (uint256 i = 0; i < k; i++) {
             _ticksMintShorted[i] = _ticksMint[i];
         }
 
         // shorted _ticksBurn
-        Automator.RebalanceTickInfo[] memory _ticksBurnShorted = new Automator.RebalanceTickInfo[](j);
+        IAutomator.RebalanceTickInfo[] memory _ticksBurnShorted = new IAutomator.RebalanceTickInfo[](j);
         for (uint256 i = 0; i < j; i++) {
             _ticksBurnShorted[i] = _ticksBurn[i];
         }
 
         vm.prank(address(this));
-        automator.inefficientRebalance(_ticksMintShorted, _ticksBurnShorted, Automator.RebalanceSwapParams(0, 0, 0, 0));
+        automator.inefficientRebalance(
+            _ticksMintShorted,
+            _ticksBurnShorted,
+            IAutomator.RebalanceSwapParams(0, 0, 0, 0)
+        );
     }
 }
