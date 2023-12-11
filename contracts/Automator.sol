@@ -7,6 +7,7 @@ import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRoute
 import {LiquidityAmounts} from "./vendor/uniswapV3/LiquidityAmounts.sol";
 import {TickMath} from "./vendor/uniswapV3/TickMath.sol";
 import {OracleLibrary} from "./vendor/uniswapV3/OracleLibrary.sol";
+import {FullMath} from "./vendor/uniswapV3/FullMath.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Receiver.sol";
@@ -22,6 +23,8 @@ import {UniswapV3SingleTickLiquidityLib} from "./lib/UniswapV3SingleTickLiquidit
 import {UniswapV3PoolLib} from "./lib/UniswapV3PoolLib.sol";
 import {IDopexV2PositionManager} from "./vendor/dopexV2/IDopexV2PositionManager.sol";
 
+import "forge-std/console2.sol";
+
 interface IMulticallProvider {
     function multicall(bytes[] calldata data) external returns (bytes[] memory results);
 }
@@ -32,6 +35,7 @@ interface IERC20Decimals {
 
 contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
     using FixedPointMathLib for uint256;
+    using FullMath for uint256;
     using SafeERC20 for IERC20;
     using SafeCast for uint256;
     using EnumerableSet for EnumerableSet.UintSet;
@@ -216,6 +220,20 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
         return _supply == 0 ? shares : shares.mulDivDown(totalAssets(), _supply);
     }
 
+    function getTickAllLiquidity(int24 tick) external view returns (uint128) {
+        uint256 _share = handler.balanceOf(address(this), handler.tokenId(address(pool), tick, tick + poolTickSpacing));
+
+        return
+            handler.convertToAssets(_share.toUint128(), handler.tokenId(address(pool), tick, tick + poolTickSpacing));
+    }
+
+    function getTickFreeLiquidity(int24 tick) external view returns (uint128) {
+        return
+            handler
+                .redeemableLiquidity(address(this), handler.tokenId(address(pool), tick, tick + poolTickSpacing))
+                .toUint128();
+    }
+
     function calculateRebalanceSwapParamsInRebalance(
         UniswapV3PoolLib.Position[] memory mintPositions,
         UniswapV3PoolLib.Position[] memory burnPositions
@@ -253,6 +271,12 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
         if (_counterAssetsShortage > 0) {
             _maxAssetsUseForSwap = _freeAssets - _mintAssets;
         }
+
+        console2.log("max counter assets use for swap", _maxCounterAssetsUseForSwap);
+        console2.log(
+            "max counter assets + fee",
+            _maxCounterAssetsUseForSwap + _maxCounterAssetsUseForSwap.mulDiv(pool.fee(), 1e6 - pool.fee())
+        );
 
         return
             RebalanceSwapParams({
