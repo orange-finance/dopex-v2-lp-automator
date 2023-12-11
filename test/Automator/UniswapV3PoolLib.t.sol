@@ -4,7 +4,8 @@ pragma solidity 0.8.19;
 
 import "forge-std/Test.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import {UniswapV3PoolLib} from "../../contracts/lib/UniswapV3PoolLib.sol";
+import {Automator} from "../../contracts/Automator.sol";
+import {AutomatorUniswapV3PoolLib} from "../../contracts/lib/AutomatorUniswapV3PoolLib.sol";
 import {LiquidityAmounts} from "../../contracts/vendor/uniswapV3/LiquidityAmounts.sol";
 import {TickMath} from "../../contracts/vendor/uniswapV3/TickMath.sol";
 
@@ -22,7 +23,7 @@ contract TestUniswapV3PoolLib is Test {
 
     function test_currentTick() public {
         (, int24 tickFromSlot, , , , , ) = wethUsdce.slot0();
-        int24 tick = UniswapV3PoolLib.currentTick(wethUsdce);
+        int24 tick = AutomatorUniswapV3PoolLib.currentTick(wethUsdce);
 
         assertEq(tick, tickFromSlot, "get current tick");
     }
@@ -32,9 +33,8 @@ contract TestUniswapV3PoolLib is Test {
                             case: single mint
         /////////////////////////////////////////////////////////////*/
 
-        UniswapV3PoolLib.Position[] memory mintParams = new UniswapV3PoolLib.Position[](1);
-        mintParams[0].tickLower = -199310;
-        mintParams[0].tickUpper = -199300;
+        Automator.RebalanceTickInfo[] memory mintParams = new Automator.RebalanceTickInfo[](1);
+        mintParams[0].tick = -199310;
         mintParams[0].liquidity = 1e18;
 
         uint256 _expectedAmount0Above;
@@ -44,12 +44,12 @@ contract TestUniswapV3PoolLib is Test {
 
         (_expectedAmount0Above, _expectedAmount1Above) = LiquidityAmounts.getAmountsForLiquidity(
             _sqrtPriceX96,
-            TickMath.getSqrtRatioAtTick(mintParams[0].tickLower),
-            TickMath.getSqrtRatioAtTick(mintParams[0].tickUpper),
+            TickMath.getSqrtRatioAtTick(mintParams[0].tick),
+            TickMath.getSqrtRatioAtTick(mintParams[0].tick + wethUsdce.tickSpacing()),
             1e18
         );
 
-        (uint256 totalAmount0, uint256 totalAmount1) = UniswapV3PoolLib.estimateTotalTokensFromPositions(
+        (uint256 totalAmount0, uint256 totalAmount1) = AutomatorUniswapV3PoolLib.estimateTotalTokensFromPositions(
             wethUsdce,
             mintParams
         );
@@ -65,13 +65,11 @@ contract TestUniswapV3PoolLib is Test {
                             case: multiple mint
         /////////////////////////////////////////////////////////////*/
 
-        mintParams = new UniswapV3PoolLib.Position[](2);
-        mintParams[0].tickLower = -199310;
-        mintParams[0].tickUpper = -199300;
+        mintParams = new Automator.RebalanceTickInfo[](2);
+        mintParams[0].tick = -199310;
         mintParams[0].liquidity = 1e18;
 
-        mintParams[1].tickLower = -199360;
-        mintParams[1].tickUpper = -199350;
+        mintParams[1].tick = -199360;
         mintParams[1].liquidity = 2e18;
 
         uint256 _expectedAmount0Below;
@@ -79,19 +77,22 @@ contract TestUniswapV3PoolLib is Test {
 
         (_expectedAmount0Above, _expectedAmount1Above) = LiquidityAmounts.getAmountsForLiquidity(
             _sqrtPriceX96,
-            TickMath.getSqrtRatioAtTick(mintParams[0].tickLower),
-            TickMath.getSqrtRatioAtTick(mintParams[0].tickUpper),
+            TickMath.getSqrtRatioAtTick(mintParams[0].tick),
+            TickMath.getSqrtRatioAtTick(mintParams[0].tick + wethUsdce.tickSpacing()),
             1e18
         );
 
         (_expectedAmount0Below, _expectedAmount1Below) = LiquidityAmounts.getAmountsForLiquidity(
             _sqrtPriceX96,
-            TickMath.getSqrtRatioAtTick(mintParams[1].tickLower),
-            TickMath.getSqrtRatioAtTick(mintParams[1].tickUpper),
+            TickMath.getSqrtRatioAtTick(mintParams[1].tick),
+            TickMath.getSqrtRatioAtTick(mintParams[1].tick + wethUsdce.tickSpacing()),
             2e18
         );
 
-        (totalAmount0, totalAmount1) = UniswapV3PoolLib.estimateTotalTokensFromPositions(wethUsdce, mintParams);
+        (totalAmount0, totalAmount1) = AutomatorUniswapV3PoolLib.estimateTotalTokensFromPositions(
+            wethUsdce,
+            mintParams
+        );
 
         emit log_named_uint("multiple mint total amount0", totalAmount0);
         emit log_named_uint("multiple mint total amount1", totalAmount1);

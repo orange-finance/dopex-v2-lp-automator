@@ -20,7 +20,7 @@ import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 
 import {IUniswapV3SingleTickLiquidityHandler} from "./vendor/dopexV2/IUniswapV3SingleTickLiquidityHandler.sol";
 import {UniswapV3SingleTickLiquidityLib} from "./lib/UniswapV3SingleTickLiquidityLib.sol";
-import {UniswapV3PoolLib} from "./lib/UniswapV3PoolLib.sol";
+import {AutomatorUniswapV3PoolLib} from "./lib/AutomatorUniswapV3PoolLib.sol";
 import {IDopexV2PositionManager} from "./vendor/dopexV2/IDopexV2PositionManager.sol";
 
 import "forge-std/console2.sol";
@@ -40,7 +40,7 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
     using SafeCast for uint256;
     using EnumerableSet for EnumerableSet.UintSet;
     using TickMath for int24;
-    using UniswapV3PoolLib for IUniswapV3Pool;
+    using AutomatorUniswapV3PoolLib for IUniswapV3Pool;
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandler;
 
     struct LockedDopexShares {
@@ -230,8 +230,8 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
     }
 
     function calculateRebalanceSwapParamsInRebalance(
-        UniswapV3PoolLib.Position[] memory mintPositions,
-        UniswapV3PoolLib.Position[] memory burnPositions
+        RebalanceTickInfo[] memory ticksMint,
+        RebalanceTickInfo[] memory ticksBurn
     ) external view returns (RebalanceSwapParams memory) {
         uint256 _mintAssets;
         uint256 _mintCAssets;
@@ -239,11 +239,11 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
         uint256 _burnCAssets;
 
         if (pool.token0() == address(asset)) {
-            (_mintAssets, _mintCAssets) = pool.estimateTotalTokensFromPositions(mintPositions);
-            (_burnAssets, _burnCAssets) = pool.estimateTotalTokensFromPositions(burnPositions);
+            (_mintAssets, _mintCAssets) = pool.estimateTotalTokensFromPositions(ticksMint);
+            (_burnAssets, _burnCAssets) = pool.estimateTotalTokensFromPositions(ticksBurn);
         } else {
-            (_mintCAssets, _mintAssets) = pool.estimateTotalTokensFromPositions(mintPositions);
-            (_burnCAssets, _burnAssets) = pool.estimateTotalTokensFromPositions(burnPositions);
+            (_mintCAssets, _mintAssets) = pool.estimateTotalTokensFromPositions(ticksMint);
+            (_burnCAssets, _burnAssets) = pool.estimateTotalTokensFromPositions(ticksBurn);
         }
 
         uint256 _freeAssets = _burnAssets + asset.balanceOf(address(this));
