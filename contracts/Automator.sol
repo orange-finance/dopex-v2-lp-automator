@@ -58,7 +58,7 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
 
     struct RebalanceBurnParams {
         int24 tick;
-        uint128 shares;
+        uint128 shares; //TODO share to liquidity.
     }
 
     bytes32 public constant STRATEGIST_ROLE = keccak256("STRATEGIST_ROLE");
@@ -261,6 +261,10 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
                 maxCounterAssetsUseForSwap: _maxCounterAssetsUseForSwap,
                 maxAssetsUseForSwap: _maxAssetsUseForSwap
             });
+    }
+
+    function getActiveTicks() external view returns (uint256[] memory) {
+        return activeTicks.values();
     }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
