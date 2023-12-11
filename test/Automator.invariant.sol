@@ -335,8 +335,8 @@ contract AutomatorHandler is Test {
         ////////////////////////////////////////////////////////////*/
 
         // create params
-        Automator.RebalanceMintParams[] memory _mintParams = new Automator.RebalanceMintParams[](positions);
-        Automator.RebalanceBurnParams[] memory _burnParams = new Automator.RebalanceBurnParams[](positions);
+        Automator.RebalanceTickInfo[] memory _ticksMint = new Automator.RebalanceTickInfo[](positions);
+        Automator.RebalanceTickInfo[] memory _ticksBurn = new Automator.RebalanceTickInfo[](positions);
 
         int24 _lt = lowerTick;
         int24 _ut = lowerTick + int24(tickSpacing);
@@ -364,7 +364,7 @@ contract AutomatorHandler is Test {
             // FIXME: too small liquidity will revert
             // if (liquidity > 0 && automator.checkMintValidity(_lt, _ut))
             if (liquidity > 10000 && automator.checkMintValidity(_lt, _ut))
-                _mintParams[k++] = Automator.RebalanceMintParams({tick: _lt, liquidity: liquidity});
+                _ticksMint[k++] = Automator.RebalanceTickInfo({tick: _lt, liquidity: liquidity});
 
             // create burn params
             shares = automator.handler().balanceOf(
@@ -374,7 +374,7 @@ contract AutomatorHandler is Test {
 
             if (shares > 0) {
                 shares = bound(shares, 0, shares);
-                _burnParams[j++] = Automator.RebalanceBurnParams({
+                _ticksBurn[j++] = Automator.RebalanceTickInfo({
                     tick: _lt,
                     liquidity: automator.handler().convertToAssets(
                         uint128(shares),
@@ -387,23 +387,19 @@ contract AutomatorHandler is Test {
             _ut += int24(tickSpacing);
         }
 
-        // shorted _mintParams
-        Automator.RebalanceMintParams[] memory _mintParamsShorted = new Automator.RebalanceMintParams[](k);
+        // shorted _ticksMint
+        Automator.RebalanceTickInfo[] memory _ticksMintShorted = new Automator.RebalanceTickInfo[](k);
         for (uint256 i = 0; i < k; i++) {
-            _mintParamsShorted[i] = _mintParams[i];
+            _ticksMintShorted[i] = _ticksMint[i];
         }
 
-        // shorted _burnParams
-        Automator.RebalanceBurnParams[] memory _burnParamsShorted = new Automator.RebalanceBurnParams[](j);
+        // shorted _ticksBurn
+        Automator.RebalanceTickInfo[] memory _ticksBurnShorted = new Automator.RebalanceTickInfo[](j);
         for (uint256 i = 0; i < j; i++) {
-            _burnParamsShorted[i] = _burnParams[i];
+            _ticksBurnShorted[i] = _ticksBurn[i];
         }
 
         vm.prank(address(this));
-        automator.inefficientRebalance(
-            _mintParamsShorted,
-            _burnParamsShorted,
-            Automator.RebalanceSwapParams(0, 0, 0, 0)
-        );
+        automator.inefficientRebalance(_ticksMintShorted, _ticksBurnShorted, Automator.RebalanceSwapParams(0, 0, 0, 0));
     }
 }

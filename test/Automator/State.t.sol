@@ -59,19 +59,19 @@ contract TestAutomatorState is Fixture {
         uint256 _a0above = WETH.balanceOf(address(automator)) / 3;
         uint256 _a1above = USDCE.balanceOf(address(automator)) / 3;
 
-        Automator.RebalanceMintParams[] memory _mintParams = new Automator.RebalanceMintParams[](2);
-        _mintParams[0] = Automator.RebalanceMintParams({
+        Automator.RebalanceTickInfo[] memory _ticksMint = new Automator.RebalanceTickInfo[](2);
+        _ticksMint[0] = Automator.RebalanceTickInfo({
             tick: _oor_belowLower,
             liquidity: _toSingleTickLiquidity(_oor_belowLower, _a0below, _a1below)
         });
-        _mintParams[1] = Automator.RebalanceMintParams({
+        _ticksMint[1] = Automator.RebalanceTickInfo({
             tick: _oor_aboveLower,
             liquidity: _toSingleTickLiquidity(_oor_aboveLower, _a0above, _a1above)
         });
 
         automator.rebalance(
-            _mintParams,
-            new Automator.RebalanceBurnParams[](0),
+            _ticksMint,
+            new Automator.RebalanceTickInfo[](0),
             Automator.RebalanceSwapParams(0, 0, 0, 0)
         );
 
@@ -196,20 +196,20 @@ contract TestAutomatorState is Fixture {
         uint256 _a0above = WETH.balanceOf(address(automator)) / 3;
         uint256 _a1above = USDCE.balanceOf(address(automator)) / 3;
 
-        Automator.RebalanceMintParams[] memory _mintParams = new Automator.RebalanceMintParams[](2);
-        _mintParams[0] = Automator.RebalanceMintParams({
+        Automator.RebalanceTickInfo[] memory _ticksMint = new Automator.RebalanceTickInfo[](2);
+        _ticksMint[0] = Automator.RebalanceTickInfo({
             tick: _oor_belowLower,
             liquidity: _toSingleTickLiquidity(_oor_belowLower, _a0below, _a1below)
         });
 
-        _mintParams[1] = Automator.RebalanceMintParams({
+        _ticksMint[1] = Automator.RebalanceTickInfo({
             tick: _oor_aboveLower,
             liquidity: _toSingleTickLiquidity(_oor_aboveLower, _a0above, _a1above)
         });
 
         automator.rebalance(
-            _mintParams,
-            new Automator.RebalanceBurnParams[](0),
+            _ticksMint,
+            new Automator.RebalanceTickInfo[](0),
             Automator.RebalanceSwapParams(0, 0, 0, 0)
         );
 
@@ -320,8 +320,8 @@ contract TestAutomatorState is Fixture {
         (int24 _oor_belowLower, ) = _outOfRangeBelow(1);
         (int24 _oor_aboveLower, ) = _outOfRangeAbove(1);
 
-        Automator.RebalanceMintParams[] memory _mintParams = new Automator.RebalanceMintParams[](2);
-        _mintParams[0] = Automator.RebalanceMintParams({
+        Automator.RebalanceTickInfo[] memory _ticksMint = new Automator.RebalanceTickInfo[](2);
+        _ticksMint[0] = Automator.RebalanceTickInfo({
             tick: _oor_belowLower,
             liquidity: _toSingleTickLiquidity(
                 _oor_belowLower,
@@ -330,7 +330,7 @@ contract TestAutomatorState is Fixture {
             )
         });
 
-        _mintParams[1] = Automator.RebalanceMintParams({
+        _ticksMint[1] = Automator.RebalanceTickInfo({
             tick: _oor_aboveLower,
             liquidity: _toSingleTickLiquidity(
                 _oor_aboveLower,
@@ -340,8 +340,8 @@ contract TestAutomatorState is Fixture {
         });
 
         automator.rebalance(
-            _mintParams,
-            new Automator.RebalanceBurnParams[](0),
+            _ticksMint,
+            new Automator.RebalanceTickInfo[](0),
             Automator.RebalanceSwapParams(0, 0, 0, 0)
         );
 
@@ -373,20 +373,20 @@ contract TestAutomatorState is Fixture {
         uint256 _a0above = WETH.balanceOf(address(automator)) / 3;
         uint256 _a1above = USDCE.balanceOf(address(automator)) / 3;
 
-        Automator.RebalanceMintParams[] memory _mintParams = new Automator.RebalanceMintParams[](2);
-        _mintParams[0] = Automator.RebalanceMintParams({
+        Automator.RebalanceTickInfo[] memory _ticksMint = new Automator.RebalanceTickInfo[](2);
+        _ticksMint[0] = Automator.RebalanceTickInfo({
             tick: _oor_belowLower,
             liquidity: _toSingleTickLiquidity(_oor_belowLower, _a0below, _a1below)
         });
 
-        _mintParams[1] = Automator.RebalanceMintParams({
+        _ticksMint[1] = Automator.RebalanceTickInfo({
             tick: _oor_aboveLower,
             liquidity: _toSingleTickLiquidity(_oor_aboveLower, _a0above, _a1above)
         });
 
         automator.rebalance(
-            _mintParams,
-            new Automator.RebalanceBurnParams[](0),
+            _ticksMint,
+            new Automator.RebalanceTickInfo[](0),
             Automator.RebalanceSwapParams(0, 0, 0, 0)
         );
 
@@ -421,20 +421,20 @@ contract TestAutomatorState is Fixture {
         uint256 _a0above = WETH.balanceOf(address(automator)) / 3;
         uint256 _a1above = USDCE.balanceOf(address(automator)) / 3;
 
-        Automator.RebalanceMintParams[] memory _mintParams = new Automator.RebalanceMintParams[](2);
-        _mintParams[0] = Automator.RebalanceMintParams({
+        Automator.RebalanceTickInfo[] memory _ticksMint = new Automator.RebalanceTickInfo[](2);
+        _ticksMint[0] = Automator.RebalanceTickInfo({
             tick: _oor_belowLower,
             liquidity: _toSingleTickLiquidity(_oor_belowLower, _a0below, _a1below)
         });
 
-        _mintParams[1] = Automator.RebalanceMintParams({
+        _ticksMint[1] = Automator.RebalanceTickInfo({
             tick: _oor_aboveLower,
             liquidity: _toSingleTickLiquidity(_oor_aboveLower, _a0above, _a1above)
         });
 
         automator.rebalance(
-            _mintParams,
-            new Automator.RebalanceBurnParams[](0),
+            _ticksMint,
+            new Automator.RebalanceTickInfo[](0),
             Automator.RebalanceSwapParams(0, 0, 0, 0)
         );
 

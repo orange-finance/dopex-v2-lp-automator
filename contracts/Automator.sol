@@ -55,12 +55,7 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
         uint256 maxAssetsUseForSwap;
     }
 
-    struct RebalanceMintParams {
-        int24 tick;
-        uint128 liquidity;
-    }
-
-    struct RebalanceBurnParams {
+    struct RebalanceTickInfo {
         int24 tick;
         uint128 liquidity;
     }
@@ -416,24 +411,24 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
     }
 
     function rebalance(
-        RebalanceMintParams[] calldata mintParams,
-        RebalanceBurnParams[] calldata burnParams,
+        RebalanceTickInfo[] calldata ticksMint,
+        RebalanceTickInfo[] calldata ticksBurn,
         RebalanceSwapParams calldata swapParams
     ) external onlyRole(STRATEGIST_ROLE) {
         _swapBeforeRebalance(swapParams);
 
-        uint256 _mintLength = mintParams.length;
-        uint256 _burnLength = burnParams.length;
+        uint256 _mintLength = ticksMint.length;
+        uint256 _burnLength = ticksBurn.length;
 
         bytes[] memory _mintCalldataBatch = new bytes[](_mintLength);
         int24 _lt;
         int24 _ut;
         uint256 _posId;
         for (uint256 i = 0; i < _mintLength; i++) {
-            _lt = mintParams[i].tick;
+            _lt = ticksMint[i].tick;
             _ut = _lt + poolTickSpacing;
 
-            _mintCalldataBatch[i] = _createMintCalldata(_lt, _ut, mintParams[i].liquidity);
+            _mintCalldataBatch[i] = _createMintCalldata(_lt, _ut, ticksMint[i].liquidity);
 
             // If the position is not active, push it to the active ticks
             _posId = uint256(keccak256(abi.encode(handler, pool, _lt, _ut)));
@@ -443,11 +438,11 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
         bytes[] memory _burnCalldataBatch = new bytes[](_burnLength);
         uint256 _shares;
         for (uint256 i = 0; i < _burnLength; i++) {
-            _lt = burnParams[i].tick;
+            _lt = ticksBurn[i].tick;
             _ut = _lt + poolTickSpacing;
 
             _posId = uint256(keccak256(abi.encode(handler, pool, _lt, _ut)));
-            _shares = handler.convertToShares(burnParams[i].liquidity, _posId);
+            _shares = handler.convertToShares(ticksBurn[i].liquidity, _posId);
             _burnCalldataBatch[i] = _createBurnCalldata(_lt, _ut, _shares.toUint128());
 
             // if all shares will be burned, pop the active tick
@@ -526,14 +521,14 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
     // TODO: delete
     /// @dev this is a testing only function to make debug easier
     function inefficientRebalance(
-        RebalanceMintParams[] calldata mintParams,
-        RebalanceBurnParams[] calldata burnParams,
+        RebalanceTickInfo[] calldata ticksMint,
+        RebalanceTickInfo[] calldata ticksBurn,
         RebalanceSwapParams calldata swapParams
     ) external onlyRole(STRATEGIST_ROLE) {
         _swapBeforeRebalance(swapParams);
 
-        uint256 _mintLength = mintParams.length;
-        uint256 _burnLength = burnParams.length;
+        uint256 _mintLength = ticksMint.length;
+        uint256 _burnLength = ticksBurn.length;
 
         int24 _lt;
         int24 _ut;
@@ -541,26 +536,26 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
         uint256 _shares;
 
         for (uint256 i = 0; i < _burnLength; i++) {
-            _lt = burnParams[i].tick;
+            _lt = ticksBurn[i].tick;
             _ut = _lt + poolTickSpacing;
 
             // if all shares will be burned, pop the active tick
             _posId = uint256(keccak256(abi.encode(handler, pool, _lt, _ut)));
-            _shares = handler.convertToShares(burnParams[i].liquidity, _posId);
+            _shares = handler.convertToShares(ticksBurn[i].liquidity, _posId);
             if (handler.balanceOf(address(this), _posId) - _shares == 0) activeTicks.remove(uint256(uint24(_lt)));
 
             _burnPosition(_lt, _ut, _shares.toUint128());
         }
 
         for (uint256 i = 0; i < _mintLength; i++) {
-            _lt = mintParams[i].tick;
+            _lt = ticksMint[i].tick;
             _ut = _lt + poolTickSpacing;
 
             // If the position is not active, push it to the active ticks
             _posId = uint256(keccak256(abi.encode(handler, pool, _lt, _ut)));
             if (handler.balanceOf(address(this), _posId) == 0) activeTicks.add(uint256(uint24(_lt)));
 
-            _mintPosition(_lt, _ut, mintParams[i].liquidity);
+            _mintPosition(_lt, _ut, ticksMint[i].liquidity);
         }
     }
 
