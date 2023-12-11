@@ -3,10 +3,12 @@
 pragma solidity 0.8.19;
 
 import "./Fixture.sol";
+import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {UniswapV3PoolLib} from "../../contracts/lib/UniswapV3PoolLib.sol";
 
 contract TestAutomatorRebalance is Fixture {
     using UniswapV3PoolLib for IUniswapV3Pool;
+    using FixedPointMathLib for uint256;
 
     function setUp() public override {
         vm.createSelectFork("arb", 157066571);
@@ -31,12 +33,20 @@ contract TestAutomatorRebalance is Fixture {
         (int24 _oor_belowLower, ) = _outOfRangeBelow(1);
         (int24 _oor_aboveLower, ) = _outOfRangeAbove(1);
 
+        /*///////////////////////////////////////////////////////////////////////////////////
+                                    case: mint positions
+        ///////////////////////////////////////////////////////////////////////////////////*/
+
         Automator.RebalanceTickInfo[] memory _ticksMint = new Automator.RebalanceTickInfo[](2);
 
         // token0: WETH, token1: USDCE
         _ticksMint[0] = Automator.RebalanceTickInfo({
             tick: _oor_belowLower,
-            liquidity: _toSingleTickLiquidity(_oor_belowLower, 0, _balanceBasedUsdce / 2)
+            liquidity: _toSingleTickLiquidity(
+                _oor_belowLower,
+                0,
+                (_balanceBasedUsdce / 2) - (_balanceBasedUsdce / 2).mulDivDown(pool.fee(), 1e6 - pool.fee())
+            )
         });
 
         (uint256 _a0, uint256 _a1) = LiquidityAmounts.getAmountsForLiquidity(
@@ -51,7 +61,11 @@ contract TestAutomatorRebalance is Fixture {
 
         _ticksMint[1] = Automator.RebalanceTickInfo({
             tick: _oor_aboveLower,
-            liquidity: _toSingleTickLiquidity(_oor_aboveLower, _balanceBasedWeth / 2, 0)
+            liquidity: _toSingleTickLiquidity(
+                _oor_aboveLower,
+                (_balanceBasedWeth / 2) - (_balanceBasedWeth / 2).mulDivDown(pool.fee(), 1e6 - pool.fee()),
+                0
+            )
         });
 
         (_a0, _a1) = LiquidityAmounts.getAmountsForLiquidity(
@@ -85,5 +99,7 @@ contract TestAutomatorRebalance is Fixture {
             _ticksBurn,
             automator.calculateRebalanceSwapParamsInRebalance(_mintPositions, new UniswapV3PoolLib.Position[](0))
         );
+
+        assertApproxEqRel(automator.totalAssets(), _balanceBasedWeth, 0.0005e18); // max 0.05% diff (swap fee)
     }
 }
