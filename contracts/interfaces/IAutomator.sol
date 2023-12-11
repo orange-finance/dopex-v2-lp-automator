@@ -19,7 +19,6 @@ import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 
 import {IUniswapV3SingleTickLiquidityHandler} from "../vendor/dopexV2/IUniswapV3SingleTickLiquidityHandler.sol";
 import {UniswapV3SingleTickLiquidityLib} from "../lib/UniswapV3SingleTickLiquidityLib.sol";
-import {UniswapV3PoolLib} from "../lib/UniswapV3PoolLib.sol";
 import {IDopexV2PositionManager} from "../vendor/dopexV2/IDopexV2PositionManager.sol";
 
 interface IAutomator {
@@ -75,8 +74,8 @@ interface IAutomator {
     function getTickFreeLiquidity(int24 tick) external view returns (uint128);
 
     function calculateRebalanceSwapParamsInRebalance(
-        UniswapV3PoolLib.Position[] calldata mintPositions,
-        UniswapV3PoolLib.Position[] calldata burnPositions
+        RebalanceTickInfo[] memory ticksMint,
+        RebalanceTickInfo[] memory ticksBurn
     ) external view returns (RebalanceSwapParams memory);
 
     function deposit(uint256 assets) external returns (uint256 shares);
@@ -88,11 +87,10 @@ interface IAutomator {
 
     function checkMintValidity(int24 lowerTick, int24 upperTick) external view returns (bool);
 
+    // Add any other public or external functions from the Automator contract here
     function rebalance(
-        RebalanceMintParams[] calldata mintParams,
-        RebalanceBurnParams[] calldata burnParams,
+        RebalanceTickInfo[] calldata ticksMint,
+        RebalanceTickInfo[] calldata ticksBurn,
         RebalanceSwapParams calldata swapParams
     ) external;
-
-    // Add any other public or external functions from the Automator contract here
 }

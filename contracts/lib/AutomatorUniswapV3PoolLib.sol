@@ -5,7 +5,7 @@ pragma solidity 0.8.19;
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {LiquidityAmounts} from "../vendor/uniswapV3/LiquidityAmounts.sol";
 import {TickMath} from "../vendor/uniswapV3/TickMath.sol";
-import {Automator} from "../Automator.sol";
+import {IAutomator} from "../interfaces/IAutomator.sol";
 
 library AutomatorUniswapV3PoolLib {
     error BurnLiquidityExceedsMint();
@@ -16,7 +16,7 @@ library AutomatorUniswapV3PoolLib {
 
     function estimateTotalTokensFromPositions(
         IUniswapV3Pool pool,
-        Automator.RebalanceTickInfo[] memory positions
+        IAutomator.RebalanceTickInfo[] memory positions
     ) internal view returns (uint256 totalAmount0, uint256 totalAmount1) {
         uint256 _a0;
         uint256 _a1;
