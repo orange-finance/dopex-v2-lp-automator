@@ -33,6 +33,20 @@ contract TestAutomatorRebalance is Fixture {
                                     case: mint positions
         ///////////////////////////////////////////////////////////////////////////////////*/
 
+        _mint(_balanceBasedUsdce, _balanceBasedWeth, _oor_belowLower, _oor_aboveLower);
+
+        assertApproxEqRel(automator.totalAssets(), _balanceBasedWeth, 0.0005e18); // max 0.05% diff (swap fee)
+
+        /*///////////////////////////////////////////////////////////////////////////////////
+                                    case: burn & mint positions
+        ///////////////////////////////////////////////////////////////////////////////////*/
+
+        _burnAndMint(_balanceBasedUsdce, _oor_belowLower, _oor_aboveLower);
+
+        assertApproxEqRel(automator.totalAssets(), _balanceBasedWeth, 0.0005e18); // max 0.05% diff (swap fee)
+    }
+
+    function _mint(uint256 _amountUsdce, uint256 _amountWeth, int24 _oor_belowLower, int24 _oor_aboveLower) public {
         IAutomator.RebalanceTickInfo[] memory _ticksMint = new IAutomator.RebalanceTickInfo[](2);
 
         // token0: WETH, token1: USDCE
@@ -41,7 +55,7 @@ contract TestAutomatorRebalance is Fixture {
             liquidity: _toSingleTickLiquidity(
                 _oor_belowLower,
                 0,
-                (_balanceBasedUsdce / 2) - (_balanceBasedUsdce / 2).mulDivDown(pool.fee(), 1e6 - pool.fee())
+                (_amountUsdce / 2) - (_amountUsdce / 2).mulDivDown(pool.fee(), 1e6 - pool.fee())
             )
         });
 
@@ -59,7 +73,7 @@ contract TestAutomatorRebalance is Fixture {
             tick: _oor_aboveLower,
             liquidity: _toSingleTickLiquidity(
                 _oor_aboveLower,
-                (_balanceBasedWeth / 2) - (_balanceBasedWeth / 2).mulDivDown(pool.fee(), 1e6 - pool.fee()),
+                (_amountWeth / 2) - (_amountWeth / 2).mulDivDown(pool.fee(), 1e6 - pool.fee()),
                 0
             )
         });
@@ -77,12 +91,38 @@ contract TestAutomatorRebalance is Fixture {
 
         IAutomator.RebalanceTickInfo[] memory _ticksBurn = new IAutomator.RebalanceTickInfo[](0);
 
-        automator.inefficientRebalance(
+        automator.rebalance(
             _ticksMint,
             _ticksBurn,
             automator.calculateRebalanceSwapParamsInRebalance(_ticksMint, _ticksBurn)
         );
+    }
 
-        assertApproxEqRel(automator.totalAssets(), _balanceBasedWeth, 0.0005e18); // max 0.05% diff (swap fee)
+    function _burnAndMint(uint256 _amountUsdce, int24 _oor_belowLower, int24 _oor_aboveLower) public {
+        IAutomator.RebalanceTickInfo[] memory _ticksMint = new IAutomator.RebalanceTickInfo[](1);
+        _ticksMint[0] = IAutomator.RebalanceTickInfo({
+            tick: _oor_belowLower,
+            liquidity: _toSingleTickLiquidity(
+                _oor_belowLower,
+                0,
+                (_amountUsdce / 3) - (_amountUsdce / 3).mulDivDown(pool.fee(), 1e6 - pool.fee())
+            )
+        });
+
+        emit log_named_uint("liquidity to mint", _ticksMint[0].liquidity);
+
+        IAutomator.RebalanceTickInfo[] memory _ticksBurn = new IAutomator.RebalanceTickInfo[](1);
+        _ticksBurn[0] = IAutomator.RebalanceTickInfo({
+            tick: _oor_aboveLower,
+            liquidity: automator.getTickFreeLiquidity(_oor_belowLower)
+        });
+
+        emit log_named_uint("liquidity to burn", _ticksBurn[0].liquidity);
+
+        automator.rebalance(
+            _ticksMint,
+            _ticksBurn,
+            automator.calculateRebalanceSwapParamsInRebalance(_ticksMint, _ticksBurn)
+        );
     }
 }
