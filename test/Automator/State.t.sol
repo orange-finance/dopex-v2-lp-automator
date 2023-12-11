@@ -3,6 +3,7 @@
 pragma solidity 0.8.19;
 
 import "./Fixture.sol";
+import {IAutomator} from "../../contracts/interfaces/IAutomator.sol";
 
 contract TestAutomatorState is Fixture {
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandler;
@@ -59,20 +60,20 @@ contract TestAutomatorState is Fixture {
         uint256 _a0above = WETH.balanceOf(address(automator)) / 3;
         uint256 _a1above = USDCE.balanceOf(address(automator)) / 3;
 
-        Automator.RebalanceTickInfo[] memory _ticksMint = new Automator.RebalanceTickInfo[](2);
-        _ticksMint[0] = Automator.RebalanceTickInfo({
+        IAutomator.RebalanceTickInfo[] memory _ticksMint = new IAutomator.RebalanceTickInfo[](2);
+        _ticksMint[0] = IAutomator.RebalanceTickInfo({
             tick: _oor_belowLower,
             liquidity: _toSingleTickLiquidity(_oor_belowLower, _a0below, _a1below)
         });
-        _ticksMint[1] = Automator.RebalanceTickInfo({
+        _ticksMint[1] = IAutomator.RebalanceTickInfo({
             tick: _oor_aboveLower,
             liquidity: _toSingleTickLiquidity(_oor_aboveLower, _a0above, _a1above)
         });
 
         automator.rebalance(
             _ticksMint,
-            new Automator.RebalanceTickInfo[](0),
-            Automator.RebalanceSwapParams(0, 0, 0, 0)
+            new IAutomator.RebalanceTickInfo[](0),
+            IAutomator.RebalanceSwapParams(0, 0, 0, 0)
         );
 
         uint256 _assetsInAutomator = WETH.balanceOf(address(automator)) +
@@ -196,21 +197,21 @@ contract TestAutomatorState is Fixture {
         uint256 _a0above = WETH.balanceOf(address(automator)) / 3;
         uint256 _a1above = USDCE.balanceOf(address(automator)) / 3;
 
-        Automator.RebalanceTickInfo[] memory _ticksMint = new Automator.RebalanceTickInfo[](2);
-        _ticksMint[0] = Automator.RebalanceTickInfo({
+        IAutomator.RebalanceTickInfo[] memory _ticksMint = new IAutomator.RebalanceTickInfo[](2);
+        _ticksMint[0] = IAutomator.RebalanceTickInfo({
             tick: _oor_belowLower,
             liquidity: _toSingleTickLiquidity(_oor_belowLower, _a0below, _a1below)
         });
 
-        _ticksMint[1] = Automator.RebalanceTickInfo({
+        _ticksMint[1] = IAutomator.RebalanceTickInfo({
             tick: _oor_aboveLower,
             liquidity: _toSingleTickLiquidity(_oor_aboveLower, _a0above, _a1above)
         });
 
         automator.rebalance(
             _ticksMint,
-            new Automator.RebalanceTickInfo[](0),
-            Automator.RebalanceSwapParams(0, 0, 0, 0)
+            new IAutomator.RebalanceTickInfo[](0),
+            IAutomator.RebalanceSwapParams(0, 0, 0, 0)
         );
 
         assertEq(
@@ -320,8 +321,8 @@ contract TestAutomatorState is Fixture {
         (int24 _oor_belowLower, ) = _outOfRangeBelow(1);
         (int24 _oor_aboveLower, ) = _outOfRangeAbove(1);
 
-        Automator.RebalanceTickInfo[] memory _ticksMint = new Automator.RebalanceTickInfo[](2);
-        _ticksMint[0] = Automator.RebalanceTickInfo({
+        IAutomator.RebalanceTickInfo[] memory _ticksMint = new IAutomator.RebalanceTickInfo[](2);
+        _ticksMint[0] = IAutomator.RebalanceTickInfo({
             tick: _oor_belowLower,
             liquidity: _toSingleTickLiquidity(
                 _oor_belowLower,
@@ -330,7 +331,7 @@ contract TestAutomatorState is Fixture {
             )
         });
 
-        _ticksMint[1] = Automator.RebalanceTickInfo({
+        _ticksMint[1] = IAutomator.RebalanceTickInfo({
             tick: _oor_aboveLower,
             liquidity: _toSingleTickLiquidity(
                 _oor_aboveLower,
@@ -341,8 +342,8 @@ contract TestAutomatorState is Fixture {
 
         automator.rebalance(
             _ticksMint,
-            new Automator.RebalanceTickInfo[](0),
-            Automator.RebalanceSwapParams(0, 0, 0, 0)
+            new IAutomator.RebalanceTickInfo[](0),
+            IAutomator.RebalanceSwapParams(0, 0, 0, 0)
         );
 
         assertApproxEqAbs(
@@ -373,21 +374,21 @@ contract TestAutomatorState is Fixture {
         uint256 _a0above = WETH.balanceOf(address(automator)) / 3;
         uint256 _a1above = USDCE.balanceOf(address(automator)) / 3;
 
-        Automator.RebalanceTickInfo[] memory _ticksMint = new Automator.RebalanceTickInfo[](2);
-        _ticksMint[0] = Automator.RebalanceTickInfo({
+        IAutomator.RebalanceTickInfo[] memory _ticksMint = new IAutomator.RebalanceTickInfo[](2);
+        _ticksMint[0] = IAutomator.RebalanceTickInfo({
             tick: _oor_belowLower,
             liquidity: _toSingleTickLiquidity(_oor_belowLower, _a0below, _a1below)
         });
 
-        _ticksMint[1] = Automator.RebalanceTickInfo({
+        _ticksMint[1] = IAutomator.RebalanceTickInfo({
             tick: _oor_aboveLower,
             liquidity: _toSingleTickLiquidity(_oor_aboveLower, _a0above, _a1above)
         });
 
         automator.rebalance(
             _ticksMint,
-            new Automator.RebalanceTickInfo[](0),
-            Automator.RebalanceSwapParams(0, 0, 0, 0)
+            new IAutomator.RebalanceTickInfo[](0),
+            IAutomator.RebalanceSwapParams(0, 0, 0, 0)
         );
 
         uint256 _belowId = uniV3Handler.tokenId(address(pool), _oor_belowLower, _oor_belowLower + pool.tickSpacing());
@@ -421,21 +422,21 @@ contract TestAutomatorState is Fixture {
         uint256 _a0above = WETH.balanceOf(address(automator)) / 3;
         uint256 _a1above = USDCE.balanceOf(address(automator)) / 3;
 
-        Automator.RebalanceTickInfo[] memory _ticksMint = new Automator.RebalanceTickInfo[](2);
-        _ticksMint[0] = Automator.RebalanceTickInfo({
+        IAutomator.RebalanceTickInfo[] memory _ticksMint = new IAutomator.RebalanceTickInfo[](2);
+        _ticksMint[0] = IAutomator.RebalanceTickInfo({
             tick: _oor_belowLower,
             liquidity: _toSingleTickLiquidity(_oor_belowLower, _a0below, _a1below)
         });
 
-        _ticksMint[1] = Automator.RebalanceTickInfo({
+        _ticksMint[1] = IAutomator.RebalanceTickInfo({
             tick: _oor_aboveLower,
             liquidity: _toSingleTickLiquidity(_oor_aboveLower, _a0above, _a1above)
         });
 
         automator.rebalance(
             _ticksMint,
-            new Automator.RebalanceTickInfo[](0),
-            Automator.RebalanceSwapParams(0, 0, 0, 0)
+            new IAutomator.RebalanceTickInfo[](0),
+            IAutomator.RebalanceSwapParams(0, 0, 0, 0)
         );
 
         uint256 _belowId = uniV3Handler.tokenId(address(pool), _oor_belowLower, _oor_belowLower + pool.tickSpacing());

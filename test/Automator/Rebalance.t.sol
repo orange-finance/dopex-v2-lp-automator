@@ -6,6 +6,7 @@ import "./Fixture.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {Automator} from "../../contracts/Automator.sol";
 import {AutomatorUniswapV3PoolLib} from "../../contracts/lib/AutomatorUniswapV3PoolLib.sol";
+import {IAutomator} from "../../contracts/interfaces/IAutomator.sol";
 
 contract TestAutomatorRebalance is Fixture {
     using AutomatorUniswapV3PoolLib for IUniswapV3Pool;
@@ -46,10 +47,10 @@ contract TestAutomatorRebalance is Fixture {
     }
 
     function _mint(uint256 _amountUsdce, uint256 _amountWeth, int24 _oor_belowLower, int24 _oor_aboveLower) public {
-        Automator.RebalanceTickInfo[] memory _ticksMint = new Automator.RebalanceTickInfo[](2);
+        IAutomator.RebalanceTickInfo[] memory _ticksMint = new IAutomator.RebalanceTickInfo[](2);
 
         // token0: WETH, token1: USDCE
-        _ticksMint[0] = Automator.RebalanceTickInfo({
+        _ticksMint[0] = IAutomator.RebalanceTickInfo({
             tick: _oor_belowLower,
             liquidity: _toSingleTickLiquidity(
                 _oor_belowLower,
@@ -68,7 +69,7 @@ contract TestAutomatorRebalance is Fixture {
         emit log_named_uint("a0 below", _a0);
         emit log_named_uint("a1 below", _a1);
 
-        _ticksMint[1] = Automator.RebalanceTickInfo({
+        _ticksMint[1] = IAutomator.RebalanceTickInfo({
             tick: _oor_aboveLower,
             liquidity: _toSingleTickLiquidity(
                 _oor_aboveLower,
@@ -88,7 +89,7 @@ contract TestAutomatorRebalance is Fixture {
         emit log_named_uint("a1 above", _a1);
         emit log_named_uint("a0 above in usdce", _getQuote(address(WETH), address(USDCE), uint128(_a0)));
 
-        Automator.RebalanceTickInfo[] memory _ticksBurn = new Automator.RebalanceTickInfo[](0);
+        IAutomator.RebalanceTickInfo[] memory _ticksBurn = new IAutomator.RebalanceTickInfo[](0);
 
         automator.rebalance(
             _ticksMint,
@@ -98,8 +99,8 @@ contract TestAutomatorRebalance is Fixture {
     }
 
     function _burnAndMint(uint256 _amountUsdce, int24 _oor_belowLower, int24 _oor_aboveLower) public {
-        Automator.RebalanceTickInfo[] memory _ticksMint = new Automator.RebalanceTickInfo[](1);
-        _ticksMint[0] = Automator.RebalanceTickInfo({
+        IAutomator.RebalanceTickInfo[] memory _ticksMint = new IAutomator.RebalanceTickInfo[](1);
+        _ticksMint[0] = IAutomator.RebalanceTickInfo({
             tick: _oor_belowLower,
             liquidity: _toSingleTickLiquidity(
                 _oor_belowLower,
@@ -110,8 +111,8 @@ contract TestAutomatorRebalance is Fixture {
 
         emit log_named_uint("liquidity to mint", _ticksMint[0].liquidity);
 
-        Automator.RebalanceTickInfo[] memory _ticksBurn = new Automator.RebalanceTickInfo[](1);
-        _ticksBurn[0] = Automator.RebalanceTickInfo({
+        IAutomator.RebalanceTickInfo[] memory _ticksBurn = new IAutomator.RebalanceTickInfo[](1);
+        _ticksBurn[0] = IAutomator.RebalanceTickInfo({
             tick: _oor_aboveLower,
             liquidity: automator.getTickFreeLiquidity(_oor_belowLower)
         });

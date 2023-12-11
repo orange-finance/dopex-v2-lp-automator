@@ -2,6 +2,7 @@
 
 pragma solidity 0.8.19;
 
+import {IAutomator} from "./interfaces/IAutomator.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import {LiquidityAmounts} from "./vendor/uniswapV3/LiquidityAmounts.sol";
@@ -33,7 +34,7 @@ interface IERC20Decimals {
     function decimals() external view returns (uint8);
 }
 
-contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
+contract Automator is IAutomator, ERC20, AccessControlEnumerable, IERC1155Receiver {
     using FixedPointMathLib for uint256;
     using FullMath for uint256;
     using SafeERC20 for IERC20;
@@ -42,23 +43,6 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
     using TickMath for int24;
     using AutomatorUniswapV3PoolLib for IUniswapV3Pool;
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandler;
-
-    struct LockedDopexShares {
-        uint256 tokenId;
-        uint256 shares;
-    }
-
-    struct RebalanceSwapParams {
-        uint256 assetsShortage;
-        uint256 counterAssetsShortage;
-        uint256 maxCounterAssetsUseForSwap;
-        uint256 maxAssetsUseForSwap;
-    }
-
-    struct RebalanceTickInfo {
-        int24 tick;
-        uint128 liquidity;
-    }
 
     bytes32 public constant STRATEGIST_ROLE = keccak256("STRATEGIST_ROLE");
 
@@ -274,6 +258,10 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
                 maxCounterAssetsUseForSwap: _maxCounterAssetsUseForSwap,
                 maxAssetsUseForSwap: _maxAssetsUseForSwap
             });
+    }
+
+    function getActiveTicks() external view returns (uint256[] memory) {
+        return activeTicks.values();
     }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
