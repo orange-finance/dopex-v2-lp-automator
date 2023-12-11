@@ -31,10 +31,10 @@ contract TestAutomatorRebalance is Fixture {
         (int24 _oor_belowLower, ) = _outOfRangeBelow(1);
         (int24 _oor_aboveLower, ) = _outOfRangeAbove(1);
 
-        Automator.RebalanceMintParams[] memory _mintParams = new Automator.RebalanceMintParams[](2);
+        Automator.RebalanceTickInfo[] memory _ticksMint = new Automator.RebalanceTickInfo[](2);
 
         // token0: WETH, token1: USDCE
-        _mintParams[0] = Automator.RebalanceMintParams({
+        _ticksMint[0] = Automator.RebalanceTickInfo({
             tick: _oor_belowLower,
             liquidity: _toSingleTickLiquidity(_oor_belowLower, 0, _balanceBasedUsdce / 2)
         });
@@ -43,13 +43,13 @@ contract TestAutomatorRebalance is Fixture {
             TickMath.getSqrtRatioAtTick(pool.currentTick()),
             TickMath.getSqrtRatioAtTick(_oor_belowLower),
             TickMath.getSqrtRatioAtTick(_oor_belowLower + pool.tickSpacing()),
-            _mintParams[0].liquidity
+            _ticksMint[0].liquidity
         );
 
         emit log_named_uint("a0 below", _a0);
         emit log_named_uint("a1 below", _a1);
 
-        _mintParams[1] = Automator.RebalanceMintParams({
+        _ticksMint[1] = Automator.RebalanceTickInfo({
             tick: _oor_aboveLower,
             liquidity: _toSingleTickLiquidity(_oor_aboveLower, _balanceBasedWeth / 2, 0)
         });
@@ -58,31 +58,31 @@ contract TestAutomatorRebalance is Fixture {
             TickMath.getSqrtRatioAtTick(pool.currentTick()),
             TickMath.getSqrtRatioAtTick(_oor_aboveLower),
             TickMath.getSqrtRatioAtTick(_oor_aboveLower + pool.tickSpacing()),
-            _mintParams[1].liquidity
+            _ticksMint[1].liquidity
         );
 
         emit log_named_uint("a0 above", _a0);
         emit log_named_uint("a1 above", _a1);
         emit log_named_uint("a0 above in usdce", _getQuote(address(WETH), address(USDCE), uint128(_a0)));
 
-        Automator.RebalanceBurnParams[] memory _burnParams = new Automator.RebalanceBurnParams[](0);
+        Automator.RebalanceTickInfo[] memory _ticksBurn = new Automator.RebalanceTickInfo[](0);
 
         UniswapV3PoolLib.Position[] memory _mintPositions = new UniswapV3PoolLib.Position[](2);
         _mintPositions[0] = UniswapV3PoolLib.Position({
-            tickLower: _mintParams[0].tick,
-            tickUpper: _mintParams[0].tick + pool.tickSpacing(),
-            liquidity: _mintParams[0].liquidity
+            tickLower: _ticksMint[0].tick,
+            tickUpper: _ticksMint[0].tick + pool.tickSpacing(),
+            liquidity: _ticksMint[0].liquidity
         });
 
         _mintPositions[1] = UniswapV3PoolLib.Position({
-            tickLower: _mintParams[1].tick,
-            tickUpper: _mintParams[1].tick + pool.tickSpacing(),
-            liquidity: _mintParams[1].liquidity
+            tickLower: _ticksMint[1].tick,
+            tickUpper: _ticksMint[1].tick + pool.tickSpacing(),
+            liquidity: _ticksMint[1].liquidity
         });
 
         automator.inefficientRebalance(
-            _mintParams,
-            _burnParams,
+            _ticksMint,
+            _ticksBurn,
             automator.calculateRebalanceSwapParamsInRebalance(_mintPositions, new UniswapV3PoolLib.Position[](0))
         );
     }
