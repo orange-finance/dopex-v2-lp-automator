@@ -62,7 +62,7 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
 
     struct RebalanceBurnParams {
         int24 tick;
-        uint128 shares; //TODO share to liquidity.
+        uint128 liquidity;
     }
 
     bytes32 public constant STRATEGIST_ROLE = keccak256("STRATEGIST_ROLE");
@@ -445,16 +445,17 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
         }
 
         bytes[] memory _burnCalldataBatch = new bytes[](_burnLength);
+        uint256 _shares;
         for (uint256 i = 0; i < _burnLength; i++) {
             _lt = burnParams[i].tick;
             _ut = _lt + poolTickSpacing;
 
-            _burnCalldataBatch[i] = _createBurnCalldata(_lt, _ut, burnParams[i].shares);
+            _posId = uint256(keccak256(abi.encode(handler, pool, _lt, _ut)));
+            _shares = handler.convertToShares(burnParams[i].liquidity, _posId);
+            _burnCalldataBatch[i] = _createBurnCalldata(_lt, _ut, _shares.toUint128());
 
             // if all shares will be burned, pop the active tick
-            _posId = uint256(keccak256(abi.encode(handler, pool, _lt, _ut)));
-            if (handler.balanceOf(address(this), _posId) - burnParams[i].shares == 0)
-                activeTicks.remove(uint256(uint24(_lt)));
+            if (handler.balanceOf(address(this), _posId) - _shares == 0) activeTicks.remove(uint256(uint24(_lt)));
         }
 
         // NOTE: burn should be called before mint to receive the assets from the burned position
@@ -541,6 +542,7 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
         int24 _lt;
         int24 _ut;
         uint256 _posId;
+        uint256 _shares;
 
         for (uint256 i = 0; i < _burnLength; i++) {
             _lt = burnParams[i].tick;
@@ -548,10 +550,10 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
 
             // if all shares will be burned, pop the active tick
             _posId = uint256(keccak256(abi.encode(handler, pool, _lt, _ut)));
-            if (handler.balanceOf(address(this), _posId) - burnParams[i].shares == 0)
-                activeTicks.remove(uint256(uint24(_lt)));
+            _shares = handler.convertToShares(burnParams[i].liquidity, _posId);
+            if (handler.balanceOf(address(this), _posId) - _shares == 0) activeTicks.remove(uint256(uint24(_lt)));
 
-            _burnPosition(_lt, _ut, burnParams[i].shares);
+            _burnPosition(_lt, _ut, _shares.toUint128());
         }
 
         for (uint256 i = 0; i < _mintLength; i++) {

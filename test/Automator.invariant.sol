@@ -374,7 +374,13 @@ contract AutomatorHandler is Test {
 
             if (shares > 0) {
                 shares = bound(shares, 0, shares);
-                _burnParams[j++] = Automator.RebalanceBurnParams({tick: _lt, shares: uint128(shares)});
+                _burnParams[j++] = Automator.RebalanceBurnParams({
+                    tick: _lt,
+                    liquidity: automator.handler().convertToAssets(
+                        uint128(shares),
+                        automator.handler().tokenId(address(automator.pool()), _lt, _ut)
+                    )
+                });
             }
 
             _lt += int24(tickSpacing);
