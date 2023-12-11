@@ -23,7 +23,6 @@ import {UniswapV3PoolLib} from "../lib/UniswapV3PoolLib.sol";
 import {IDopexV2PositionManager} from "../vendor/dopexV2/IDopexV2PositionManager.sol";
 
 interface IAutomator {
-    // Public State Variables
     function manager() external view returns (IDopexV2PositionManager);
 
     function handler() external view returns (IUniswapV3SingleTickLiquidityHandler);
@@ -57,14 +56,9 @@ interface IAutomator {
         uint256 maxAssetsUseForSwap;
     }
 
-    struct RebalanceMintParams {
+    struct RebalanceTickInfo {
         int24 tick;
         uint128 liquidity;
-    }
-
-    struct RebalanceBurnParams {
-        int24 tick;
-        uint128 shares;
     }
 
     // Functions
@@ -75,6 +69,10 @@ interface IAutomator {
     function convertToShares(uint256 assets) external view returns (uint256);
 
     function convertToAssets(uint256 shares) external view returns (uint256);
+
+    function getTickAllLiquidity(int24 tick) external view returns (uint128);
+
+    function getTickFreeLiquidity(int24 tick) external view returns (uint128);
 
     function calculateRebalanceSwapParamsInRebalance(
         UniswapV3PoolLib.Position[] calldata mintPositions,
