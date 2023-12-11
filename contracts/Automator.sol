@@ -267,12 +267,6 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
             _maxAssetsUseForSwap = _freeAssets - _mintAssets;
         }
 
-        console2.log("max counter assets use for swap", _maxCounterAssetsUseForSwap);
-        console2.log(
-            "max counter assets + fee",
-            _maxCounterAssetsUseForSwap + _maxCounterAssetsUseForSwap.mulDiv(pool.fee(), 1e6 - pool.fee())
-        );
-
         return
             RebalanceSwapParams({
                 assetsShortage: _assetsShortage,
@@ -415,8 +409,6 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
         RebalanceTickInfo[] calldata ticksBurn,
         RebalanceSwapParams calldata swapParams
     ) external onlyRole(STRATEGIST_ROLE) {
-        _swapBeforeRebalance(swapParams);
-
         uint256 _mintLength = ticksMint.length;
         uint256 _burnLength = ticksBurn.length;
 
@@ -451,10 +443,14 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
 
         // NOTE: burn should be called before mint to receive the assets from the burned position
         if (_burnLength > 0) IMulticallProvider(address(manager)).multicall(_burnCalldataBatch);
+
+        // NOTE: after receiving the assets from the burned position, swap should be called to get the assets for mint
+        _swapBeforeRebalanceMint(swapParams);
+
         if (_mintLength > 0) IMulticallProvider(address(manager)).multicall(_mintCalldataBatch);
     }
 
-    function _swapBeforeRebalance(RebalanceSwapParams calldata swapParams) internal {
+    function _swapBeforeRebalanceMint(RebalanceSwapParams calldata swapParams) internal {
         if (swapParams.assetsShortage > 0) {
             router.exactOutputSingle(
                 ISwapRouter.ExactOutputSingleParams({
@@ -525,8 +521,6 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
         RebalanceTickInfo[] calldata ticksBurn,
         RebalanceSwapParams calldata swapParams
     ) external onlyRole(STRATEGIST_ROLE) {
-        _swapBeforeRebalance(swapParams);
-
         uint256 _mintLength = ticksMint.length;
         uint256 _burnLength = ticksBurn.length;
 
@@ -546,6 +540,8 @@ contract Automator is ERC20, AccessControlEnumerable, IERC1155Receiver {
 
             _burnPosition(_lt, _ut, _shares.toUint128());
         }
+
+        _swapBeforeRebalanceMint(swapParams);
 
         for (uint256 i = 0; i < _mintLength; i++) {
             _lt = ticksMint[i].tick;
