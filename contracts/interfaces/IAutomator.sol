@@ -40,7 +40,7 @@ interface IAutomator {
 
     function depositCap() external view returns (uint256);
 
-    function getActiveTicks() external view returns (uint256[] memory);
+    function getActiveTicks() external view returns (int24[] memory);
 
     // Structs
     struct LockedDopexShares {
