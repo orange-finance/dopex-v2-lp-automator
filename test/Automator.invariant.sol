@@ -197,6 +197,7 @@ contract AutomatorHandler is Test {
         }
 
         /*////////////////////////////////////////////////////////////
+
                         case: shares > balance will revert
         ////////////////////////////////////////////////////////////*/
         if (shares > automator.balanceOf(currentActor)) {
@@ -219,19 +220,12 @@ contract AutomatorHandler is Test {
         /*////////////////////////////////////////////////////////////
                         case: normal redeem
         ////////////////////////////////////////////////////////////*/
-        emit log_string("case: normal redeem");
-        // slippage tolerance: 0.1%
-        uint256 _minAssets = automator.convertToAssets(shares) - (automator.convertToAssets(shares) / 1000 + 1);
 
+        emit log_string("case: normal redeem");
         uint256 _preAssets = automator.asset().balanceOf(currentActor);
         uint256 _preShares = automator.balanceOf(currentActor);
 
-        (uint256 _assets, ) = automator.redeem(shares, _minAssets);
-
-        // FIXME: consider locked dopex liquidity
-        // uint256 _totalAssets = automator.totalAssets();
-        // uint256 _totalSupply = automator.totalSupply();
-        // assertEq(_assets, shares.mulDivDown(_totalAssets, _totalSupply), "redeem: assets");
+        (uint256 _assets, ) = automator.redeem(shares, 0);
 
         assertEq(automator.asset().balanceOf(currentActor), _preAssets + _assets, "redeem: user assets transferred");
         assertEq(automator.balanceOf(currentActor), _preShares - shares, "redeem: user shares burned");
@@ -239,85 +233,6 @@ contract AutomatorHandler is Test {
         totalMinted -= shares;
     }
 
-    // function rebalance(int24 lowerTick, uint128 liquidity, uint256 shares, uint256 positions) external {
-    //     (, int24 _currentTick, , , , , ) = automator.pool().slot0();
-    //     int24 tickSpacing = automator.pool().tickSpacing();
-
-    //     positions = bound(positions, 0, 5);
-    //     lowerTick = int24(
-    //         bound(
-    //             lowerTick,
-    //             _currentTick - tickSpacing * int24(uint24(positions)),
-    //             _currentTick + tickSpacing * int24(uint24(positions))
-    //         )
-    //     );
-    //     lowerTick = lowerTick - (lowerTick % tickSpacing);
-
-    //     /*////////////////////////////////////////////////////////////
-    //                     case: out of range
-    //     ////////////////////////////////////////////////////////////*/
-
-    //     // create params
-    //     Automator.MintParams[] memory _mintParams = new Automator.MintParams[](positions);
-    //     Automator.RebalanceBurnParams[] memory _burnParams = new Automator.RebalanceBurnParams[](positions);
-
-    //     int24 _lt = lowerTick;
-    //     int24 _ut = lowerTick + int24(tickSpacing);
-    //     (uint256 j, uint256 k) = (0, 0);
-
-    //     for (uint256 i = 0; i < positions; i++) {
-    //         // skip in range ticks
-    //         if (_lt <= _currentTick && _currentTick <= _ut) {
-    //             _lt += int24(tickSpacing);
-    //             _ut += int24(tickSpacing);
-    //             continue;
-    //         }
-
-    //         // create mint params
-    //         uint128 _maxLiquidity = LiquidityAmounts.getLiquidityForAmounts(
-    //             _currentTick.getSqrtRatioAtTick(),
-    //             _lt.getSqrtRatioAtTick(),
-    //             _ut.getSqrtRatioAtTick(),
-    //             IERC20(automator.pool().token0()).balanceOf(address(automator)),
-    //             IERC20(automator.pool().token1()).balanceOf(address(automator))
-    //         ) / uint128(positions);
-
-    //         liquidity = uint128(bound(liquidity, 0, _maxLiquidity));
-
-    //         if (liquidity > 0) _mintParams[k++] = Automator.MintParams({tick: _lt, liquidity: liquidity});
-
-    //         // create burn params
-    //         shares = automator.handler().balanceOf(
-    //             address(automator),
-    //             automator.handler().tokenId(address(automator.pool()), _lt, _ut)
-    //         );
-
-    //         if (shares > 0) {
-    //             shares = bound(shares, 0, shares);
-    //             _burnParams[j++] = Automator.RebalanceBurnParams({tick: _lt, shares: uint128(shares)});
-    //         }
-
-    //         _lt += int24(tickSpacing);
-    //         _ut += int24(tickSpacing);
-    //     }
-
-    //     // shorted _mintParams
-    //     Automator.MintParams[] memory _mintParamsShorted = new Automator.MintParams[](k);
-    //     for (uint256 i = 0; i < k; i++) {
-    //         _mintParamsShorted[i] = _mintParams[i];
-    //     }
-
-    //     // shorted _burnParams
-    //     Automator.RebalanceBurnParams[] memory _burnParamsShorted = new Automator.RebalanceBurnParams[](j);
-    //     for (uint256 i = 0; i < j; i++) {
-    //         _burnParamsShorted[i] = _burnParams[i];
-    //     }
-
-    //     vm.prank(address(this));
-    //     automator.rebalance(_mintParamsShorted, _burnParamsShorted);
-    // }
-
-    // TODO: make this work
     function rebalance(int24 lowerTick, uint128 liquidity, uint256 shares, uint256 positions) external {
         (, int24 _currentTick, , , , , ) = automator.pool().slot0();
         int24 tickSpacing = automator.pool().tickSpacing();
@@ -402,10 +317,6 @@ contract AutomatorHandler is Test {
         }
 
         vm.prank(address(this));
-        automator.inefficientRebalance(
-            _ticksMintShorted,
-            _ticksBurnShorted,
-            IAutomator.RebalanceSwapParams(0, 0, 0, 0)
-        );
+        automator.rebalance(_ticksMintShorted, _ticksBurnShorted, IAutomator.RebalanceSwapParams(0, 0, 0, 0));
     }
 }
