@@ -52,6 +52,8 @@ contract TestAutomatorInvariant is Test {
         automator.grantRole(automator.STRATEGIST_ROLE(), address(handler));
 
         targetContract(address(handler));
+        targetContract(address(new SwapHandler()));
+
         /**
          * NOTE: this is a hack to cache the forked chain's state.
          * transactions in the invariant test are from random senders so the state is not cached.
@@ -70,6 +72,9 @@ contract TestAutomatorInvariant is Test {
     }
 
     function invariant_sumOfSharesMatchesTotalSupply() public {
+        (, int24 _currentTick, , , , , ) = automator.pool().slot0();
+        emit log_named_int("current tick", _currentTick);
+        emit log_named_uint("fee", automator.pool().fee());
         assertEq(handler.totalMinted(), automator.totalSupply(), "total minted shares == total supply");
     }
 }
@@ -78,6 +83,9 @@ contract AutomatorHandler is Test {
     using FixedPointMathLib for uint256;
     using TickMath for int24;
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandler;
+
+    IERC20 constant WETH = IERC20(0x82aF49447D8a07e3bd95BD0d56f35241523fBab1);
+    IERC20 constant USDCE = IERC20(0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8);
 
     Automator automator;
 
@@ -88,6 +96,8 @@ contract AutomatorHandler is Test {
 
     address[] actors = [alice, bob, carol, dave];
     address currentActor;
+
+    address[] swapTokens;
 
     uint256 public totalMinted;
 
@@ -102,6 +112,8 @@ contract AutomatorHandler is Test {
 
     constructor(Automator automator_) {
         automator = automator_;
+        swapTokens.push(address(automator.asset()));
+        swapTokens.push(address(automator.counterAsset()));
 
         vm.label(address(alice), "alice");
         vm.label(address(bob), "bob");
@@ -110,7 +122,6 @@ contract AutomatorHandler is Test {
     }
 
     function deposit(uint256 assets, uint256 actorIndex) external useActor(actorIndex) {
-        // assets = bound(assets, automator.minDepositAssets(), automator.depositCap());
         assets = bound(assets, 0, automator.depositCap() * 2);
 
         IERC20 _asset = automator.asset();
@@ -318,5 +329,49 @@ contract AutomatorHandler is Test {
 
         vm.prank(address(this));
         automator.rebalance(_ticksMintShorted, _ticksBurnShorted, IAutomator.RebalanceSwapParams(0, 0, 0, 0));
+    }
+}
+
+contract SwapHandler is Test {
+    IERC20 constant WETH = IERC20(0x82aF49447D8a07e3bd95BD0d56f35241523fBab1);
+    IERC20 constant USDCE = IERC20(0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8);
+    ISwapRouter router = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
+
+    function swapWethToUsdc(uint256 amount) external {
+        amount = bound(amount, 50 ether, 100 ether);
+        deal(address(WETH), address(this), amount);
+
+        WETH.approve(address(router), amount);
+        router.exactInputSingle(
+            ISwapRouter.ExactInputSingleParams({
+                tokenIn: address(WETH),
+                tokenOut: address(USDCE),
+                fee: 500,
+                recipient: address(this),
+                deadline: block.timestamp,
+                amountIn: amount,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0
+            })
+        );
+    }
+
+    function swapUsdcToWeth(uint256 amount) external {
+        amount = bound(amount, 100_000e6, 150_000e6);
+        deal(address(USDCE), address(this), amount);
+
+        USDCE.approve(address(router), amount);
+        router.exactInputSingle(
+            ISwapRouter.ExactInputSingleParams({
+                tokenIn: address(USDCE),
+                tokenOut: address(WETH),
+                fee: 500,
+                recipient: address(this),
+                deadline: block.timestamp,
+                amountIn: amount,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0
+            })
+        );
     }
 }
