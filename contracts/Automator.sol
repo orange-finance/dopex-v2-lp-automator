@@ -184,6 +184,55 @@ contract Automator is IAutomator, ERC20, AccessControlEnumerable, IERC1155Receiv
             OracleLibrary.getQuoteAtTick(pool.currentTick(), _base.toUint128(), address(counterAsset), address(asset));
     }
 
+    function freeAssets() public view returns (uint256) {
+        // 1. calculate the free assets in Dopex pools
+        uint256 _length = activeTicks.length();
+        uint256 _tid;
+        uint128 _liquidity;
+        (int24 _lt, int24 _ut) = (0, 0);
+        (uint256 _sum0, uint256 _sum1) = (0, 0);
+        (uint256 _a0, uint256 _a1) = (0, 0);
+
+        (uint160 _sqrtRatioX96, , , , , , ) = pool.slot0();
+
+        for (uint256 i = 0; i < _length; ) {
+            _lt = int24(uint24(activeTicks.at(i)));
+            _ut = _lt + poolTickSpacing;
+            _tid = handler.tokenId(address(pool), _lt, _ut);
+
+            _liquidity = handler.redeemableLiquidity(address(this), _tid).toUint128();
+
+            (_a0, _a1) = LiquidityAmounts.getAmountsForLiquidity(
+                _sqrtRatioX96,
+                _lt.getSqrtRatioAtTick(),
+                _ut.getSqrtRatioAtTick(),
+                _liquidity
+            );
+
+            _sum0 += _a0;
+            _sum1 += _a1;
+
+            unchecked {
+                i++;
+            }
+        }
+
+        // 2. merge into the total assets in the automator
+        (uint256 _base, uint256 _quote) = (counterAsset.balanceOf(address(this)), asset.balanceOf(address(this)));
+
+        if (address(asset) == pool.token0()) {
+            _base += _sum1;
+            _quote += _sum0;
+        } else {
+            _base += _sum0;
+            _quote += _sum1;
+        }
+
+        return
+            _quote +
+            OracleLibrary.getQuoteAtTick(pool.currentTick(), _base.toUint128(), address(counterAsset), address(asset));
+    }
+
     // TODO: implement
     // function previewRedeem() public view returns (uint256 assets, LockedDopexShares[] memory lockedDopexShares) {}
 
@@ -290,80 +339,69 @@ contract Automator is IAutomator, ERC20, AccessControlEnumerable, IERC1155Receiv
         asset.safeTransferFrom(msg.sender, address(this), assets);
     }
 
+    /// @dev avoid stack too deep error
+    struct RedeemLoopCache {
+        int24 lowerTick;
+        uint256 tokenId;
+        uint256 shareLocked;
+        uint256 shareRedeemable;
+        uint256 lockedShareIndex;
+    }
+
     function redeem(
         uint256 shares,
-        uint256 minAssets // use sqrtPriceLimitX96 instead ?
+        uint256 minAssets
     ) external returns (uint256 assets, LockedDopexShares[] memory lockedDopexShares) {
         if (shares == 0) revert AmountZero();
+        if (convertToAssets(shares) < 0) revert SharesTooSmall();
 
-        assets = convertToAssets(shares);
-
-        // avoid rounding to 0
-        if (assets == 0) revert SharesTooSmall();
-
-        uint256 _length = activeTicks.length();
-        int24 _lt;
-        uint256 _tid;
-        uint256 _shareLocked;
-        uint256 _shareRedeemable;
-        uint256 j;
-
+        uint256 _totalSupply = totalSupply;
         uint256 _preBase = counterAsset.balanceOf(address(this));
         uint256 _preQuote = asset.balanceOf(address(this));
 
+        RedeemLoopCache memory c;
+        uint256 _length = activeTicks.length();
+
+        LockedDopexShares[] memory _tempShares = new LockedDopexShares[](_length);
+
         for (uint256 i = 0; i < _length; i++) {
-            _lt = int24(uint24(activeTicks.at(i)));
-            _tid = handler.tokenId(address(pool), _lt, _lt + poolTickSpacing);
-            _shareRedeemable = uint256(
-                handler.convertToShares(handler.redeemableLiquidity(address(this), _tid).toUint128(), _tid)
-            ).mulDivDown(shares, totalSupply);
-            _shareLocked = uint256(
-                handler.convertToShares(handler.lockedLiquidity(address(this), _tid).toUint128(), _tid)
-            ).mulDivDown(shares, totalSupply);
+            c.lowerTick = int24(uint24(activeTicks.at(i)));
+
+            c.tokenId = handler.tokenId(address(pool), c.lowerTick, c.lowerTick + poolTickSpacing);
+            c.shareRedeemable = uint256(
+                handler.convertToShares(handler.redeemableLiquidity(address(this), c.tokenId).toUint128(), c.tokenId)
+            ).mulDivDown(shares, _totalSupply);
+            c.shareLocked = uint256(
+                handler.convertToShares(handler.lockedLiquidity(address(this), c.tokenId).toUint128(), c.tokenId)
+            ).mulDivDown(shares, _totalSupply);
 
             // locked share is transferred to the user
-            if (_shareLocked > 0) {
+            if (c.shareLocked > 0) {
                 unchecked {
-                    lockedDopexShares[j++] = LockedDopexShares({tokenId: _tid, shares: _shareLocked});
+                    _tempShares[c.lockedShareIndex++] = LockedDopexShares({tokenId: c.tokenId, shares: c.shareLocked});
                 }
 
-                handler.safeTransferFrom(address(this), msg.sender, _tid, _shareLocked, "");
+                handler.safeTransferFrom(address(this), msg.sender, c.tokenId, c.shareLocked, "");
             }
 
             // redeemable share is burned
-            if (_shareRedeemable > 0) {
-                manager.burnPosition(
-                    handler,
-                    abi.encode(
-                        IUniswapV3SingleTickLiquidityHandler.BurnPositionParams({
-                            pool: address(pool),
-                            tickLower: _lt,
-                            tickUpper: _lt + poolTickSpacing,
-                            shares: _shareRedeemable.toUint128()
-                        })
-                    )
-                );
-            }
+            if (c.shareRedeemable > 0)
+                _burnPosition(c.lowerTick, c.lowerTick + poolTickSpacing, c.shareRedeemable.toUint128());
+        }
+
+        // copy to exact size array
+        lockedDopexShares = new LockedDopexShares[](c.lockedShareIndex);
+        for (uint256 i = 0; i < c.lockedShareIndex; i++) {
+            lockedDopexShares[i] = _tempShares[i];
         }
 
         uint256 _payBase = counterAsset.balanceOf(address(this)) - _preBase;
 
-        if (_payBase > 0)
-            router.exactInputSingle(
-                ISwapRouter.ExactInputSingleParams({
-                    tokenIn: address(counterAsset),
-                    tokenOut: address(asset),
-                    fee: pool.fee(),
-                    recipient: address(this),
-                    deadline: block.timestamp,
-                    amountIn: _payBase,
-                    amountOutMinimum: 0,
-                    sqrtPriceLimitX96: 0
-                })
-            );
+        if (_payBase > 0) _swapToRedeemAssets(_payBase);
 
-        if ((assets += (asset.balanceOf(address(this)) - _preQuote)) < minAssets)
-            revert MinAssetsRequired(minAssets, assets);
+        assets = shares.mulDivDown(_preQuote, _totalSupply) + asset.balanceOf(address(this)) - _preQuote;
+
+        if (assets < minAssets) revert MinAssetsRequired(minAssets, assets);
 
         _burn(msg.sender, shares);
 
