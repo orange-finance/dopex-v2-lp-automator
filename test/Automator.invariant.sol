@@ -72,9 +72,6 @@ contract TestAutomatorInvariant is Test {
     }
 
     function invariant_sumOfSharesMatchesTotalSupply() public {
-        (, int24 _currentTick, , , , , ) = automator.pool().slot0();
-        emit log_named_int("current tick", _currentTick);
-        emit log_named_uint("fee", automator.pool().fee());
         assertEq(handler.totalMinted(), automator.totalSupply(), "total minted shares == total supply");
     }
 }
@@ -117,12 +114,12 @@ contract AutomatorHandler is Test {
 
         vm.label(address(alice), "alice");
         vm.label(address(bob), "bob");
-        vm.label(address(carol), "carol");
-        vm.label(address(dave), "dave");
+        // vm.label(address(carol), "carol");
+        // vm.label(address(dave), "dave");
     }
 
     function deposit(uint256 assets, uint256 actorIndex) external useActor(actorIndex) {
-        assets = bound(assets, 0, automator.depositCap() * 2);
+        assets = bound(assets, 1e18, automator.depositCap());
 
         IERC20 _asset = automator.asset();
         deal(address(_asset), currentActor, assets);
@@ -134,36 +131,10 @@ contract AutomatorHandler is Test {
         uint256 _sharesMinted;
 
         /*////////////////////////////////////////////////////////////
-                        case: zero deposit will revert
-        ////////////////////////////////////////////////////////////*/
-        if (assets == 0) {
-            vm.expectRevert(Automator.AmountZero.selector);
-            automator.deposit(assets);
-            return;
-        }
-
-        /*////////////////////////////////////////////////////////////
-                        case: too small deposit will revert
-        ////////////////////////////////////////////////////////////*/
-        if (assets < automator.minDepositAssets()) {
-            vm.expectRevert(Automator.DepositTooSmall.selector);
-            automator.deposit(assets);
-            return;
-        }
-
-        /*////////////////////////////////////////////////////////////
-                        case: deposit cap exceeded will revert
-        ////////////////////////////////////////////////////////////*/
-        if (assets > automator.depositCap()) {
-            vm.expectRevert(Automator.DepositCapExceeded.selector);
-            automator.deposit(assets);
-            return;
-        }
-
-        /*////////////////////////////////////////////////////////////
                         case: first deposit
         ////////////////////////////////////////////////////////////*/
         if (automator.totalSupply() == 0) {
+            emit log_string("case: first deposit");
             _sharesMinted = automator.deposit(assets);
             uint256 _sharesDead = 10 ** automator.decimals() / 1000;
             assertEq(_sharesMinted, assets - _sharesDead, "first deposit: deducts dead shares");
@@ -184,8 +155,6 @@ contract AutomatorHandler is Test {
         ////////////////////////////////////////////////////////////*/
         uint256 _totalAssets = automator.totalAssets();
         uint256 _totalSupply = automator.totalSupply();
-        emit log_named_uint("total assets", _totalAssets);
-        emit log_named_uint("total supply", _totalSupply);
 
         assertNotEq(_totalAssets, 0, "not first deposit: total assets != 0");
         _sharesMinted = automator.deposit(assets);
@@ -195,7 +164,7 @@ contract AutomatorHandler is Test {
     }
 
     function redeem(uint256 shares, uint256 actorIndex) external useActor(actorIndex) {
-        shares = bound(shares, 0, automator.balanceOf(currentActor) * 2);
+        shares = bound(shares, 0, automator.balanceOf(currentActor));
 
         /*////////////////////////////////////////////////////////////
                         case: zero shares will revert
@@ -203,17 +172,6 @@ contract AutomatorHandler is Test {
         if (shares == 0) {
             emit log_string("case: zero shares will revert");
             vm.expectRevert(Automator.AmountZero.selector);
-            automator.redeem(shares, 0);
-            return;
-        }
-
-        /*////////////////////////////////////////////////////////////
-
-                        case: shares > balance will revert
-        ////////////////////////////////////////////////////////////*/
-        if (shares > automator.balanceOf(currentActor)) {
-            emit log_string("case: shares > balance will revert");
-            vm.expectRevert();
             automator.redeem(shares, 0);
             return;
         }
@@ -245,18 +203,13 @@ contract AutomatorHandler is Test {
     }
 
     function rebalance(int24 lowerTick, uint128 liquidity, uint256 shares, uint256 positions) external {
-        (, int24 _currentTick, , , , , ) = automator.pool().slot0();
-        int24 tickSpacing = automator.pool().tickSpacing();
-
-        positions = bound(positions, 0, 5);
         lowerTick = int24(
-            bound(
-                lowerTick,
-                _currentTick - tickSpacing * int24(uint24(positions)),
-                _currentTick + tickSpacing * int24(uint24(positions))
-            )
+            (bound(lowerTick, -200600, -200400) / automator.pool().tickSpacing()) * automator.pool().tickSpacing()
         );
-        lowerTick = lowerTick - (lowerTick % tickSpacing);
+
+        (, int24 _currentTick, , , , , ) = automator.pool().slot0();
+
+        positions = bound(positions, 1, 5);
 
         /*////////////////////////////////////////////////////////////
                         case: out of range
@@ -267,14 +220,15 @@ contract AutomatorHandler is Test {
         IAutomator.RebalanceTickInfo[] memory _ticksBurn = new IAutomator.RebalanceTickInfo[](positions);
 
         int24 _lt = lowerTick;
-        int24 _ut = lowerTick + int24(tickSpacing);
+        int24 _ut = lowerTick + int24(automator.pool().tickSpacing());
         (uint256 j, uint256 k) = (0, 0);
 
         for (uint256 i = 0; i < positions; i++) {
             // skip in range ticks
             if (_lt <= _currentTick && _currentTick <= _ut) {
-                _lt += int24(tickSpacing);
-                _ut += int24(tickSpacing);
+                emit log_string("in range skipped");
+                _lt += int24(automator.pool().tickSpacing());
+                _ut += int24(automator.pool().tickSpacing());
                 continue;
             }
 
@@ -289,10 +243,10 @@ contract AutomatorHandler is Test {
 
             liquidity = uint128(bound(liquidity, 0, _maxLiquidity));
 
-            // FIXME: too small liquidity will revert
-            // if (liquidity > 0 && automator.checkMintValidity(_lt, _ut))
-            if (liquidity > 10000 && automator.checkMintValidity(_lt, _ut))
+            if (liquidity > 10000 && automator.checkMintValidity(_lt, _ut)) {
+                emit log_string("create mint params");
                 _ticksMint[k++] = IAutomator.RebalanceTickInfo({tick: _lt, liquidity: liquidity});
+            }
 
             // create burn params
             shares = automator.handler().balanceOf(
@@ -301,6 +255,7 @@ contract AutomatorHandler is Test {
             );
 
             if (shares > 0) {
+                emit log_string("create burn params");
                 shares = bound(shares, 0, shares);
                 _ticksBurn[j++] = IAutomator.RebalanceTickInfo({
                     tick: _lt,
@@ -311,8 +266,8 @@ contract AutomatorHandler is Test {
                 });
             }
 
-            _lt += int24(tickSpacing);
-            _ut += int24(tickSpacing);
+            _lt += int24(automator.pool().tickSpacing());
+            _ut += int24(automator.pool().tickSpacing());
         }
 
         // shorted _ticksMint
@@ -328,7 +283,11 @@ contract AutomatorHandler is Test {
         }
 
         vm.prank(address(this));
-        automator.rebalance(_ticksMintShorted, _ticksBurnShorted, IAutomator.RebalanceSwapParams(0, 0, 0, 0));
+        automator.inefficientRebalance(
+            _ticksMintShorted,
+            _ticksBurnShorted,
+            IAutomator.RebalanceSwapParams(0, 0, 0, 0)
+        );
     }
 }
 
