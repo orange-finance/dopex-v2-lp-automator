@@ -353,7 +353,7 @@ contract Automator is IAutomator, ERC20, AccessControlEnumerable, IERC1155Receiv
         uint256 minAssets
     ) external returns (uint256 assets, LockedDopexShares[] memory lockedDopexShares) {
         if (shares == 0) revert AmountZero();
-        if (convertToAssets(shares) < 0) revert SharesTooSmall();
+        if (convertToAssets(shares) == 0) revert SharesTooSmall();
 
         uint256 _totalSupply = totalSupply;
         uint256 _preBase = counterAsset.balanceOf(address(this));

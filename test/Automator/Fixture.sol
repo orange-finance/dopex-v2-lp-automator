@@ -69,6 +69,16 @@ abstract contract Fixture is Test {
         return OracleLibrary.getQuoteAtTick(_currentTick, baseAmount, base, quote);
     }
 
+    function _depositFrom(address account, uint256 amount) internal {
+        IERC20 _asset = automator.asset();
+        deal(address(_asset), account, amount);
+
+        vm.startPrank(account);
+        _asset.approve(address(automator), amount);
+        automator.deposit(amount);
+        vm.stopPrank();
+    }
+
     function _mintDopexPosition(int24 lowerTick, int24 upperTick, uint128 liquidity) internal {
         IUniswapV3SingleTickLiquidityHandler.MintPositionParams memory _params = IUniswapV3SingleTickLiquidityHandler
             .MintPositionParams({

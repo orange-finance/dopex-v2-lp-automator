@@ -220,7 +220,8 @@ contract AutomatorHandler is Test {
                         case: normal redeem
         ////////////////////////////////////////////////////////////*/
         emit log_string("case: normal redeem");
-        uint256 _minAssets = automator.convertToAssets(shares);
+        // slippage tolerance: 0.1%
+        uint256 _minAssets = automator.convertToAssets(shares) - (automator.convertToAssets(shares) / 1000 + 1);
 
         uint256 _preAssets = automator.asset().balanceOf(currentActor);
         uint256 _preShares = automator.balanceOf(currentActor);

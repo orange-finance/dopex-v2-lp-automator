@@ -18,27 +18,13 @@ contract TestAutomatorRedeem is Fixture {
     }
 
     function test_redeem_noDopexPosition() public {
-        deal(address(WETH), alice, 1 ether);
-        deal(address(WETH), bob, 1 ether);
-
-        vm.startPrank(bob);
-        WETH.approve(address(automator), 1 ether);
-        automator.deposit(1 ether);
-        vm.stopPrank();
-
-        vm.startPrank(alice);
-        WETH.approve(address(automator), 1 ether);
-        automator.deposit(1 ether);
-        vm.stopPrank();
+        _depositFrom(bob, 1 ether);
+        _depositFrom(alice, 1 ether);
 
         assertEq(WETH.balanceOf(alice), 0);
 
-        vm.startPrank(alice);
-        (uint256 _assets, IAutomator.LockedDopexShares[] memory _locked) = automator.redeem(
-            automator.balanceOf(alice),
-            0
-        );
-        vm.stopPrank();
+        vm.prank(alice);
+        (uint256 _assets, IAutomator.LockedDopexShares[] memory _locked) = automator.redeem(1e18, 0);
 
         assertEq(_locked.length, 0);
         assertEq(_assets, 1 ether);
@@ -46,19 +32,8 @@ contract TestAutomatorRedeem is Fixture {
     }
 
     function test_redeem_burnDopexPositions() public {
-        deal(address(WETH), alice, 1.3 ether);
-        deal(address(WETH), bob, 1 ether);
-
-        // bob does first deposit, taking slippage from dead shares (makes it easier to redeem test for alice)
-        vm.startPrank(bob);
-        WETH.approve(address(automator), 1 ether);
-        automator.deposit(1 ether);
-        vm.stopPrank();
-
-        vm.startPrank(alice);
-        WETH.approve(address(automator), 1.3 ether);
-        automator.deposit(1.3 ether);
-        vm.stopPrank();
+        _depositFrom(bob, 1 ether);
+        _depositFrom(alice, 1.3 ether);
 
         assertEq(WETH.balanceOf(alice), 0);
 
@@ -120,6 +95,63 @@ contract TestAutomatorRedeem is Fixture {
 
         assertEq(_locked.length, 1);
         assertApproxEqAbs(_assets, _balExpected, 1);
+    }
+
+    function test_redeem_revertWhenMinAssetsNotReached() public {
+        deal(address(WETH), alice, 1 ether);
+        deal(address(WETH), bob, 1 ether);
+
+        // bob does first deposit, taking slippage from dead shares (makes it easier to redeem test for alice)
+        vm.startPrank(bob);
+        WETH.approve(address(automator), 1 ether);
+        automator.deposit(1 ether);
+        vm.stopPrank();
+
+        vm.startPrank(alice);
+        WETH.approve(address(automator), 1 ether);
+        // 1e18 shares will minted
+        automator.deposit(1 ether);
+        vm.stopPrank();
+
+        vm.startPrank(alice);
+        vm.expectRevert(abi.encodeWithSelector(Automator.MinAssetsRequired.selector, 1.1 ether, 1 ether));
+        automator.redeem(1 ether, 1.1 ether);
+        vm.stopPrank();
+    }
+
+    function test_redeem_revertWhenSharesTooSmall() public {
+        deal(address(WETH), alice, 1 ether);
+        deal(address(WETH), bob, 1 ether);
+
+        // bob does first deposit, taking slippage from dead shares (makes it easier to redeem test for alice)
+        vm.startPrank(bob);
+        WETH.approve(address(automator), 1 ether);
+        automator.deposit(1 ether);
+        vm.stopPrank();
+
+        vm.startPrank(alice);
+        WETH.approve(address(automator), 1 ether);
+        // 1e18 shares will minted
+        automator.deposit(1 ether);
+        vm.stopPrank();
+
+        // assume that significant amount of WETH locked as Dopex position
+        vm.prank(address(automator));
+        WETH.transfer(makeAddr("locked"), 2 ether - 1);
+
+        /**
+         * total supply: 2e18
+         * alice shares: 1e18
+         * WETH in automator: 1e18
+         *
+         * 1 * 1e18 / 2e18 = 0 shares
+         *
+         */
+
+        vm.startPrank(alice);
+        vm.expectRevert(Automator.SharesTooSmall.selector);
+        automator.redeem(1e18, 0);
+        vm.stopPrank();
     }
 
     function _mint(uint256 _amountWeth, uint256 _amountUsdce, int24 _oor_belowLower, int24 _oor_aboveLower) public {
