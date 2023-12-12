@@ -66,9 +66,6 @@ contract TestAutomatorRebalance is Fixture {
             _ticksMint[0].liquidity
         );
 
-        emit log_named_uint("a0 below", _a0);
-        emit log_named_uint("a1 below", _a1);
-
         _ticksMint[1] = IAutomator.RebalanceTickInfo({
             tick: _oor_aboveLower,
             liquidity: _toSingleTickLiquidity(
@@ -84,10 +81,6 @@ contract TestAutomatorRebalance is Fixture {
             TickMath.getSqrtRatioAtTick(_oor_aboveLower + pool.tickSpacing()),
             _ticksMint[1].liquidity
         );
-
-        emit log_named_uint("a0 above", _a0);
-        emit log_named_uint("a1 above", _a1);
-        emit log_named_uint("a0 above in usdce", _getQuote(address(WETH), address(USDCE), uint128(_a0)));
 
         IAutomator.RebalanceTickInfo[] memory _ticksBurn = new IAutomator.RebalanceTickInfo[](0);
 
@@ -109,15 +102,11 @@ contract TestAutomatorRebalance is Fixture {
             )
         });
 
-        emit log_named_uint("liquidity to mint", _ticksMint[0].liquidity);
-
         IAutomator.RebalanceTickInfo[] memory _ticksBurn = new IAutomator.RebalanceTickInfo[](1);
         _ticksBurn[0] = IAutomator.RebalanceTickInfo({
             tick: _oor_aboveLower,
             liquidity: automator.getTickFreeLiquidity(_oor_belowLower)
         });
-
-        emit log_named_uint("liquidity to burn", _ticksBurn[0].liquidity);
 
         automator.rebalance(
             _ticksMint,
