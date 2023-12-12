@@ -85,7 +85,7 @@ interface IAutomator {
         uint256 minAssets
     ) external returns (uint256 assets, LockedDopexShares[] memory lockedDopexShares);
 
-    function checkMintValidity(int24 lowerTick, int24 upperTick) external view returns (bool);
+    function checkMintValidity(int24 lowerTick) external view returns (bool);
 
     // Add any other public or external functions from the Automator contract here
     function rebalance(

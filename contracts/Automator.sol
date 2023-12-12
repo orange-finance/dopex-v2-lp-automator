@@ -418,9 +418,9 @@ contract Automator is IAutomator, ERC20, AccessControlEnumerable, IERC1155Receiv
      * the handler will revert when accumulated fees are less than 10.
      * this is because the liquidity calculation is rounded down to 0 against the accumulated fees, then mint for 0 will revert.
      */
-    function checkMintValidity(int24 lowerTick, int24 upperTick) external view returns (bool) {
+    function checkMintValidity(int24 lowerTick) external view returns (bool) {
         (, , , uint128 _owed0, uint128 _owed1) = pool.positions(
-            keccak256(abi.encodePacked(address(handler), lowerTick, upperTick))
+            keccak256(abi.encodePacked(address(handler), lowerTick, lowerTick + poolTickSpacing))
         );
 
         if (_owed0 > 0 && _owed0 < 10) return false;

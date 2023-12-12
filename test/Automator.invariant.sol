@@ -243,7 +243,7 @@ contract AutomatorHandler is Test {
 
             liquidity = uint128(bound(liquidity, 0, _maxLiquidity));
 
-            if (liquidity > 10000 && automator.checkMintValidity(_lt, _ut)) {
+            if (liquidity > 10000 && automator.checkMintValidity(_lt)) {
                 emit log_string("create mint params");
                 _ticksMint[k++] = IAutomator.RebalanceTickInfo({tick: _lt, liquidity: liquidity});
             }
