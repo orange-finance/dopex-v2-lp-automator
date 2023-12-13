@@ -3,7 +3,7 @@
 pragma solidity 0.8.19;
 
 import "forge-std/Test.sol";
-import {Automator} from "../../contracts/Automator.sol";
+import {Automator, IAutomator} from "../../contracts/Automator.sol";
 import {IDopexV2PositionManager} from "../../contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
 import {IUniswapV3SingleTickLiquidityHandler} from "../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandler.sol";
 import {UniswapV3SingleTickLiquidityLib} from "../../contracts/lib/UniswapV3SingleTickLiquidityLib.sol";
@@ -169,19 +169,6 @@ abstract contract Fixture is Test {
         return _quote + _getQuote(address(_baseAsset), address(_quoteAsset), uint128(_base));
     }
 
-    function _setDopexHandlerTokenOwedValues(int24 lowerTick, uint256 owed0, uint256 owed1) internal {
-        uint256 _tokenId = uint256(
-            keccak256(abi.encode(uniV3Handler, pool, lowerTick, lowerTick + pool.tickSpacing()))
-        );
-
-        stdstore.target(address(uniV3Handler)).sig("tokenIds(uint256)").with_key(_tokenId).depth(5).checked_write(
-            owed0
-        );
-        stdstore.target(address(uniV3Handler)).sig("tokenIds(uint256)").with_key(_tokenId).depth(6).checked_write(
-            owed1
-        );
-    }
-
     function _outOfRangeBelow(int24 mulOffset) internal view returns (int24 tick, uint256 tokenId) {
         (, int24 _currentTick, , , , , ) = pool.slot0();
         int24 _spacing = pool.tickSpacing();
@@ -218,5 +205,25 @@ abstract contract Fixture is Test {
 
         automator.setDepositCap(depositCap);
         automator.grantRole(automator.STRATEGIST_ROLE(), strategist);
+    }
+
+    function _rebalanceMintSingle(int24 lowerTick, uint128 liquidity) internal {
+        IAutomator.RebalanceTickInfo[] memory _ticksMint = new Automator.RebalanceTickInfo[](1);
+        _ticksMint[0] = IAutomator.RebalanceTickInfo({tick: lowerTick, liquidity: liquidity});
+        automator.rebalance(
+            _ticksMint,
+            new Automator.RebalanceTickInfo[](0),
+            IAutomator.RebalanceSwapParams(0, 0, 0, 0)
+        );
+    }
+
+    function _rebalanceBurnSingle(int24 lowerTick, uint128 liquidity) internal {
+        IAutomator.RebalanceTickInfo[] memory _ticksBurn = new Automator.RebalanceTickInfo[](1);
+        _ticksBurn[0] = IAutomator.RebalanceTickInfo({tick: lowerTick, liquidity: liquidity});
+        automator.rebalance(
+            new Automator.RebalanceTickInfo[](0),
+            _ticksBurn,
+            IAutomator.RebalanceSwapParams(0, 0, 0, 0)
+        );
     }
 }

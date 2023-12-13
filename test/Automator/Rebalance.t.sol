@@ -46,6 +46,23 @@ contract TestAutomatorRebalance is Fixture {
         assertApproxEqRel(automator.totalAssets(), _balanceBasedWeth, 0.0005e18); // max 0.05% diff (swap fee)
     }
 
+    function test_rebalance_activeTickRemoved() public {
+        deal(address(WETH), address(automator), 10 ether);
+
+        // 5 WETH = 11009961214 USDC.e (currentTick: -199349)
+        // liquidity(-199330, -199320) = 469840801795273610 (currentTick: -199349)
+
+        _rebalanceMintSingle(-199330, 469840801795273610);
+
+        int24[] memory _ticks = automator.getActiveTicks();
+        assertEq(_ticks.length, 1);
+
+        _rebalanceBurnSingle(-199330, 469840801795273609);
+
+        _ticks = automator.getActiveTicks();
+        assertEq(_ticks.length, 0);
+    }
+
     function test_calculateRebalanceSwapParamsInRebalance_reversedPair() public {
         _deployAutomator({
             admin: address(this),
