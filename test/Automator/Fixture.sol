@@ -183,4 +183,26 @@ abstract contract Fixture is Test {
         tick = _currentTick - (_currentTick % _spacing) + _spacing * mulOffset;
         tokenId = uniV3Handler.tokenId(address(pool), tick, tick + _spacing);
     }
+
+    function _deployAutomator(
+        address admin,
+        address strategist,
+        IUniswapV3Pool pool_,
+        IERC20 asset,
+        uint256 minDepositAssets,
+        uint256 depositCap
+    ) internal {
+        automator = new Automator({
+            admin: admin,
+            manager_: manager,
+            handler_: uniV3Handler,
+            router_: router,
+            pool_: pool_,
+            asset_: asset,
+            minDepositAssets_: minDepositAssets
+        });
+
+        automator.setDepositCap(depositCap);
+        automator.grantRole(automator.STRATEGIST_ROLE(), strategist);
+    }
 }

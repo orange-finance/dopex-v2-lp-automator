@@ -283,11 +283,7 @@ contract AutomatorHandler is Test {
         }
 
         vm.prank(address(this));
-        automator.inefficientRebalance(
-            _ticksMintShorted,
-            _ticksBurnShorted,
-            IAutomator.RebalanceSwapParams(0, 0, 0, 0)
-        );
+        automator.rebalance(_ticksMintShorted, _ticksBurnShorted, IAutomator.RebalanceSwapParams(0, 0, 0, 0));
     }
 }
 

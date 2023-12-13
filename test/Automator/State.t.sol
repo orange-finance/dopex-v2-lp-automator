@@ -74,6 +74,21 @@ contract TestAutomatorState is Fixture {
         );
     }
 
+    function test_totalAssets_reversedPair() public {
+        _deployAutomator({
+            admin: address(this),
+            strategist: address(this),
+            pool_: pool,
+            asset: USDCE,
+            minDepositAssets: 1e6,
+            depositCap: 10_000e6
+        });
+
+        deal(address(USDCE), address(automator), 100e6);
+
+        assertEq(automator.totalAssets(), 100e6);
+    }
+
     function test_convertToAssets_noDopexPosition() public {
         /*///////////////////////////////////////////////////////
                         case: 1 depositor (single token)
@@ -258,6 +273,21 @@ contract TestAutomatorState is Fixture {
             _positionToAssets(_oor_aboveLower, address(automator));
 
         assertEq(automator.freeAssets(), _freeAssets);
+    }
+
+    function test_freeAssets_reversedPair() public {
+        _deployAutomator({
+            admin: address(this),
+            strategist: address(this),
+            pool_: pool,
+            asset: USDCE,
+            minDepositAssets: 1e6,
+            depositCap: 10_000e6
+        });
+
+        deal(address(USDCE), address(automator), 100e6);
+
+        assertEq(automator.freeAssets(), 100e6);
     }
 
     function test_convertToShares_noDopexPosition() public {

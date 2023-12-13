@@ -408,6 +408,35 @@ contract Automator is IAutomator, ERC20, AccessControlEnumerable, IERC1155Receiv
         asset.safeTransfer(msg.sender, assets);
     }
 
+    function _burnPosition(int24 lowerTick, int24 upperTick, uint128 shares) internal {
+        manager.burnPosition(
+            handler,
+            abi.encode(
+                IUniswapV3SingleTickLiquidityHandler.BurnPositionParams({
+                    pool: address(pool),
+                    tickLower: lowerTick,
+                    tickUpper: upperTick,
+                    shares: shares
+                })
+            )
+        );
+    }
+
+    function _swapToRedeemAssets(uint256 counterAssetsIn) internal {
+        router.exactInputSingle(
+            ISwapRouter.ExactInputSingleParams({
+                tokenIn: address(counterAsset),
+                tokenOut: address(asset),
+                fee: pool.fee(),
+                recipient: address(this),
+                deadline: block.timestamp,
+                amountIn: counterAssetsIn,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0
+            })
+        );
+    }
+
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                     STRATEGIST ACTIONS
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -542,85 +571,56 @@ contract Automator is IAutomator, ERC20, AccessControlEnumerable, IERC1155Receiv
 
     // TODO: delete
     /// @dev this is a testing only function to make debug easier
-    function inefficientRebalance(
-        RebalanceTickInfo[] calldata ticksMint,
-        RebalanceTickInfo[] calldata ticksBurn,
-        RebalanceSwapParams calldata swapParams
-    ) external onlyRole(STRATEGIST_ROLE) {
-        uint256 _mintLength = ticksMint.length;
-        uint256 _burnLength = ticksBurn.length;
+    // function inefficientRebalance(
+    //     RebalanceTickInfo[] calldata ticksMint,
+    //     RebalanceTickInfo[] calldata ticksBurn,
+    //     RebalanceSwapParams calldata swapParams
+    // ) external onlyRole(STRATEGIST_ROLE) {
+    //     uint256 _mintLength = ticksMint.length;
+    //     uint256 _burnLength = ticksBurn.length;
 
-        int24 _lt;
-        int24 _ut;
-        uint256 _posId;
-        uint256 _shares;
+    //     int24 _lt;
+    //     int24 _ut;
+    //     uint256 _posId;
+    //     uint256 _shares;
 
-        for (uint256 i = 0; i < _burnLength; i++) {
-            _lt = ticksBurn[i].tick;
-            _ut = _lt + poolTickSpacing;
+    //     for (uint256 i = 0; i < _burnLength; i++) {
+    //         _lt = ticksBurn[i].tick;
+    //         _ut = _lt + poolTickSpacing;
 
-            // if all shares will be burned, pop the active tick
-            _posId = uint256(keccak256(abi.encode(handler, pool, _lt, _ut)));
-            _shares = handler.convertToShares(ticksBurn[i].liquidity, _posId);
-            if (handler.balanceOf(address(this), _posId) - _shares == 0) activeTicks.remove(uint256(uint24(_lt)));
+    //         // if all shares will be burned, pop the active tick
+    //         _posId = uint256(keccak256(abi.encode(handler, pool, _lt, _ut)));
+    //         _shares = handler.convertToShares(ticksBurn[i].liquidity, _posId);
+    //         if (handler.balanceOf(address(this), _posId) - _shares == 0) activeTicks.remove(uint256(uint24(_lt)));
 
-            _burnPosition(_lt, _ut, _shares.toUint128());
-        }
+    //         _burnPosition(_lt, _ut, _shares.toUint128());
+    //     }
 
-        _swapBeforeRebalanceMint(swapParams);
+    //     _swapBeforeRebalanceMint(swapParams);
 
-        for (uint256 i = 0; i < _mintLength; i++) {
-            _lt = ticksMint[i].tick;
-            _ut = _lt + poolTickSpacing;
+    //     for (uint256 i = 0; i < _mintLength; i++) {
+    //         _lt = ticksMint[i].tick;
+    //         _ut = _lt + poolTickSpacing;
 
-            // If the position is not active, push it to the active ticks
-            _posId = uint256(keccak256(abi.encode(handler, pool, _lt, _ut)));
-            if (handler.balanceOf(address(this), _posId) == 0) activeTicks.add(uint256(uint24(_lt)));
+    //         // If the position is not active, push it to the active ticks
+    //         _posId = uint256(keccak256(abi.encode(handler, pool, _lt, _ut)));
+    //         if (handler.balanceOf(address(this), _posId) == 0) activeTicks.add(uint256(uint24(_lt)));
 
-            _mintPosition(_lt, _ut, ticksMint[i].liquidity);
-        }
-    }
+    //         _mintPosition(_lt, _ut, ticksMint[i].liquidity);
+    //     }
+    // }
 
-    function _mintPosition(int24 lowerTick, int24 upperTick, uint128 liquidity) internal {
-        manager.mintPosition(
-            handler,
-            abi.encode(
-                IUniswapV3SingleTickLiquidityHandler.MintPositionParams({
-                    pool: address(pool),
-                    tickLower: lowerTick,
-                    tickUpper: upperTick,
-                    liquidity: liquidity
-                })
-            )
-        );
-    }
-
-    function _burnPosition(int24 lowerTick, int24 upperTick, uint128 shares) internal {
-        manager.burnPosition(
-            handler,
-            abi.encode(
-                IUniswapV3SingleTickLiquidityHandler.BurnPositionParams({
-                    pool: address(pool),
-                    tickLower: lowerTick,
-                    tickUpper: upperTick,
-                    shares: shares
-                })
-            )
-        );
-    }
-
-    function _swapToRedeemAssets(uint256 counterAssetsIn) internal {
-        router.exactInputSingle(
-            ISwapRouter.ExactInputSingleParams({
-                tokenIn: address(counterAsset),
-                tokenOut: address(asset),
-                fee: pool.fee(),
-                recipient: address(this),
-                deadline: block.timestamp,
-                amountIn: counterAssetsIn,
-                amountOutMinimum: 0,
-                sqrtPriceLimitX96: 0
-            })
-        );
-    }
+    // function _mintPosition(int24 lowerTick, int24 upperTick, uint128 liquidity) internal {
+    //     manager.mintPosition(
+    //         handler,
+    //         abi.encode(
+    //             IUniswapV3SingleTickLiquidityHandler.MintPositionParams({
+    //                 pool: address(pool),
+    //                 tickLower: lowerTick,
+    //                 tickUpper: upperTick,
+    //                 liquidity: liquidity
+    //             })
+    //         )
+    //     );
+    // }
 }

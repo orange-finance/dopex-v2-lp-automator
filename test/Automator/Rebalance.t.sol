@@ -46,6 +46,36 @@ contract TestAutomatorRebalance is Fixture {
         assertApproxEqRel(automator.totalAssets(), _balanceBasedWeth, 0.0005e18); // max 0.05% diff (swap fee)
     }
 
+    function test_calculateRebalanceSwapParamsInRebalance_reversedPair() public {
+        _deployAutomator({
+            admin: address(this),
+            strategist: address(this),
+            pool_: pool,
+            asset: USDCE,
+            minDepositAssets: 1e6,
+            depositCap: 10_000e6
+        });
+
+        deal(address(USDCE), address(automator), 10000e6);
+
+        // 10000e6 USDCE  = 4541342065417645174 WETH (currentTick: 199349)
+        // liquidity(-199340, -199330) = 426528252665062768 (currentTick: -199349)
+
+        IAutomator.RebalanceTickInfo[] memory _ticksMint = new Automator.RebalanceTickInfo[](1);
+        IAutomator.RebalanceTickInfo[] memory _ticksBurn = new Automator.RebalanceTickInfo[](0);
+        _ticksMint[0] = IAutomator.RebalanceTickInfo({tick: -199340, liquidity: 426528252665062768});
+
+        IAutomator.RebalanceSwapParams memory _swapParams = automator.calculateRebalanceSwapParamsInRebalance(
+            _ticksMint,
+            _ticksBurn
+        );
+
+        assertApproxEqAbs(_swapParams.counterAssetsShortage, 4541342065417645174, 10);
+        assertEq(_swapParams.maxAssetsUseForSwap, 10000e6);
+        assertEq(_swapParams.assetsShortage, 0);
+        assertEq(_swapParams.maxCounterAssetsUseForSwap, 0);
+    }
+
     function _mint(uint256 _amountUsdce, uint256 _amountWeth, int24 _oor_belowLower, int24 _oor_aboveLower) public {
         IAutomator.RebalanceTickInfo[] memory _ticksMint = new IAutomator.RebalanceTickInfo[](2);
 
