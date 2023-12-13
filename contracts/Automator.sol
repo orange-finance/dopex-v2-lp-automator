@@ -82,7 +82,7 @@ contract Automator is IAutomator, ERC20, AccessControlEnumerable, IERC1155Receiv
         uint256 minDepositAssets_
     )
         // TODO: change name and symbol
-        ERC20("Automator", "AUTO", 18)
+        ERC20("Automator", "AUTO", IERC20Decimals(address(asset_)).decimals())
     {
         if (asset_ != IERC20(pool_.token0()) && asset_ != IERC20(pool_.token1())) revert TokenAddressMismatch();
 

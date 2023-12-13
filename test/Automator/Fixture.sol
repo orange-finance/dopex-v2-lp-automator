@@ -70,13 +70,13 @@ abstract contract Fixture is Test {
         return OracleLibrary.getQuoteAtTick(_currentTick, baseAmount, base, quote);
     }
 
-    function _depositFrom(address account, uint256 amount) internal {
+    function _depositFrom(address account, uint256 amount) internal returns (uint256 shares) {
         IERC20 _asset = automator.asset();
         deal(address(_asset), account, amount);
 
         vm.startPrank(account);
         _asset.approve(address(automator), amount);
-        automator.deposit(amount);
+        shares = automator.deposit(amount);
         vm.stopPrank();
     }
 
