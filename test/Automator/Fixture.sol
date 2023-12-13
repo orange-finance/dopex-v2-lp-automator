@@ -20,6 +20,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 abstract contract Fixture is Test {
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandler;
     using TickMath for int24;
+    using stdStorage for StdStorage;
 
     Automator automator;
 
@@ -166,6 +167,19 @@ abstract contract Fixture is Test {
         uint256 _base = pool.token0() == address(automator.asset()) ? _amount1 : _amount0;
 
         return _quote + _getQuote(address(_baseAsset), address(_quoteAsset), uint128(_base));
+    }
+
+    function _setDopexHandlerTokenOwedValues(int24 lowerTick, uint256 owed0, uint256 owed1) internal {
+        uint256 _tokenId = uint256(
+            keccak256(abi.encode(uniV3Handler, pool, lowerTick, lowerTick + pool.tickSpacing()))
+        );
+
+        stdstore.target(address(uniV3Handler)).sig("tokenIds(uint256)").with_key(_tokenId).depth(5).checked_write(
+            owed0
+        );
+        stdstore.target(address(uniV3Handler)).sig("tokenIds(uint256)").with_key(_tokenId).depth(6).checked_write(
+            owed1
+        );
     }
 
     function _outOfRangeBelow(int24 mulOffset) internal view returns (int24 tick, uint256 tokenId) {

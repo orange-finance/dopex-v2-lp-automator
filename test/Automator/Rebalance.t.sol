@@ -83,7 +83,67 @@ contract TestAutomatorRebalance is Fixture {
         );
     }
 
-    function _mint(uint256 _amountUsdce, uint256 _amountWeth, int24 _oor_belowLower, int24 _oor_aboveLower) public {
+    function test_checkMintValidity_false() public {
+        _mockDopexHandlerTokenIdInfo(
+            -199500,
+            IUniswapV3SingleTickLiquidityHandler.TokenIdInfo({
+                totalLiquidity: 0,
+                totalSupply: 0,
+                liquidityUsed: 0,
+                feeGrowthInside0LastX128: 0,
+                feeGrowthInside1LastX128: 0,
+                tokensOwed0: 9,
+                tokensOwed1: 9,
+                lastDonation: 0,
+                donatedLiquidity: 0,
+                token0: address(USDCE),
+                token1: address(WETH),
+                fee: 3000
+            })
+        );
+
+        assertEq(automator.checkMintValidity(-199500), false);
+        vm.clearMockedCalls();
+    }
+
+    function test_checkMintValidity_true() public {
+        _mockDopexHandlerTokenIdInfo(
+            -199500,
+            IUniswapV3SingleTickLiquidityHandler.TokenIdInfo({
+                totalLiquidity: 0,
+                totalSupply: 0,
+                liquidityUsed: 0,
+                feeGrowthInside0LastX128: 0,
+                feeGrowthInside1LastX128: 0,
+                tokensOwed0: 10,
+                tokensOwed1: 10,
+                lastDonation: 0,
+                donatedLiquidity: 0,
+                token0: address(USDCE),
+                token1: address(WETH),
+                fee: 3000
+            })
+        );
+
+        assertEq(automator.checkMintValidity(-199500), true);
+        vm.clearMockedCalls();
+    }
+
+    function _mockDopexHandlerTokenIdInfo(
+        int24 lowerTick,
+        IUniswapV3SingleTickLiquidityHandler.TokenIdInfo memory ti
+    ) internal {
+        vm.mockCall(
+            address(uniV3Handler),
+            abi.encodeWithSelector(
+                uniV3Handler.tokenIds.selector,
+                uint256(keccak256(abi.encode(uniV3Handler, pool, lowerTick, lowerTick + pool.tickSpacing())))
+            ),
+            abi.encode(ti)
+        );
+    }
+
+    function _mint(uint256 _amountUsdce, uint256 _amountWeth, int24 _oor_belowLower, int24 _oor_aboveLower) internal {
         IAutomator.RebalanceTickInfo[] memory _ticksMint = new IAutomator.RebalanceTickInfo[](2);
 
         // token0: WETH, token1: USDCE
@@ -128,7 +188,7 @@ contract TestAutomatorRebalance is Fixture {
         );
     }
 
-    function _burnAndMint(uint256 _amountUsdce, int24 _oor_belowLower, int24 _oor_aboveLower) public {
+    function _burnAndMint(uint256 _amountUsdce, int24 _oor_belowLower, int24 _oor_aboveLower) internal {
         IAutomator.RebalanceTickInfo[] memory _ticksMint = new IAutomator.RebalanceTickInfo[](1);
         _ticksMint[0] = IAutomator.RebalanceTickInfo({
             tick: _oor_belowLower,
