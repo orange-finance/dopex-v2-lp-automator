@@ -102,7 +102,7 @@ contract TestAutomatorRebalance is Fixture {
         );
     }
 
-    function test_checkMintValidity_false() public {
+    function test_checkMintValidity_false_owed0Invalid() public {
         _mockDopexHandlerTokenIdInfo(
             -199500,
             IUniswapV3SingleTickLiquidityHandler.TokenIdInfo({
@@ -112,6 +112,29 @@ contract TestAutomatorRebalance is Fixture {
                 feeGrowthInside0LastX128: 0,
                 feeGrowthInside1LastX128: 0,
                 tokensOwed0: 9,
+                tokensOwed1: 10000,
+                lastDonation: 0,
+                donatedLiquidity: 0,
+                token0: address(USDCE),
+                token1: address(WETH),
+                fee: 3000
+            })
+        );
+
+        assertEq(automator.checkMintValidity(-199500), false);
+        vm.clearMockedCalls();
+    }
+
+    function test_checkMintValidity_false_owed1Invalid() public {
+        _mockDopexHandlerTokenIdInfo(
+            -199500,
+            IUniswapV3SingleTickLiquidityHandler.TokenIdInfo({
+                totalLiquidity: 0,
+                totalSupply: 0,
+                liquidityUsed: 0,
+                feeGrowthInside0LastX128: 0,
+                feeGrowthInside1LastX128: 0,
+                tokensOwed0: 10000,
                 tokensOwed1: 9,
                 lastDonation: 0,
                 donatedLiquidity: 0,
