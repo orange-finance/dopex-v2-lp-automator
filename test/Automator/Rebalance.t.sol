@@ -76,6 +76,13 @@ contract TestAutomatorRebalance is Fixture {
         assertEq(_swapParams.maxCounterAssetsUseForSwap, 0);
     }
 
+    function test_onERC1155BatchReceived() public {
+        assertEq(
+            automator.onERC1155BatchReceived(address(0), address(0), new uint256[](0), new uint256[](0), ""),
+            bytes4(keccak256("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)"))
+        );
+    }
+
     function _mint(uint256 _amountUsdce, uint256 _amountWeth, int24 _oor_belowLower, int24 _oor_aboveLower) public {
         IAutomator.RebalanceTickInfo[] memory _ticksMint = new IAutomator.RebalanceTickInfo[](2);
 
