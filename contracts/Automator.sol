@@ -309,8 +309,15 @@ contract Automator is IAutomator, ERC20, AccessControlEnumerable, IERC1155Receiv
             });
     }
 
-    function getActiveTicks() external view returns (uint256[] memory) {
-        return activeTicks.values();
+    function getActiveTicks() external view returns (int24[] memory) {
+        uint256[] memory _tempTicks = activeTicks.values();
+        int24[] memory _activeTicks = new int24[](_tempTicks.length);
+
+        for (uint256 i; i < _tempTicks.length; i++) {
+            _activeTicks[i] = int24(uint24(_tempTicks[i]));
+        }
+
+        return _activeTicks;
     }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
