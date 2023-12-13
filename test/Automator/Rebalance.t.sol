@@ -58,7 +58,7 @@ contract TestAutomatorRebalance is Fixture {
 
         deal(address(USDCE), address(automator), 10000e6);
 
-        // 10000e6 USDCE  = 4541342065417645174 WETH (currentTick: 199349)
+        // 10000e6 USDCE  = 4541342065417645174 WETH (currentTick: -199349)
         // liquidity(-199340, -199330) = 426528252665062768 (currentTick: -199349)
 
         IAutomator.RebalanceTickInfo[] memory _ticksMint = new Automator.RebalanceTickInfo[](1);
@@ -74,6 +74,25 @@ contract TestAutomatorRebalance is Fixture {
         assertEq(_swapParams.maxAssetsUseForSwap, 10000e6);
         assertEq(_swapParams.assetsShortage, 0);
         assertEq(_swapParams.maxCounterAssetsUseForSwap, 0);
+    }
+
+    function test_calculateRebalanceSwapParamsInRebalance_revertWhenBothTokensInShort() public {
+        // automator has no tokens
+        // currentTick: -199349
+
+        IAutomator.RebalanceTickInfo[] memory _ticksMint = new Automator.RebalanceTickInfo[](2);
+
+        /**
+         * NOTE: When specifying liquidity less than 1e8, smaller decimals token rounded to zero by UniswapPool.
+         */
+        // < currentTick (need USDC.e)
+        _ticksMint[0] = IAutomator.RebalanceTickInfo({tick: -199360, liquidity: 1e8});
+        // > currentTick (need WETH)
+        _ticksMint[1] = IAutomator.RebalanceTickInfo({tick: -199340, liquidity: 1e8});
+
+        // this will be reverted because both tokens are in short
+        vm.expectRevert(Automator.InvalidPositionConstruction.selector);
+        automator.calculateRebalanceSwapParamsInRebalance(_ticksMint, new Automator.RebalanceTickInfo[](0));
     }
 
     function test_onERC1155BatchReceived() public {
