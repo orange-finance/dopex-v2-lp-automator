@@ -4,6 +4,7 @@ pragma solidity 0.8.19;
 
 import "./Fixture.sol";
 import {IAutomator} from "../../contracts/interfaces/IAutomator.sol";
+import {deployAutomatorHarness, AutomatorHarness} from "./harness/AutomatorHarness.sol";
 
 contract TestAutomatorState is Fixture {
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandler;
@@ -535,5 +536,27 @@ contract TestAutomatorState is Fixture {
         );
 
         assertEq(automator.getTickFreeLiquidity(-200000), 0, "tick no position");
+    }
+
+    function test_getActiveTicks() public {
+        AutomatorHarness _automator = deployAutomatorHarness({
+            admin: address(this),
+            strategist: address(this),
+            manager_: manager,
+            handler_: uniV3Handler,
+            router_: router,
+            pool_: pool,
+            asset_: USDCE,
+            minDepositAssets_: 1e6,
+            depositCap: 10_000e6
+        });
+        _automator.pushActiveTick(1);
+        _automator.pushActiveTick(2);
+
+        int24[] memory _actual = _automator.getActiveTicks();
+
+        assertEq(_actual.length, 2);
+        assertEq(_actual[0], 1);
+        assertEq(_actual[1], 2);
     }
 }
