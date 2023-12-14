@@ -3,18 +3,18 @@
 pragma solidity 0.8.19;
 
 import "forge-std/Test.sol";
-import {Automator} from "../contracts/Automator.sol";
+import {Automator} from "../../contracts/Automator.sol";
 
-import {IUniswapV3SingleTickLiquidityHandler} from "../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandler.sol";
-import {IDopexV2PositionManager} from "../contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
-import {LiquidityAmounts} from "../contracts/vendor/uniswapV3/LiquidityAmounts.sol";
-import {UniswapV3SingleTickLiquidityLib} from "../contracts/lib/UniswapV3SingleTickLiquidityLib.sol";
-import {TickMath} from "../contracts/vendor/uniswapV3/TickMath.sol";
+import {IUniswapV3SingleTickLiquidityHandler} from "../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandler.sol";
+import {IDopexV2PositionManager} from "../../contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
+import {LiquidityAmounts} from "../../contracts/vendor/uniswapV3/LiquidityAmounts.sol";
+import {UniswapV3SingleTickLiquidityLib} from "../../contracts/lib/UniswapV3SingleTickLiquidityLib.sol";
+import {TickMath} from "../../contracts/vendor/uniswapV3/TickMath.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
-import {IAutomator} from "../contracts/interfaces/IAutomator.sol";
+import {IAutomator} from "../../contracts/interfaces/IAutomator.sol";
 
 interface IERC20Decimals {
     function decimals() external view returns (uint8);
