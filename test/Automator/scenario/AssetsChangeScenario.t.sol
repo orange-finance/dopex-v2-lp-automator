@@ -56,7 +56,7 @@ contract TestScenarioAssetsChange is Test {
         vm.createSelectFork("arb", 159926478);
     }
 
-    function test_scenario_1() public {
+    function test_scenario_some_none_below_t1up_none_mint() public {
         /**
          * position | locked | tick_position | price | user_action | strategist_action
          * some     | none   | below         | t1up  | none        | mint
@@ -99,6 +99,56 @@ contract TestScenarioAssetsChange is Test {
         // 100_000e6 - 2000e6 - 3000e6 - 4000e6 - 1111e6 - 2222e6 - 3333e6 - 4444e6 - 5555e6 = 74_444e6
         assertLt(USDCE.balanceOf(address(automator)), 74_444e6);
         assertApproxEqRel(USDCE.balanceOf(address(automator)), 74_444e6, 0.01e18);
+    }
+
+    function test_scenario_some_some_above_t0up_deposit_mint() public {
+        /**
+         * position | locked | tick_position | price | user_action | strategist_action
+         * some     | some   | above         | t0up  | deposit     | mint
+         */
+
+        automator = _deployAutomatorWithInitialDeposit(
+            DeployAutomatorWithDeposit({
+                depositor: address(this),
+                depositAssets: 100_000e6,
+                vm: vm,
+                admin: address(this),
+                strategist: address(this),
+                pool: WETH_USDCE_500,
+                asset: USDCE,
+                minDepositAssets: 100e6,
+                depositCap: 100_000e6
+            })
+        );
+
+        // current tick: -199137
+        // 100_000e6 USDCE  = 44.460836828644632334 WETH
+        IAutomator.RebalanceTickInfo[] memory _ticksMint = new IAutomator.RebalanceTickInfo[](3);
+        _ticksMint[0] = IAutomator.RebalanceTickInfo({tick: -199200, liquidity: 52193337897493838}); // 1234 USDCE
+        _ticksMint[1] = IAutomator.RebalanceTickInfo({tick: -199300, liquidity: 99681398684826138}); // 2345 USDCE
+        _ticksMint[2] = IAutomator.RebalanceTickInfo({tick: -199350, liquidity: 147275563082695553}); // 3456 USDCE
+
+        automator.rebalanceMint(_ticksMint);
+
+        // price changes
+        _usdceToWeth(987_654e6);
+
+        // current tick: -199075
+        // 100_000e6 USDCE  = 44.186046111040200911 WETH
+        _ticksMint = new IAutomator.RebalanceTickInfo[](3);
+        _ticksMint[0] = IAutomator.RebalanceTickInfo({tick: -199000, liquidity: 477657091282809450}); // 5 ether
+        _ticksMint[1] = IAutomator.RebalanceTickInfo({tick: -199010, liquidity: 954836668738034165}); // 10 ether
+        _ticksMint[2] = IAutomator.RebalanceTickInfo({tick: -199020, liquidity: 1431539090393629287}); // 15 ether
+
+        IAutomator.RebalanceSwapParams memory _swapParams = IAutomator.RebalanceSwapParams({
+            assetsShortage: 0,
+            counterAssetsShortage: 30 ether,
+            maxCounterAssetsUseForSwap: 0,
+            // 67894737457 USDCE (30 ether) * 1e6 / (1e6 - 1000) = 67962700157 (take 0.1 % buffer for slippage)
+            maxAssetsUseForSwap: 67962700157
+        });
+
+        automator.rebalanceMintWithSwap(_ticksMint, _swapParams);
     }
 
     struct DeployAutomatorWithDeposit {
@@ -146,6 +196,20 @@ contract TestScenarioAssetsChange is Test {
             address(USDCE),
             500,
             wethAmount,
+            0,
+            0
+        );
+    }
+
+    function _usdceToWeth(uint256 usdcAmount) internal {
+        deal(address(USDCE), address(this), usdcAmount);
+        USDCE.approve(address(AutomatorHelper.ROUTER), usdcAmount);
+        UniswapV3Helper.exactInputSingleSwap(
+            AutomatorHelper.ROUTER,
+            address(USDCE),
+            address(WETH),
+            500,
+            usdcAmount,
             0,
             0
         );

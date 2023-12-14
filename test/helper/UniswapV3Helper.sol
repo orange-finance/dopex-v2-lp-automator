@@ -8,6 +8,7 @@ import {LiquidityAmounts} from "../../contracts/vendor/uniswapV3/LiquidityAmount
 import {TickMath} from "../../contracts/vendor/uniswapV3/TickMath.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import {OracleLibrary} from "../../contracts/vendor/uniswapV3/OracleLibrary.sol";
 
 struct Constants {
     IDopexV2PositionManager manager;
@@ -38,6 +39,16 @@ library UniswapV3Helper {
                 amount0,
                 amount1
             );
+    }
+
+    function getQuote(
+        IUniswapV3Pool pool,
+        address base,
+        address quote,
+        uint128 baseAmount
+    ) internal view returns (uint256) {
+        (, int24 _currentTick, , , , , ) = pool.slot0();
+        return OracleLibrary.getQuoteAtTick(_currentTick, baseAmount, base, quote);
     }
 
     function exactInputSingleSwap(

@@ -64,4 +64,12 @@ library AutomatorHelper {
             IAutomator.RebalanceSwapParams(0, 0, 0, 0)
         );
     }
+
+    function rebalanceMintWithSwap(
+        IAutomator automator,
+        IAutomator.RebalanceTickInfo[] memory ticksMint,
+        IAutomator.RebalanceSwapParams memory swapParams
+    ) internal {
+        automator.rebalance(ticksMint, new IAutomator.RebalanceTickInfo[](0), swapParams);
+    }
 }
