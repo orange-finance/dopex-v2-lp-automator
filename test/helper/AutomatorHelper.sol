@@ -44,7 +44,7 @@ library AutomatorHelper {
         automator.grantRole(automator.STRATEGIST_ROLE(), strategist);
 
         vm.prank(dopexV2ManagerOwner);
-        manager.updateWhitelistHandlerWithApp(address(uniV3Handler), address(automator), true);
+        manager.updateWhitelistHandlerWithApp(address(uniV3Handler), address(admin), true);
     }
 
     function rebalanceMintSingle(IAutomator automator, int24 lowerTick, uint128 liquidity) internal {
@@ -71,5 +71,17 @@ library AutomatorHelper {
         IAutomator.RebalanceSwapParams memory swapParams
     ) internal {
         automator.rebalance(ticksMint, new IAutomator.RebalanceTickInfo[](0), swapParams);
+    }
+
+    function rebalanceMintWithSwap(
+        IAutomator automator,
+        IAutomator.RebalanceTickInfo[] memory ticksMint,
+        IAutomator.RebalanceTickInfo[] memory ticksBurn
+    ) internal {
+        automator.rebalance(
+            ticksMint,
+            ticksBurn,
+            automator.calculateRebalanceSwapParamsInRebalance(ticksMint, ticksBurn)
+        );
     }
 }

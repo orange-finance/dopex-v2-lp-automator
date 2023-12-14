@@ -17,33 +17,34 @@ import {Automator, IAutomator} from "../../../contracts/Automator.sol";
 /**
  * Test scenario:
  *
- * position | locked | tick_position | price | user_action | strategist_action
- * some     | none   | below         | t1up  | none        | mint
- * some     | some   | above         | t0up  | deposit     | mint
- * full     | none   | above         | stay  | redeem      | burn
- * some     | full   | none          | stay  | deposit     | none
- * none     | none   | none          | t0up  | redeem      | mint
- * full     | some   | both          | t0up  | none        | burn
- * full     | some   | below         | stay  | none        | burn & mint
- * some     | some   | below         | t1up  | redeem      | burn & mint
- * full     | none   | both          | t1up  | deposit     | burn & mint
- * full     | some   | none          | t1up  | none        | burn
- * none     | none   | both          | stay  | redeem      | mint
- * some     | full   | none          | t1up  | none        | none
- * some     | none   | both          | t0up  | deposit     | burn
- * full     | none   | above         | t1up  | none        | burn & mint
- * none     | none   | below         | t1up  | deposit     | mint
- * some     | full   | none          | t0up  | redeem      | none
- * some     | some   | below         | t0up  | none        | burn
- * some     | some   | none          | stay  | none        | none
- * some     | none   | none          | t0up  | none        | none
- * none     | none   | above         | t1up  | none        | mint
- * full     | some   | none          | t0up  | none        | burn & mint
+    * position | locked | tick_position | price | user_action | strategist_action
+    ✓ some     | none   | below         | t1up  | none        | mint
+    ↻ some     | some   | above         | t0up  | deposit     | mint
+    □ full     | none   | above         | stay  | redeem      | burn
+    □ some     | full   | none          | stay  | deposit     | none
+    □ none     | none   | none          | t0up  | redeem      | mint
+    □ full     | some   | both          | t0up  | none        | burn
+    □ full     | some   | below         | stay  | none        | burn & mint
+    □ some     | some   | below         | t1up  | redeem      | burn & mint
+    □ full     | none   | both          | t1up  | deposit     | burn & mint
+    □ full     | some   | none          | t1up  | none        | burn
+    □ none     | none   | both          | stay  | redeem      | mint
+    □ some     | full   | none          | t1up  | none        | none
+    □ some     | none   | both          | t0up  | deposit     | burn
+    □ full     | none   | above         | t1up  | none        | burn & mint
+    □ none     | none   | below         | t1up  | deposit     | mint
+    □ some     | full   | none          | t0up  | redeem      | none
+    □ some     | some   | below         | t0up  | none        | burn
+    □ some     | some   | none          | stay  | none        | none
+    □ some     | none   | none          | t0up  | none        | none
+    □ none     | none   | above         | t1up  | none        | mint
+    □ full     | some   | none          | t0up  | none        | burn & mint
  */
 
 contract TestScenarioAssetsChange is Test {
     using AutomatorHelper for Automator;
     using UniswapV3Helper for IUniswapV3Pool;
+    using DopexV2Helper for IUniswapV3Pool;
 
     IERC20 constant WETH = IERC20(0x82aF49447D8a07e3bd95BD0d56f35241523fBab1);
     IERC20 constant USDCE = IERC20(0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8);
@@ -123,32 +124,36 @@ contract TestScenarioAssetsChange is Test {
 
         // current tick: -199137
         // 100_000e6 USDCE  = 44.460836828644632334 WETH
-        IAutomator.RebalanceTickInfo[] memory _ticksMint = new IAutomator.RebalanceTickInfo[](3);
-        _ticksMint[0] = IAutomator.RebalanceTickInfo({tick: -199200, liquidity: 52193337897493838}); // 1234 USDCE
-        _ticksMint[1] = IAutomator.RebalanceTickInfo({tick: -199300, liquidity: 99681398684826138}); // 2345 USDCE
-        _ticksMint[2] = IAutomator.RebalanceTickInfo({tick: -199350, liquidity: 147275563082695553}); // 3456 USDCE
 
-        automator.rebalanceMint(_ticksMint);
+        IAutomator.RebalanceTickInfo[] memory _ticksMint = new IAutomator.RebalanceTickInfo[](3);
+        _ticksMint[0] = IAutomator.RebalanceTickInfo({tick: -199000, liquidity: 95531418256561890}); //  1 ether (2249.170441 USDCE)
+        _ticksMint[1] = IAutomator.RebalanceTickInfo({tick: -199010, liquidity: 190967333747606833}); // 2 ether (4498.340883 USDCE)
+        _ticksMint[2] = IAutomator.RebalanceTickInfo({tick: -199020, liquidity: 286307818078725857}); // 3 ether (6747.511324 USDCE)
+
+        automator.rebalanceMintWithSwap(_ticksMint, new IAutomator.RebalanceTickInfo[](0));
+
+        // create lock (use all free liquidity without mine + part of my liquidity)
+        WETH_USDCE_500.useDopexPosition(-199000, 15944662399582 + 30897450720345520);
+        WETH_USDCE_500.useDopexPosition(-199010, 11256886803850 + 79786597123471723);
+        WETH_USDCE_500.useDopexPosition(-199020, 12009915582891 + 250834342342341345);
 
         // price changes
         _usdceToWeth(987_654e6);
 
         // current tick: -199075
         // 100_000e6 USDCE  = 44.186046111040200911 WETH
+
         _ticksMint = new IAutomator.RebalanceTickInfo[](3);
-        _ticksMint[0] = IAutomator.RebalanceTickInfo({tick: -199000, liquidity: 477657091282809450}); // 5 ether
-        _ticksMint[1] = IAutomator.RebalanceTickInfo({tick: -199010, liquidity: 954836668738034165}); // 10 ether
-        _ticksMint[2] = IAutomator.RebalanceTickInfo({tick: -199020, liquidity: 1431539090393629287}); // 15 ether
+        _ticksMint[0] = IAutomator.RebalanceTickInfo({tick: -199000, liquidity: 477657091282809450}); // 5 ether (11316.921155 USDCE)
+        _ticksMint[1] = IAutomator.RebalanceTickInfo({tick: -199010, liquidity: 954836668738034165}); // 10 ether (22633.842310 USDCE)
+        _ticksMint[2] = IAutomator.RebalanceTickInfo({tick: -199020, liquidity: 1431539090393629287}); // 15 ether (33950.763465 USDCE)
 
-        IAutomator.RebalanceSwapParams memory _swapParams = IAutomator.RebalanceSwapParams({
-            assetsShortage: 0,
-            counterAssetsShortage: 30 ether,
-            maxCounterAssetsUseForSwap: 0,
-            // 67894737457 USDCE (30 ether) * 1e6 / (1e6 - 1000) = 67962700157 (take 0.1 % buffer for slippage)
-            maxAssetsUseForSwap: 67962700157
-        });
+        // execute rebalance mint against partially locked liquidity
+        automator.rebalanceMintWithSwap(_ticksMint, new IAutomator.RebalanceTickInfo[](0));
 
-        automator.rebalanceMintWithSwap(_ticksMint, _swapParams);
+        // allow 1% error rate
+        // 100_000e6 - 2249170441 - 4498340883 - 6747511324 - 11316921155 - 22633842310 - 33950763465 = 18603450422
+        assertApproxEqRel(USDCE.balanceOf(address(automator)), 18603450422, 0.01e18);
     }
 
     struct DeployAutomatorWithDeposit {
@@ -170,7 +175,7 @@ contract TestScenarioAssetsChange is Test {
             admin: params.admin,
             strategist: params.strategist,
             manager: DopexV2Helper.DOPEX_V2_POSITION_MANAGER,
-            uniV3Handler: DopexV2Helper.uniV3Handler,
+            uniV3Handler: DopexV2Helper.DOPEX_UNIV3_HANDLER,
             router: AutomatorHelper.ROUTER,
             pool: params.pool,
             asset: params.asset,
