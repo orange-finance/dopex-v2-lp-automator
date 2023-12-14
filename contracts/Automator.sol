@@ -82,7 +82,7 @@ contract Automator is IAutomator, ERC20, AccessControlEnumerable, IERC1155Receiv
         uint256 minDepositAssets_
     )
         // TODO: change name and symbol
-        ERC20("Automator", "AUTO", 18)
+        ERC20("Automator", "AUTO", IERC20Decimals(address(asset_)).decimals())
     {
         if (asset_ != IERC20(pool_.token0()) && asset_ != IERC20(pool_.token1())) revert TokenAddressMismatch();
 
@@ -371,7 +371,7 @@ contract Automator is IAutomator, ERC20, AccessControlEnumerable, IERC1155Receiv
 
         LockedDopexShares[] memory _tempShares = new LockedDopexShares[](_length);
 
-        for (uint256 i = 0; i < _length; i++) {
+        for (uint256 i = 0; i < _length; ) {
             c.lowerTick = int24(uint24(activeTicks.at(i)));
 
             c.tokenId = handler.tokenId(address(pool), c.lowerTick, c.lowerTick + poolTickSpacing);
@@ -394,12 +394,20 @@ contract Automator is IAutomator, ERC20, AccessControlEnumerable, IERC1155Receiv
             // redeemable share is burned
             if (c.shareRedeemable > 0)
                 _burnPosition(c.lowerTick, c.lowerTick + poolTickSpacing, c.shareRedeemable.toUint128());
+
+            unchecked {
+                i++;
+            }
         }
 
         // copy to exact size array
         lockedDopexShares = new LockedDopexShares[](c.lockedShareIndex);
-        for (uint256 i = 0; i < c.lockedShareIndex; i++) {
+        for (uint256 i = 0; i < c.lockedShareIndex; ) {
             lockedDopexShares[i] = _tempShares[i];
+
+            unchecked {
+                i++;
+            }
         }
 
         uint256 _payBase = counterAsset.balanceOf(address(this)) - _preBase;
@@ -485,7 +493,7 @@ contract Automator is IAutomator, ERC20, AccessControlEnumerable, IERC1155Receiv
         int24 _lt;
         int24 _ut;
         uint256 _posId;
-        for (uint256 i = 0; i < _mintLength; i++) {
+        for (uint256 i = 0; i < _mintLength; ) {
             _lt = ticksMint[i].tick;
             _ut = _lt + poolTickSpacing;
 
@@ -494,11 +502,15 @@ contract Automator is IAutomator, ERC20, AccessControlEnumerable, IERC1155Receiv
             // If the position is not active, push it to the active ticks
             _posId = uint256(keccak256(abi.encode(handler, pool, _lt, _ut)));
             if (handler.balanceOf(address(this), _posId) == 0) activeTicks.add(uint256(uint24(_lt)));
+
+            unchecked {
+                i++;
+            }
         }
 
         bytes[] memory _burnCalldataBatch = new bytes[](_burnLength);
         uint256 _shares;
-        for (uint256 i = 0; i < _burnLength; i++) {
+        for (uint256 i = 0; i < _burnLength; ) {
             _lt = ticksBurn[i].tick;
             _ut = _lt + poolTickSpacing;
 
@@ -508,6 +520,10 @@ contract Automator is IAutomator, ERC20, AccessControlEnumerable, IERC1155Receiv
 
             // if all shares will be burned, pop the active tick
             if (handler.balanceOf(address(this), _posId) - _shares == 0) activeTicks.remove(uint256(uint24(_lt)));
+
+            unchecked {
+                i++;
+            }
         }
 
         // NOTE: burn should be called before mint to receive the assets from the burned position

@@ -21,13 +21,13 @@ library AutomatorUniswapV3PoolLib {
         uint256 _a0;
         uint256 _a1;
 
-        (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
+        (, int24 _ct, , , , , ) = pool.slot0();
         int24 _spacing = pool.tickSpacing();
 
         uint256 _pLen = positions.length;
         for (uint256 i = 0; i < _pLen; i++) {
             (_a0, _a1) = LiquidityAmounts.getAmountsForLiquidity(
-                sqrtPriceX96,
+                TickMath.getSqrtRatioAtTick(_ct),
                 TickMath.getSqrtRatioAtTick(positions[i].tick),
                 TickMath.getSqrtRatioAtTick(positions[i].tick + _spacing),
                 positions[i].liquidity

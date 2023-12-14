@@ -46,6 +46,23 @@ contract TestAutomatorRebalance is Fixture {
         assertApproxEqRel(automator.totalAssets(), _balanceBasedWeth, 0.0005e18); // max 0.05% diff (swap fee)
     }
 
+    function test_rebalance_activeTickRemoved() public {
+        deal(address(WETH), address(automator), 10 ether);
+
+        // 5 WETH = 11009961214 USDC.e (currentTick: -199349)
+        // liquidity(-199330, -199320) = 469840801795273610 (currentTick: -199349)
+
+        _rebalanceMintSingle(-199330, 469840801795273610);
+
+        int24[] memory _ticks = automator.getActiveTicks();
+        assertEq(_ticks.length, 1);
+
+        _rebalanceBurnSingle(-199330, 469840801795273609);
+
+        _ticks = automator.getActiveTicks();
+        assertEq(_ticks.length, 0);
+    }
+
     function test_calculateRebalanceSwapParamsInRebalance_reversedPair() public {
         _deployAutomator({
             admin: address(this),
@@ -58,7 +75,7 @@ contract TestAutomatorRebalance is Fixture {
 
         deal(address(USDCE), address(automator), 10000e6);
 
-        // 10000e6 USDCE  = 4541342065417645174 WETH (currentTick: 199349)
+        // 10000e6 USDCE  = 4541342065417645174 WETH (currentTick: -199349)
         // liquidity(-199340, -199330) = 426528252665062768 (currentTick: -199349)
 
         IAutomator.RebalanceTickInfo[] memory _ticksMint = new Automator.RebalanceTickInfo[](1);
@@ -76,6 +93,25 @@ contract TestAutomatorRebalance is Fixture {
         assertEq(_swapParams.maxCounterAssetsUseForSwap, 0);
     }
 
+    function test_calculateRebalanceSwapParamsInRebalance_revertWhenBothTokensInShort() public {
+        // automator has no tokens
+        // currentTick: -199349
+
+        IAutomator.RebalanceTickInfo[] memory _ticksMint = new Automator.RebalanceTickInfo[](2);
+
+        /**
+         * NOTE: When specifying liquidity less than 1e8, smaller decimals token rounded to zero by UniswapPool.
+         */
+        // < currentTick (need USDC.e)
+        _ticksMint[0] = IAutomator.RebalanceTickInfo({tick: -199360, liquidity: 1e8});
+        // > currentTick (need WETH)
+        _ticksMint[1] = IAutomator.RebalanceTickInfo({tick: -199340, liquidity: 1e8});
+
+        // this will be reverted because both tokens are in short
+        vm.expectRevert(Automator.InvalidPositionConstruction.selector);
+        automator.calculateRebalanceSwapParamsInRebalance(_ticksMint, new Automator.RebalanceTickInfo[](0));
+    }
+
     function test_onERC1155BatchReceived() public {
         assertEq(
             automator.onERC1155BatchReceived(address(0), address(0), new uint256[](0), new uint256[](0), ""),
@@ -83,7 +119,7 @@ contract TestAutomatorRebalance is Fixture {
         );
     }
 
-    function test_checkMintValidity_false() public {
+    function test_checkMintValidity_false_owed0Invalid() public {
         _mockDopexHandlerTokenIdInfo(
             -199500,
             IUniswapV3SingleTickLiquidityHandler.TokenIdInfo({
@@ -93,6 +129,29 @@ contract TestAutomatorRebalance is Fixture {
                 feeGrowthInside0LastX128: 0,
                 feeGrowthInside1LastX128: 0,
                 tokensOwed0: 9,
+                tokensOwed1: 10000,
+                lastDonation: 0,
+                donatedLiquidity: 0,
+                token0: address(USDCE),
+                token1: address(WETH),
+                fee: 3000
+            })
+        );
+
+        assertEq(automator.checkMintValidity(-199500), false);
+        vm.clearMockedCalls();
+    }
+
+    function test_checkMintValidity_false_owed1Invalid() public {
+        _mockDopexHandlerTokenIdInfo(
+            -199500,
+            IUniswapV3SingleTickLiquidityHandler.TokenIdInfo({
+                totalLiquidity: 0,
+                totalSupply: 0,
+                liquidityUsed: 0,
+                feeGrowthInside0LastX128: 0,
+                feeGrowthInside1LastX128: 0,
+                tokensOwed0: 10000,
                 tokensOwed1: 9,
                 lastDonation: 0,
                 donatedLiquidity: 0,
