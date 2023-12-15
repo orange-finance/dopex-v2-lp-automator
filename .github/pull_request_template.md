@@ -6,7 +6,6 @@ Bug fixes and new features should include tests.
 
 ## Motivation
 
- 
 <!--
 Explain the context and why you're making that change. What is the problem
 you're trying to solve? In some cases there is not a problem and this can be
