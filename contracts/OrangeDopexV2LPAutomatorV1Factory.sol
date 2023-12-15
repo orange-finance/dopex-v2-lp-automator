@@ -6,6 +6,8 @@ import {IOrangeVaultRegistry} from "./vendor/orange/IOrangeVaultRegistry.sol";
 import {OrangeDopexV2LPAutomator, IDopexV2PositionManager, IUniswapV3SingleTickLiquidityHandler, ISwapRouter, IUniswapV3Pool, IERC20} from "./OrangeDopexV2LPAutomator.sol";
 import {AccessControlEnumerable} from "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 
+import {IERC20Symbol} from "./interfaces/IERC20Extended.sol";
+
 contract OrangeDopexV2LPAutomatorV1Factory is AccessControlEnumerable {
     IOrangeVaultRegistry public immutable registry;
 
@@ -32,10 +34,16 @@ contract OrangeDopexV2LPAutomatorV1Factory is AccessControlEnumerable {
     }
 
     function _create(InitArgs calldata initArgs) internal returns (OrangeDopexV2LPAutomator) {
+        string memory _tokenName = string.concat(
+            "odpx",
+            IERC20Symbol(initArgs.pool.token0()).symbol(),
+            "-",
+            IERC20Symbol(initArgs.pool.token1()).symbol()
+        );
+
         OrangeDopexV2LPAutomator automator = new OrangeDopexV2LPAutomator({
-            // TODO: dynamic name and symbol
-            name: "OrangeDopexV2LPAutomator",
-            symbol: "ODV2LP",
+            name: _tokenName,
+            symbol: _tokenName,
             admin: initArgs.admin,
             manager_: initArgs.manager,
             handler_: initArgs.handler,

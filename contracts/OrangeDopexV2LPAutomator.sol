@@ -24,12 +24,10 @@ import {UniswapV3SingleTickLiquidityLib} from "./lib/UniswapV3SingleTickLiquidit
 import {AutomatorUniswapV3PoolLib} from "./lib/AutomatorUniswapV3PoolLib.sol";
 import {IDopexV2PositionManager} from "./vendor/dopexV2/IDopexV2PositionManager.sol";
 
+import {IERC20Decimals} from "./interfaces/IERC20Extended.sol";
+
 interface IMulticallProvider {
     function multicall(bytes[] calldata data) external returns (bytes[] memory results);
-}
-
-interface IERC20Decimals {
-    function decimals() external view returns (uint8);
 }
 
 contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessControlEnumerable, IERC1155Receiver {

@@ -50,6 +50,8 @@ contract TestOrangeDopexV2LPAutomatorFactory is Test {
             })
         );
 
+        assertEq(automator.name(), "odpxWETH-USDC");
+        assertEq(automator.symbol(), "odpxWETH-USDC");
         assertEq(address(automator.manager()), address(DopexV2Helper.DOPEX_V2_POSITION_MANAGER));
         assertEq(address(automator.handler()), address(DopexV2Helper.DOPEX_UNIV3_HANDLER));
         assertEq(address(automator.router()), address(AutomatorHelper.ROUTER));
