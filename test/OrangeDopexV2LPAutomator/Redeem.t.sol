@@ -3,10 +3,10 @@
 pragma solidity 0.8.19;
 
 import "./Fixture.sol";
-import {IAutomator} from "../../contracts/interfaces/IAutomator.sol";
+import {IOrangeDopexV2LPAutomator} from "../../contracts/interfaces/IOrangeDopexV2LPAutomator.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 
-contract TestAutomatorRedeem is Fixture {
+contract TestOrangeDopexV2LPAutomatorRedeem is Fixture {
     using FixedPointMathLib for uint256;
 
     function setUp() public override {
@@ -24,7 +24,7 @@ contract TestAutomatorRedeem is Fixture {
         assertEq(WETH.balanceOf(alice), 0);
 
         vm.prank(alice);
-        (uint256 _assets, IAutomator.LockedDopexShares[] memory _locked) = automator.redeem(1e18, 0);
+        (uint256 _assets, IOrangeDopexV2LPAutomator.LockedDopexShares[] memory _locked) = automator.redeem(1e18, 0);
 
         assertEq(_locked.length, 0);
         assertEq(_assets, 1 ether);
@@ -46,7 +46,7 @@ contract TestAutomatorRedeem is Fixture {
         _mint(_balanceBasedWeth, _balanceBasedUsdce, _oor_belowLower, _oor_aboveLower);
 
         vm.startPrank(alice);
-        (uint256 _assets, IAutomator.LockedDopexShares[] memory _locked) = automator.redeem(
+        (uint256 _assets, IOrangeDopexV2LPAutomator.LockedDopexShares[] memory _locked) = automator.redeem(
             automator.balanceOf(alice),
             0
         );
@@ -70,7 +70,10 @@ contract TestAutomatorRedeem is Fixture {
 
         // now the balance of WETH in automator ≈ 1 ether
         vm.prank(alice);
-        (uint256 _assets, IAutomator.LockedDopexShares[] memory _locked) = automator.redeem(1.3 ether, 0);
+        (uint256 _assets, IOrangeDopexV2LPAutomator.LockedDopexShares[] memory _locked) = automator.redeem(
+            1.3 ether,
+            0
+        );
 
         /**
          * 1.3 ether * 1 ether (redeemable WETH in automator) / 2.3 ether(automator total supply) = 565217391304347826
@@ -106,7 +109,7 @@ contract TestAutomatorRedeem is Fixture {
         uint256 _balExpected = automator.freeAssets().mulDivDown(1.3e18, automator.totalSupply());
 
         vm.startPrank(alice);
-        (uint256 _assets, IAutomator.LockedDopexShares[] memory _locked) = automator.redeem(1.3e18, 0);
+        (uint256 _assets, IOrangeDopexV2LPAutomator.LockedDopexShares[] memory _locked) = automator.redeem(1.3e18, 0);
         vm.stopPrank();
 
         assertEq(_locked.length, 1);
@@ -118,7 +121,9 @@ contract TestAutomatorRedeem is Fixture {
         _depositFrom(alice, 1 ether);
 
         vm.startPrank(alice);
-        vm.expectRevert(abi.encodeWithSelector(Automator.MinAssetsRequired.selector, 1.1 ether, 1 ether));
+        vm.expectRevert(
+            abi.encodeWithSelector(OrangeDopexV2LPAutomator.MinAssetsRequired.selector, 1.1 ether, 1 ether)
+        );
         automator.redeem(1 ether, 1.1 ether);
         vm.stopPrank();
     }
@@ -141,16 +146,17 @@ contract TestAutomatorRedeem is Fixture {
          */
 
         vm.startPrank(alice);
-        vm.expectRevert(Automator.SharesTooSmall.selector);
+        vm.expectRevert(OrangeDopexV2LPAutomator.SharesTooSmall.selector);
         automator.redeem(1e18, 0);
         vm.stopPrank();
     }
 
     function _mint(uint256 _amountWeth, uint256 _amountUsdce, int24 _oor_belowLower, int24 _oor_aboveLower) public {
-        IAutomator.RebalanceTickInfo[] memory _ticksMint = new IAutomator.RebalanceTickInfo[](2);
+        IOrangeDopexV2LPAutomator.RebalanceTickInfo[]
+            memory _ticksMint = new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](2);
 
         // token0: WETH, token1: USDCE
-        _ticksMint[0] = IAutomator.RebalanceTickInfo({
+        _ticksMint[0] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({
             tick: _oor_belowLower,
             liquidity: _toSingleTickLiquidity(
                 _oor_belowLower,
@@ -158,7 +164,7 @@ contract TestAutomatorRedeem is Fixture {
                 (_amountUsdce / 2) - (_amountUsdce / 2).mulDivDown(pool.fee(), 1e6 - pool.fee())
             )
         });
-        _ticksMint[1] = IAutomator.RebalanceTickInfo({
+        _ticksMint[1] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({
             tick: _oor_aboveLower,
             liquidity: _toSingleTickLiquidity(
                 _oor_aboveLower,
@@ -167,7 +173,8 @@ contract TestAutomatorRedeem is Fixture {
             )
         });
 
-        IAutomator.RebalanceTickInfo[] memory _ticksBurn = new IAutomator.RebalanceTickInfo[](0);
+        IOrangeDopexV2LPAutomator.RebalanceTickInfo[]
+            memory _ticksBurn = new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](0);
 
         automator.rebalance(
             _ticksMint,

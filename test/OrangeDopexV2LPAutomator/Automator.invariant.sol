@@ -3,7 +3,7 @@
 pragma solidity 0.8.19;
 
 import "forge-std/Test.sol";
-import {Automator} from "../../contracts/Automator.sol";
+import {OrangeDopexV2LPAutomator} from "../../contracts/OrangeDopexV2LPAutomator.sol";
 
 import {IUniswapV3SingleTickLiquidityHandler} from "../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandler.sol";
 import {IDopexV2PositionManager} from "../../contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
@@ -14,17 +14,17 @@ import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Po
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
-import {IAutomator} from "../../contracts/interfaces/IAutomator.sol";
+import {IOrangeDopexV2LPAutomator} from "../../contracts/interfaces/IOrangeDopexV2LPAutomator.sol";
 
 interface IERC20Decimals {
     function decimals() external view returns (uint8);
 }
 
-contract TestAutomatorInvariant is Test {
+contract TestOrangeDopexV2LPAutomatorInvariant is Test {
     address constant DOPEX_OWNER = 0x2c9bC901f39F847C2fe5D2D7AC9c5888A2Ab8Fcf;
 
-    AutomatorHandler handler;
-    Automator automator;
+    OrangeDopexV2LPAutomatorHandler handler;
+    OrangeDopexV2LPAutomator automator;
 
     IUniswapV3Pool pool = IUniswapV3Pool(0xC31E54c7a869B9FcBEcc14363CF510d1c41fa443);
     IUniswapV3SingleTickLiquidityHandler uniV3Handler =
@@ -37,7 +37,7 @@ contract TestAutomatorInvariant is Test {
     function setUp() public {
         vm.createSelectFork("arb", 151299689);
 
-        automator = new Automator({
+        automator = new OrangeDopexV2LPAutomator({
             admin: address(this),
             manager_: manager,
             handler_: uniV3Handler,
@@ -48,7 +48,7 @@ contract TestAutomatorInvariant is Test {
         });
 
         automator.setDepositCap(100 ether);
-        handler = new AutomatorHandler(automator);
+        handler = new OrangeDopexV2LPAutomatorHandler(automator);
         automator.grantRole(automator.STRATEGIST_ROLE(), address(handler));
 
         targetContract(address(handler));
@@ -76,7 +76,7 @@ contract TestAutomatorInvariant is Test {
     }
 }
 
-contract AutomatorHandler is Test {
+contract OrangeDopexV2LPAutomatorHandler is Test {
     using FixedPointMathLib for uint256;
     using TickMath for int24;
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandler;
@@ -84,7 +84,7 @@ contract AutomatorHandler is Test {
     IERC20 constant WETH = IERC20(0x82aF49447D8a07e3bd95BD0d56f35241523fBab1);
     IERC20 constant USDCE = IERC20(0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8);
 
-    Automator automator;
+    OrangeDopexV2LPAutomator automator;
 
     address alice = vm.addr(1);
     address bob = vm.addr(2);
@@ -107,7 +107,7 @@ contract AutomatorHandler is Test {
         vm.stopPrank();
     }
 
-    constructor(Automator automator_) {
+    constructor(OrangeDopexV2LPAutomator automator_) {
         automator = automator_;
         swapTokens.push(address(automator.asset()));
         swapTokens.push(address(automator.counterAsset()));
@@ -171,7 +171,7 @@ contract AutomatorHandler is Test {
         ////////////////////////////////////////////////////////////*/
         if (shares == 0) {
             emit log_string("case: zero shares will revert");
-            vm.expectRevert(Automator.AmountZero.selector);
+            vm.expectRevert(OrangeDopexV2LPAutomator.AmountZero.selector);
             automator.redeem(shares, 0);
             return;
         }
@@ -181,7 +181,7 @@ contract AutomatorHandler is Test {
         ////////////////////////////////////////////////////////////*/
         if (automator.convertToAssets(shares) == 0) {
             emit log_string("case: too small shares will revert");
-            vm.expectRevert(Automator.SharesTooSmall.selector);
+            vm.expectRevert(OrangeDopexV2LPAutomator.SharesTooSmall.selector);
             automator.redeem(shares, 0);
             return;
         }
@@ -216,8 +216,10 @@ contract AutomatorHandler is Test {
         ////////////////////////////////////////////////////////////*/
 
         // create params
-        IAutomator.RebalanceTickInfo[] memory _ticksMint = new IAutomator.RebalanceTickInfo[](positions);
-        IAutomator.RebalanceTickInfo[] memory _ticksBurn = new IAutomator.RebalanceTickInfo[](positions);
+        IOrangeDopexV2LPAutomator.RebalanceTickInfo[]
+            memory _ticksMint = new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](positions);
+        IOrangeDopexV2LPAutomator.RebalanceTickInfo[]
+            memory _ticksBurn = new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](positions);
 
         int24 _lt = lowerTick;
         int24 _ut = lowerTick + int24(automator.pool().tickSpacing());
@@ -245,7 +247,7 @@ contract AutomatorHandler is Test {
 
             if (liquidity > 10000 && automator.checkMintValidity(_lt)) {
                 emit log_string("create mint params");
-                _ticksMint[k++] = IAutomator.RebalanceTickInfo({tick: _lt, liquidity: liquidity});
+                _ticksMint[k++] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({tick: _lt, liquidity: liquidity});
             }
 
             // create burn params
@@ -257,7 +259,7 @@ contract AutomatorHandler is Test {
             if (shares > 0) {
                 emit log_string("create burn params");
                 shares = bound(shares, 0, shares);
-                _ticksBurn[j++] = IAutomator.RebalanceTickInfo({
+                _ticksBurn[j++] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({
                     tick: _lt,
                     liquidity: automator.handler().convertToAssets(
                         uint128(shares),
@@ -271,19 +273,25 @@ contract AutomatorHandler is Test {
         }
 
         // shorted _ticksMint
-        IAutomator.RebalanceTickInfo[] memory _ticksMintShorted = new IAutomator.RebalanceTickInfo[](k);
+        IOrangeDopexV2LPAutomator.RebalanceTickInfo[]
+            memory _ticksMintShorted = new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](k);
         for (uint256 i = 0; i < k; i++) {
             _ticksMintShorted[i] = _ticksMint[i];
         }
 
         // shorted _ticksBurn
-        IAutomator.RebalanceTickInfo[] memory _ticksBurnShorted = new IAutomator.RebalanceTickInfo[](j);
+        IOrangeDopexV2LPAutomator.RebalanceTickInfo[]
+            memory _ticksBurnShorted = new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](j);
         for (uint256 i = 0; i < j; i++) {
             _ticksBurnShorted[i] = _ticksBurn[i];
         }
 
         vm.prank(address(this));
-        automator.rebalance(_ticksMintShorted, _ticksBurnShorted, IAutomator.RebalanceSwapParams(0, 0, 0, 0));
+        automator.rebalance(
+            _ticksMintShorted,
+            _ticksBurnShorted,
+            IOrangeDopexV2LPAutomator.RebalanceSwapParams(0, 0, 0, 0)
+        );
     }
 }
 

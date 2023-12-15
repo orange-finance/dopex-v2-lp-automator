@@ -6,7 +6,7 @@ import "./Fixture.sol";
 // TODO: migrate all utility to this helper functions
 import "../helper/AutomatorHelper.sol";
 
-contract TestAutomatorDeposit is Fixture {
+contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
     function setUp() public override {
         vm.createSelectFork("arb", 157066571);
         super.setUp();
@@ -16,7 +16,7 @@ contract TestAutomatorDeposit is Fixture {
     }
 
     function test_deposit_firstTime() public {
-        _deployAutomator({
+        _deployOrangeDopexV2LPAutomator({
             admin: address(this),
             strategist: address(this),
             pool_: pool,
@@ -40,12 +40,12 @@ contract TestAutomatorDeposit is Fixture {
     }
 
     function test_deposit_revertWhenDepositIsZero() public {
-        vm.expectRevert(Automator.AmountZero.selector);
+        vm.expectRevert(OrangeDopexV2LPAutomator.AmountZero.selector);
         automator.deposit(0);
     }
 
     function test_deposit_revertWhenDepositCapExceeded() public {
-        _deployAutomator({
+        _deployOrangeDopexV2LPAutomator({
             admin: address(this),
             strategist: address(this),
             pool_: pool,
@@ -55,13 +55,13 @@ contract TestAutomatorDeposit is Fixture {
         });
         deal(address(USDCE), alice, 10001e6);
 
-        vm.expectRevert(Automator.DepositCapExceeded.selector);
+        vm.expectRevert(OrangeDopexV2LPAutomator.DepositCapExceeded.selector);
         vm.prank(alice);
         automator.deposit(10_001e6);
     }
 
     function test_deposit_revertWhenDepositTooSmall() public {
-        _deployAutomator({
+        _deployOrangeDopexV2LPAutomator({
             admin: address(this),
             strategist: address(this),
             pool_: pool,
@@ -70,12 +70,12 @@ contract TestAutomatorDeposit is Fixture {
             depositCap: 10_000e6
         });
 
-        vm.expectRevert(Automator.DepositTooSmall.selector);
+        vm.expectRevert(OrangeDopexV2LPAutomator.DepositTooSmall.selector);
         automator.deposit(999999);
     }
 
     function test_deposit_deductedPerfFee_firstDeposit() public {
-        automator = AutomatorHelper.deployAutomator({
+        automator = AutomatorHelper.deployOrangeDopexV2LPAutomator({
             vm: vm,
             dopexV2ManagerOwner: managerOwner,
             admin: address(this),
@@ -103,7 +103,7 @@ contract TestAutomatorDeposit is Fixture {
     }
 
     function test_deposit_deductedPerfFee_secondDeposit() public {
-        automator = AutomatorHelper.deployAutomator({
+        automator = AutomatorHelper.deployOrangeDopexV2LPAutomator({
             vm: vm,
             dopexV2ManagerOwner: managerOwner,
             admin: address(this),

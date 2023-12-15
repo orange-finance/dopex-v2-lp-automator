@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.19;
 
-import {IAutomator} from "./interfaces/IAutomator.sol";
+import {IOrangeDopexV2LPAutomator} from "./interfaces/IOrangeDopexV2LPAutomator.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import {LiquidityAmounts} from "./vendor/uniswapV3/LiquidityAmounts.sol";
@@ -34,7 +34,7 @@ interface IERC20Decimals {
     function decimals() external view returns (uint8);
 }
 
-contract Automator is IAutomator, ERC20, AccessControlEnumerable, IERC1155Receiver {
+contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessControlEnumerable, IERC1155Receiver {
     using FixedPointMathLib for uint256;
     using FullMath for uint256;
     using SafeERC20 for IERC20;
@@ -91,7 +91,7 @@ contract Automator is IAutomator, ERC20, AccessControlEnumerable, IERC1155Receiv
         uint256 minDepositAssets_
     )
         // TODO: change name and symbol
-        ERC20("Automator", "AUTO", IERC20Decimals(address(asset_)).decimals())
+        ERC20("OrangeDopexV2LPAutomator", "AUTO", IERC20Decimals(address(asset_)).decimals())
     {
         if (asset_ != IERC20(pool_.token0()) && asset_ != IERC20(pool_.token1())) revert TokenAddressMismatch();
 

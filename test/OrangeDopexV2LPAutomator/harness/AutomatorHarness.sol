@@ -2,9 +2,9 @@
 
 pragma solidity 0.8.19;
 
-import {Automator, EnumerableSet, IDopexV2PositionManager, IUniswapV3SingleTickLiquidityHandler, ISwapRouter, IUniswapV3Pool, IERC20} from "../../../contracts/Automator.sol";
+import {OrangeDopexV2LPAutomator, EnumerableSet, IDopexV2PositionManager, IUniswapV3SingleTickLiquidityHandler, ISwapRouter, IUniswapV3Pool, IERC20} from "../../../contracts/OrangeDopexV2LPAutomator.sol";
 
-contract AutomatorHarness is Automator {
+contract AutomatorHarness is OrangeDopexV2LPAutomator {
     constructor(
         address admin,
         IDopexV2PositionManager manager_,
@@ -13,7 +13,7 @@ contract AutomatorHarness is Automator {
         IUniswapV3Pool pool_,
         IERC20 asset_,
         uint256 minDepositAssets_
-    ) Automator(admin, manager_, handler_, router_, pool_, asset_, minDepositAssets_) {}
+    ) OrangeDopexV2LPAutomator(admin, manager_, handler_, router_, pool_, asset_, minDepositAssets_) {}
 
     function pushActiveTick(int24 tick) external {
         EnumerableSet.add(activeTicks, uint256(uint24(tick)));

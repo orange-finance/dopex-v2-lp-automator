@@ -3,7 +3,7 @@
 pragma solidity 0.8.19;
 
 import "forge-std/Test.sol";
-import {Automator, IAutomator} from "../../contracts/Automator.sol";
+import {OrangeDopexV2LPAutomator, IOrangeDopexV2LPAutomator} from "../../contracts/OrangeDopexV2LPAutomator.sol";
 import {IDopexV2PositionManager} from "../../contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
 import {IUniswapV3SingleTickLiquidityHandler} from "../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandler.sol";
 import {UniswapV3SingleTickLiquidityLib} from "../../contracts/lib/UniswapV3SingleTickLiquidityLib.sol";
@@ -22,7 +22,7 @@ abstract contract Fixture is Test {
     using TickMath for int24;
     using stdStorage for StdStorage;
 
-    Automator automator;
+    OrangeDopexV2LPAutomator automator;
 
     IDopexV2PositionManager manager = IDopexV2PositionManager(0xE4bA6740aF4c666325D49B3112E4758371386aDc);
     address managerOwner = 0xEE82496D3ed1f5AFbEB9B29f3f59289fd899d9D0;
@@ -43,7 +43,7 @@ abstract contract Fixture is Test {
     address dave = makeAddr("dave");
 
     function setUp() public virtual {
-        automator = new Automator({
+        automator = new OrangeDopexV2LPAutomator({
             admin: address(this),
             manager_: manager,
             handler_: uniV3Handler,
@@ -185,7 +185,7 @@ abstract contract Fixture is Test {
         tokenId = uniV3Handler.tokenId(address(pool), tick, tick + _spacing);
     }
 
-    function _deployAutomator(
+    function _deployOrangeDopexV2LPAutomator(
         address admin,
         address strategist,
         IUniswapV3Pool pool_,
@@ -193,7 +193,7 @@ abstract contract Fixture is Test {
         uint256 minDepositAssets,
         uint256 depositCap
     ) internal {
-        automator = new Automator({
+        automator = new OrangeDopexV2LPAutomator({
             admin: admin,
             manager_: manager,
             handler_: uniV3Handler,
@@ -208,22 +208,24 @@ abstract contract Fixture is Test {
     }
 
     function _rebalanceMintSingle(int24 lowerTick, uint128 liquidity) internal {
-        IAutomator.RebalanceTickInfo[] memory _ticksMint = new Automator.RebalanceTickInfo[](1);
-        _ticksMint[0] = IAutomator.RebalanceTickInfo({tick: lowerTick, liquidity: liquidity});
+        IOrangeDopexV2LPAutomator.RebalanceTickInfo[]
+            memory _ticksMint = new OrangeDopexV2LPAutomator.RebalanceTickInfo[](1);
+        _ticksMint[0] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({tick: lowerTick, liquidity: liquidity});
         automator.rebalance(
             _ticksMint,
-            new Automator.RebalanceTickInfo[](0),
-            IAutomator.RebalanceSwapParams(0, 0, 0, 0)
+            new OrangeDopexV2LPAutomator.RebalanceTickInfo[](0),
+            IOrangeDopexV2LPAutomator.RebalanceSwapParams(0, 0, 0, 0)
         );
     }
 
     function _rebalanceBurnSingle(int24 lowerTick, uint128 liquidity) internal {
-        IAutomator.RebalanceTickInfo[] memory _ticksBurn = new Automator.RebalanceTickInfo[](1);
-        _ticksBurn[0] = IAutomator.RebalanceTickInfo({tick: lowerTick, liquidity: liquidity});
+        IOrangeDopexV2LPAutomator.RebalanceTickInfo[]
+            memory _ticksBurn = new OrangeDopexV2LPAutomator.RebalanceTickInfo[](1);
+        _ticksBurn[0] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({tick: lowerTick, liquidity: liquidity});
         automator.rebalance(
-            new Automator.RebalanceTickInfo[](0),
+            new OrangeDopexV2LPAutomator.RebalanceTickInfo[](0),
             _ticksBurn,
-            IAutomator.RebalanceSwapParams(0, 0, 0, 0)
+            IOrangeDopexV2LPAutomator.RebalanceSwapParams(0, 0, 0, 0)
         );
     }
 }

@@ -21,7 +21,7 @@ import {IUniswapV3SingleTickLiquidityHandler} from "../vendor/dopexV2/IUniswapV3
 import {UniswapV3SingleTickLiquidityLib} from "../lib/UniswapV3SingleTickLiquidityLib.sol";
 import {IDopexV2PositionManager} from "../vendor/dopexV2/IDopexV2PositionManager.sol";
 
-interface IAutomator {
+interface IOrangeDopexV2LPAutomator {
     function manager() external view returns (IDopexV2PositionManager);
 
     function handler() external view returns (IUniswapV3SingleTickLiquidityHandler);
@@ -87,7 +87,7 @@ interface IAutomator {
 
     function checkMintValidity(int24 lowerTick) external view returns (bool);
 
-    // Add any other public or external functions from the Automator contract here
+    // Add any other public or external functions from the OrangeDopexV2LPAutomator contract here
     function rebalance(
         RebalanceTickInfo[] calldata ticksMint,
         RebalanceTickInfo[] calldata ticksBurn,

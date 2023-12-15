@@ -3,10 +3,10 @@
 pragma solidity 0.8.19;
 
 import "./Fixture.sol";
-import {IAutomator} from "../../contracts/interfaces/IAutomator.sol";
+import {IOrangeDopexV2LPAutomator} from "../../contracts/interfaces/IOrangeDopexV2LPAutomator.sol";
 import {deployAutomatorHarness, AutomatorHarness} from "./harness/AutomatorHarness.sol";
 
-contract TestAutomatorState is Fixture {
+contract TestOrangeDopexV2LPAutomatorState is Fixture {
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandler;
 
     function setUp() public override {
@@ -44,31 +44,32 @@ contract TestAutomatorState is Fixture {
         uint256 _a0above = WETH.balanceOf(address(automator)) / 3;
         uint256 _a1above = USDCE.balanceOf(address(automator)) / 3;
 
-        IAutomator.RebalanceTickInfo[] memory _ticksMint = new IAutomator.RebalanceTickInfo[](2);
-        _ticksMint[0] = IAutomator.RebalanceTickInfo({
+        IOrangeDopexV2LPAutomator.RebalanceTickInfo[]
+            memory _ticksMint = new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](2);
+        _ticksMint[0] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({
             tick: _oor_belowLower,
             liquidity: _toSingleTickLiquidity(_oor_belowLower, _a0below, _a1below)
         });
-        _ticksMint[1] = IAutomator.RebalanceTickInfo({
+        _ticksMint[1] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({
             tick: _oor_aboveLower,
             liquidity: _toSingleTickLiquidity(_oor_aboveLower, _a0above, _a1above)
         });
 
         automator.rebalance(
             _ticksMint,
-            new IAutomator.RebalanceTickInfo[](0),
-            IAutomator.RebalanceSwapParams(0, 0, 0, 0)
+            new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](0),
+            IOrangeDopexV2LPAutomator.RebalanceSwapParams(0, 0, 0, 0)
         );
 
-        uint256 _assetsInAutomator = WETH.balanceOf(address(automator)) +
+        uint256 _assetsInOrangeDopexV2LPAutomator = WETH.balanceOf(address(automator)) +
             _getQuote(address(USDCE), address(WETH), uint128(USDCE.balanceOf(address(automator))));
 
-        emit log_named_uint("assets in automator", _assetsInAutomator);
+        emit log_named_uint("assets in automator", _assetsInOrangeDopexV2LPAutomator);
 
         // allow bit of error because rounding will happen from different position => assets calculations
         assertApproxEqAbs(
             automator.totalAssets(),
-            _assetsInAutomator +
+            _assetsInOrangeDopexV2LPAutomator +
                 _positionToAssets(_oor_belowLower, address(automator)) +
                 _positionToAssets(_oor_aboveLower, address(automator)),
             1
@@ -76,7 +77,7 @@ contract TestAutomatorState is Fixture {
     }
 
     function test_totalAssets_reversedPair() public {
-        _deployAutomator({
+        _deployOrangeDopexV2LPAutomator({
             admin: address(this),
             strategist: address(this),
             pool_: pool,
@@ -196,21 +197,22 @@ contract TestAutomatorState is Fixture {
         uint256 _a0above = WETH.balanceOf(address(automator)) / 3;
         uint256 _a1above = USDCE.balanceOf(address(automator)) / 3;
 
-        IAutomator.RebalanceTickInfo[] memory _ticksMint = new IAutomator.RebalanceTickInfo[](2);
-        _ticksMint[0] = IAutomator.RebalanceTickInfo({
+        IOrangeDopexV2LPAutomator.RebalanceTickInfo[]
+            memory _ticksMint = new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](2);
+        _ticksMint[0] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({
             tick: _oor_belowLower,
             liquidity: _toSingleTickLiquidity(_oor_belowLower, _a0below, _a1below)
         });
 
-        _ticksMint[1] = IAutomator.RebalanceTickInfo({
+        _ticksMint[1] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({
             tick: _oor_aboveLower,
             liquidity: _toSingleTickLiquidity(_oor_aboveLower, _a0above, _a1above)
         });
 
         automator.rebalance(
             _ticksMint,
-            new IAutomator.RebalanceTickInfo[](0),
-            IAutomator.RebalanceSwapParams(0, 0, 0, 0)
+            new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](0),
+            IOrangeDopexV2LPAutomator.RebalanceSwapParams(0, 0, 0, 0)
         );
 
         assertEq(
@@ -251,25 +253,26 @@ contract TestAutomatorState is Fixture {
         uint256 _a0above = WETH.balanceOf(address(automator)) / 4;
         uint256 _a1above = USDCE.balanceOf(address(automator)) / 4;
 
-        IAutomator.RebalanceTickInfo[] memory _ticksMint = new IAutomator.RebalanceTickInfo[](2);
-        _ticksMint[0] = IAutomator.RebalanceTickInfo({
+        IOrangeDopexV2LPAutomator.RebalanceTickInfo[]
+            memory _ticksMint = new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](2);
+        _ticksMint[0] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({
             tick: _oor_belowLower,
             liquidity: _toSingleTickLiquidity(_oor_belowLower, _a0below, _a1below)
         });
-        _ticksMint[1] = IAutomator.RebalanceTickInfo({
+        _ticksMint[1] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({
             tick: _oor_aboveLower,
             liquidity: _toSingleTickLiquidity(_oor_aboveLower, _a0above, _a1above)
         });
 
         automator.rebalance(
             _ticksMint,
-            new IAutomator.RebalanceTickInfo[](0),
-            IAutomator.RebalanceSwapParams(0, 0, 0, 0)
+            new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](0),
+            IOrangeDopexV2LPAutomator.RebalanceSwapParams(0, 0, 0, 0)
         );
 
-        uint256 _assetsInAutomator = WETH.balanceOf(address(automator)) +
+        uint256 _assetsInOrangeDopexV2LPAutomator = WETH.balanceOf(address(automator)) +
             _getQuote(address(USDCE), address(WETH), uint128(USDCE.balanceOf(address(automator))));
-        uint256 _freeAssets = _assetsInAutomator +
+        uint256 _freeAssets = _assetsInOrangeDopexV2LPAutomator +
             _positionToAssets(_oor_belowLower, address(automator)) +
             _positionToAssets(_oor_aboveLower, address(automator));
 
@@ -277,7 +280,7 @@ contract TestAutomatorState is Fixture {
     }
 
     function test_freeAssets_reversedPair() public {
-        _deployAutomator({
+        _deployOrangeDopexV2LPAutomator({
             admin: address(this),
             strategist: address(this),
             pool_: pool,
@@ -385,8 +388,9 @@ contract TestAutomatorState is Fixture {
         (int24 _oor_belowLower, ) = _outOfRangeBelow(1);
         (int24 _oor_aboveLower, ) = _outOfRangeAbove(1);
 
-        IAutomator.RebalanceTickInfo[] memory _ticksMint = new IAutomator.RebalanceTickInfo[](2);
-        _ticksMint[0] = IAutomator.RebalanceTickInfo({
+        IOrangeDopexV2LPAutomator.RebalanceTickInfo[]
+            memory _ticksMint = new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](2);
+        _ticksMint[0] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({
             tick: _oor_belowLower,
             liquidity: _toSingleTickLiquidity(
                 _oor_belowLower,
@@ -395,7 +399,7 @@ contract TestAutomatorState is Fixture {
             )
         });
 
-        _ticksMint[1] = IAutomator.RebalanceTickInfo({
+        _ticksMint[1] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({
             tick: _oor_aboveLower,
             liquidity: _toSingleTickLiquidity(
                 _oor_aboveLower,
@@ -406,8 +410,8 @@ contract TestAutomatorState is Fixture {
 
         automator.rebalance(
             _ticksMint,
-            new IAutomator.RebalanceTickInfo[](0),
-            IAutomator.RebalanceSwapParams(0, 0, 0, 0)
+            new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](0),
+            IOrangeDopexV2LPAutomator.RebalanceSwapParams(0, 0, 0, 0)
         );
 
         assertApproxEqAbs(
@@ -438,21 +442,22 @@ contract TestAutomatorState is Fixture {
         uint256 _a0above = WETH.balanceOf(address(automator)) / 3;
         uint256 _a1above = USDCE.balanceOf(address(automator)) / 3;
 
-        IAutomator.RebalanceTickInfo[] memory _ticksMint = new IAutomator.RebalanceTickInfo[](2);
-        _ticksMint[0] = IAutomator.RebalanceTickInfo({
+        IOrangeDopexV2LPAutomator.RebalanceTickInfo[]
+            memory _ticksMint = new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](2);
+        _ticksMint[0] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({
             tick: _oor_belowLower,
             liquidity: _toSingleTickLiquidity(_oor_belowLower, _a0below, _a1below)
         });
 
-        _ticksMint[1] = IAutomator.RebalanceTickInfo({
+        _ticksMint[1] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({
             tick: _oor_aboveLower,
             liquidity: _toSingleTickLiquidity(_oor_aboveLower, _a0above, _a1above)
         });
 
         automator.rebalance(
             _ticksMint,
-            new IAutomator.RebalanceTickInfo[](0),
-            IAutomator.RebalanceSwapParams(0, 0, 0, 0)
+            new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](0),
+            IOrangeDopexV2LPAutomator.RebalanceSwapParams(0, 0, 0, 0)
         );
 
         uint256 _belowId = uniV3Handler.tokenId(address(pool), _oor_belowLower, _oor_belowLower + pool.tickSpacing());
@@ -486,21 +491,22 @@ contract TestAutomatorState is Fixture {
         uint256 _a0above = WETH.balanceOf(address(automator)) / 3;
         uint256 _a1above = USDCE.balanceOf(address(automator)) / 3;
 
-        IAutomator.RebalanceTickInfo[] memory _ticksMint = new IAutomator.RebalanceTickInfo[](2);
-        _ticksMint[0] = IAutomator.RebalanceTickInfo({
+        IOrangeDopexV2LPAutomator.RebalanceTickInfo[]
+            memory _ticksMint = new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](2);
+        _ticksMint[0] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({
             tick: _oor_belowLower,
             liquidity: _toSingleTickLiquidity(_oor_belowLower, _a0below, _a1below)
         });
 
-        _ticksMint[1] = IAutomator.RebalanceTickInfo({
+        _ticksMint[1] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({
             tick: _oor_aboveLower,
             liquidity: _toSingleTickLiquidity(_oor_aboveLower, _a0above, _a1above)
         });
 
         automator.rebalance(
             _ticksMint,
-            new IAutomator.RebalanceTickInfo[](0),
-            IAutomator.RebalanceSwapParams(0, 0, 0, 0)
+            new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](0),
+            IOrangeDopexV2LPAutomator.RebalanceSwapParams(0, 0, 0, 0)
         );
 
         uint256 _belowId = uniV3Handler.tokenId(address(pool), _oor_belowLower, _oor_belowLower + pool.tickSpacing());

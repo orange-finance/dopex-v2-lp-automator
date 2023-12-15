@@ -3,10 +3,10 @@
 pragma solidity 0.8.19;
 
 import {IOrangeVaultRegistry} from "./vendor/orange/IOrangeVaultRegistry.sol";
-import {Automator, IDopexV2PositionManager, IUniswapV3SingleTickLiquidityHandler, ISwapRouter, IUniswapV3Pool, IERC20} from "./Automator.sol";
+import {OrangeDopexV2LPAutomator, IDopexV2PositionManager, IUniswapV3SingleTickLiquidityHandler, ISwapRouter, IUniswapV3Pool, IERC20} from "./OrangeDopexV2LPAutomator.sol";
 import {AccessControlEnumerable} from "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 
-contract AutomatorV1Factory is AccessControlEnumerable {
+contract OrangeDopexV2LPAutomatorV1Factory is AccessControlEnumerable {
     IOrangeVaultRegistry public immutable registry;
 
     constructor(IOrangeVaultRegistry _registry) {
@@ -25,12 +25,14 @@ contract AutomatorV1Factory is AccessControlEnumerable {
         uint256 minDepositAssets;
     }
 
-    function createAutomator(InitArgs calldata initArgs) external onlyRole(DEFAULT_ADMIN_ROLE) returns (Automator) {
+    function createOrangeDopexV2LPAutomator(
+        InitArgs calldata initArgs
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) returns (OrangeDopexV2LPAutomator) {
         return _create(initArgs);
     }
 
-    function _create(InitArgs calldata initArgs) internal returns (Automator) {
-        Automator automator = new Automator({
+    function _create(InitArgs calldata initArgs) internal returns (OrangeDopexV2LPAutomator) {
+        OrangeDopexV2LPAutomator automator = new OrangeDopexV2LPAutomator({
             admin: initArgs.admin,
             manager_: initArgs.manager,
             handler_: initArgs.handler,

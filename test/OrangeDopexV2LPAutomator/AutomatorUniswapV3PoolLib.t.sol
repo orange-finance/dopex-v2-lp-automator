@@ -4,11 +4,11 @@ pragma solidity 0.8.19;
 
 import "forge-std/Test.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import {Automator} from "../../contracts/Automator.sol";
+import {OrangeDopexV2LPAutomator} from "../../contracts/OrangeDopexV2LPAutomator.sol";
 import {AutomatorUniswapV3PoolLib} from "../../contracts/lib/AutomatorUniswapV3PoolLib.sol";
 import {LiquidityAmounts} from "../../contracts/vendor/uniswapV3/LiquidityAmounts.sol";
 import {TickMath} from "../../contracts/vendor/uniswapV3/TickMath.sol";
-import {IAutomator} from "../../contracts/interfaces/IAutomator.sol";
+import {IOrangeDopexV2LPAutomator} from "../../contracts/interfaces/IOrangeDopexV2LPAutomator.sol";
 
 contract TestUniswapV3PoolLib is Test {
     IUniswapV3Pool wethUsdce = IUniswapV3Pool(0xC31E54c7a869B9FcBEcc14363CF510d1c41fa443);
@@ -34,7 +34,8 @@ contract TestUniswapV3PoolLib is Test {
                             case: single mint
         /////////////////////////////////////////////////////////////*/
 
-        IAutomator.RebalanceTickInfo[] memory mintParams = new IAutomator.RebalanceTickInfo[](1);
+        IOrangeDopexV2LPAutomator.RebalanceTickInfo[]
+            memory mintParams = new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](1);
         mintParams[0].tick = -199310;
         mintParams[0].liquidity = 1e18;
 
@@ -66,7 +67,7 @@ contract TestUniswapV3PoolLib is Test {
                             case: multiple mint
         /////////////////////////////////////////////////////////////*/
 
-        mintParams = new IAutomator.RebalanceTickInfo[](2);
+        mintParams = new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](2);
         mintParams[0].tick = -199310;
         mintParams[0].liquidity = 1e18;
 

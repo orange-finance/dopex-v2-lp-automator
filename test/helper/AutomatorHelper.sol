@@ -10,7 +10,7 @@ import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRoute
 import {IDopexV2PositionManager} from "../../contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
 import {IUniswapV3SingleTickLiquidityHandler} from "../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandler.sol";
 
-import {Automator, IAutomator} from "../../contracts/Automator.sol";
+import {OrangeDopexV2LPAutomator, IOrangeDopexV2LPAutomator} from "../../contracts/OrangeDopexV2LPAutomator.sol";
 
 import {Vm} from "forge-std/Test.sol";
 
@@ -18,10 +18,10 @@ library AutomatorHelper {
     ISwapRouter constant ROUTER = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
 
     /*/////////////////////////////////////////////////////////////////////
-                                Automator utilities
+                                OrangeDopexV2LPAutomator utilities
     /////////////////////////////////////////////////////////////////////*/
 
-    function deployAutomator(
+    function deployOrangeDopexV2LPAutomator(
         Vm vm,
         address dopexV2ManagerOwner,
         address admin,
@@ -33,8 +33,8 @@ library AutomatorHelper {
         IERC20 asset,
         uint256 minDepositAssets,
         uint256 depositCap
-    ) external returns (Automator automator) {
-        automator = new Automator({
+    ) external returns (OrangeDopexV2LPAutomator automator) {
+        automator = new OrangeDopexV2LPAutomator({
             admin: admin,
             manager_: manager,
             handler_: uniV3Handler,
@@ -53,36 +53,40 @@ library AutomatorHelper {
         manager.updateWhitelistHandlerWithApp(address(uniV3Handler), address(admin), true);
     }
 
-    function rebalanceMintSingle(IAutomator automator, int24 lowerTick, uint128 liquidity) internal {
-        IAutomator.RebalanceTickInfo[] memory _ticksMint = new IAutomator.RebalanceTickInfo[](1);
-        _ticksMint[0] = IAutomator.RebalanceTickInfo({tick: lowerTick, liquidity: liquidity});
+    function rebalanceMintSingle(IOrangeDopexV2LPAutomator automator, int24 lowerTick, uint128 liquidity) internal {
+        IOrangeDopexV2LPAutomator.RebalanceTickInfo[]
+            memory _ticksMint = new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](1);
+        _ticksMint[0] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({tick: lowerTick, liquidity: liquidity});
         automator.rebalance(
             _ticksMint,
-            new IAutomator.RebalanceTickInfo[](0),
-            IAutomator.RebalanceSwapParams(0, 0, 0, 0)
+            new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](0),
+            IOrangeDopexV2LPAutomator.RebalanceSwapParams(0, 0, 0, 0)
         );
     }
 
-    function rebalanceMint(IAutomator automator, IAutomator.RebalanceTickInfo[] memory ticksMint) internal {
+    function rebalanceMint(
+        IOrangeDopexV2LPAutomator automator,
+        IOrangeDopexV2LPAutomator.RebalanceTickInfo[] memory ticksMint
+    ) internal {
         automator.rebalance(
             ticksMint,
-            new IAutomator.RebalanceTickInfo[](0),
-            IAutomator.RebalanceSwapParams(0, 0, 0, 0)
+            new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](0),
+            IOrangeDopexV2LPAutomator.RebalanceSwapParams(0, 0, 0, 0)
         );
     }
 
     function rebalanceMintWithSwap(
-        IAutomator automator,
-        IAutomator.RebalanceTickInfo[] memory ticksMint,
-        IAutomator.RebalanceSwapParams memory swapParams
+        IOrangeDopexV2LPAutomator automator,
+        IOrangeDopexV2LPAutomator.RebalanceTickInfo[] memory ticksMint,
+        IOrangeDopexV2LPAutomator.RebalanceSwapParams memory swapParams
     ) internal {
-        automator.rebalance(ticksMint, new IAutomator.RebalanceTickInfo[](0), swapParams);
+        automator.rebalance(ticksMint, new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](0), swapParams);
     }
 
     function rebalanceMintWithSwap(
-        IAutomator automator,
-        IAutomator.RebalanceTickInfo[] memory ticksMint,
-        IAutomator.RebalanceTickInfo[] memory ticksBurn
+        IOrangeDopexV2LPAutomator automator,
+        IOrangeDopexV2LPAutomator.RebalanceTickInfo[] memory ticksMint,
+        IOrangeDopexV2LPAutomator.RebalanceTickInfo[] memory ticksBurn
     ) internal {
         automator.rebalance(
             ticksMint,
@@ -101,15 +105,19 @@ library AutomatorHelper {
         internal
         pure
         returns (
-            IAutomator.RebalanceTickInfo[] memory mintTicks,
-            IAutomator.RebalanceTickInfo[] memory burnTicks,
-            IAutomator.RebalanceSwapParams memory swapParams
+            IOrangeDopexV2LPAutomator.RebalanceTickInfo[] memory mintTicks,
+            IOrangeDopexV2LPAutomator.RebalanceTickInfo[] memory burnTicks,
+            IOrangeDopexV2LPAutomator.RebalanceSwapParams memory swapParams
         )
     {
         return
             abi.decode(
                 _extractCalldata(data),
-                (IAutomator.RebalanceTickInfo[], IAutomator.RebalanceTickInfo[], IAutomator.RebalanceSwapParams)
+                (
+                    IOrangeDopexV2LPAutomator.RebalanceTickInfo[],
+                    IOrangeDopexV2LPAutomator.RebalanceTickInfo[],
+                    IOrangeDopexV2LPAutomator.RebalanceSwapParams
+                )
             );
     }
 
