@@ -5,7 +5,20 @@ pragma solidity 0.8.19;
 import {IUniswapV3SingleTickLiquidityHandler} from "../vendor/dopexV2/IUniswapV3SingleTickLiquidityHandler.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
+/**
+ * @title UniswapV3SingleTickLiquidityLib
+ * @dev Library for managing liquidity in a single Uniswap V3 tick.
+ * @author Orange Finance
+ */
 library UniswapV3SingleTickLiquidityLib {
+    /**
+     * @dev Calculates the unique token ID for a given set of parameters.
+     * @param handler The instance of the IUniswapV3SingleTickLiquidityHandler contract.
+     * @param pool The address of the Uniswap V3 pool.
+     * @param tickLower The lower tick of the range.
+     * @param tickUpper The upper tick of the range.
+     * @return The unique token ID.
+     */
     function tokenId(
         IUniswapV3SingleTickLiquidityHandler handler,
         address pool,
@@ -16,9 +29,11 @@ library UniswapV3SingleTickLiquidityLib {
     }
 
     /**
-     * @dev convertToAssets means max amount of liquidity that can be withdrawn.
-     * but it doesn't mean that all of them can be withdrawn. Some of them can be locked.
-     * So we need to calculate the amount of liquidity that can be withdrawn.
+     * @dev Calculates the redeemable liquidity for a given owner and token ID.
+     * @param handler The instance of the UniswapV3SingleTickLiquidityHandler contract.
+     * @param owner The address of the owner.
+     * @param tokenId_ The ID of the token.
+     * @return liquidity The amount of redeemable liquidity.
      */
     function redeemableLiquidity(
         IUniswapV3SingleTickLiquidityHandler handler,
@@ -34,6 +49,13 @@ library UniswapV3SingleTickLiquidityLib {
         );
     }
 
+    /**
+     * @dev Calculates the amount of locked liquidity for a given owner and token ID.
+     * @param handler The instance of the IUniswapV3SingleTickLiquidityHandler contract.
+     * @param owner The address of the liquidity owner.
+     * @param tokenId_ The ID of the liquidity token.
+     * @return The amount of locked liquidity.
+     */
     function lockedLiquidity(
         IUniswapV3SingleTickLiquidityHandler handler,
         address owner,
@@ -48,21 +70,5 @@ library UniswapV3SingleTickLiquidityLib {
         if (_freeLiquidity >= _maxRedeem) return 0;
 
         return _maxRedeem - _freeLiquidity;
-    }
-
-    /// @dev currently unused
-    function donationLocked(
-        IUniswapV3SingleTickLiquidityHandler handler,
-        uint256 tokenId_
-    ) internal view returns (uint128) {
-        IUniswapV3SingleTickLiquidityHandler.TokenIdInfo memory _tki = handler.tokenIds(tokenId_);
-
-        if (block.number >= _tki.lastDonation + handler.lockedBlockDuration()) {
-            return 0;
-        }
-
-        return
-            _tki.donatedLiquidity -
-            ((_tki.donatedLiquidity * (uint64(block.number) - _tki.lastDonation)) / handler.lockedBlockDuration());
     }
 }

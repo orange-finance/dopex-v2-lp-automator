@@ -7,6 +7,11 @@ import {LiquidityAmounts} from "../vendor/uniswapV3/LiquidityAmounts.sol";
 import {TickMath} from "../vendor/uniswapV3/TickMath.sol";
 import {IOrangeDopexV2LPAutomator} from "../interfaces/IOrangeDopexV2LPAutomator.sol";
 
+/**
+ * @title AutomatorUniswapV3PoolLib
+ * @dev Library for interacting with Uniswap V3 pools in the Automator contract.
+ * @author Orange Finance
+ */
 library AutomatorUniswapV3PoolLib {
     error BurnLiquidityExceedsMint();
 
@@ -14,6 +19,13 @@ library AutomatorUniswapV3PoolLib {
         (, tick, , , , , ) = pool.slot0();
     }
 
+    /**
+     * @dev Estimates the total amount of tokens from a given set of positions in a Uniswap V3 pool.
+     * @param pool The Uniswap V3 pool contract.
+     * @param positions An array of RebalanceTickInfo structs representing the positions.
+     * @return totalAmount0 The total amount of token0.
+     * @return totalAmount1 The total amount of token1.
+     */
     function estimateTotalTokensFromPositions(
         IUniswapV3Pool pool,
         IOrangeDopexV2LPAutomator.RebalanceTickInfo[] memory positions

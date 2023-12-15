@@ -30,6 +30,11 @@ interface IMulticallProvider {
     function multicall(bytes[] calldata data) external returns (bytes[] memory results);
 }
 
+/**
+ * @title OrangeDopexV2LPAutomator
+ * @dev This contract implements the OrangeDopexV2LPAutomator interface and inherits from ERC20, AccessControlEnumerable, and IERC1155Receiver.
+ * @author Orange Finance
+ */
 contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessControlEnumerable, IERC1155Receiver {
     using FixedPointMathLib for uint256;
     using FullMath for uint256;
@@ -77,6 +82,18 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     error InvalidPositionConstruction();
     error FeePipsTooHigh();
 
+    /**
+     * @dev Constructor function for OrangeDopexV2LPAutomator contract.
+     * @param name The name of the ERC20 token.
+     * @param symbol The symbol of the ERC20 token.
+     * @param admin The address of the admin role.
+     * @param manager_ The address of the DopexV2PositionManager contract.
+     * @param handler_ The address of the UniswapV3SingleTickLiquidityHandler contract.
+     * @param router_ The address of the SwapRouter contract.
+     * @param pool_ The address of the UniswapV3Pool contract.
+     * @param asset_ The address of the ERC20 token used as the main asset in the pool.
+     * @param minDepositAssets_ The minimum amount of assets that can be deposited.
+     */
     constructor(
         string memory name,
         string memory symbol,
@@ -87,10 +104,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         IUniswapV3Pool pool_,
         IERC20 asset_,
         uint256 minDepositAssets_
-    )
-        // TODO: change name and symbol
-        ERC20(name, symbol, IERC20Decimals(address(asset_)).decimals())
-    {
+    ) ERC20(name, symbol, IERC20Decimals(address(asset_)).decimals()) {
         if (asset_ != IERC20(pool_.token0()) && asset_ != IERC20(pool_.token1())) revert TokenAddressMismatch();
 
         manager = manager_;
@@ -134,10 +148,25 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
                                                     ADMIN FUNCTIONS
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
+    /**
+     * @dev Sets the deposit cap for the automator.
+     * @param _depositCap The new deposit cap value.
+     * Requirements:
+     * - Caller must have the DEFAULT_ADMIN_ROLE.
+     */
     function setDepositCap(uint256 _depositCap) external onlyRole(DEFAULT_ADMIN_ROLE) {
         depositCap = _depositCap;
     }
 
+    /**
+     * @dev Sets the performance fee pips for a recipient.
+     * @param recipient The address of the recipient.
+     * @param pips The new performance fee pips value.
+     * Requirements:
+     * - Caller must have the DEFAULT_ADMIN_ROLE.
+     * - Recipient address must not be zero.
+     * - Performance fee pips must not exceed MAX_PERF_FEE_PIPS.
+     */
     function setPerformanceFeePips(address recipient, uint24 pips) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (recipient == address(0)) revert AddressZero();
         if (pips > MAX_PERF_FEE_PIPS) revert FeePipsTooHigh();
@@ -150,6 +179,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
                                                     VAULT STATE DERIVATION FUNCTIONS
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
+    /// @inheritdoc IOrangeDopexV2LPAutomator
     function totalAssets() public view returns (uint256) {
         // 1. calculate the total assets in Dopex pools
         uint256 _length = activeTicks.length();
@@ -199,6 +229,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
             OracleLibrary.getQuoteAtTick(pool.currentTick(), _base.toUint128(), address(counterAsset), address(asset));
     }
 
+    /// @inheritdoc IOrangeDopexV2LPAutomator
     function freeAssets() public view returns (uint256) {
         // 1. calculate the free assets in Dopex pools
         uint256 _length = activeTicks.length();
@@ -248,21 +279,21 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
             OracleLibrary.getQuoteAtTick(pool.currentTick(), _base.toUint128(), address(counterAsset), address(asset));
     }
 
-    // TODO: implement
-    // function previewRedeem() public view returns (uint256 assets, LockedDopexShares[] memory lockedDopexShares) {}
-
+    /// @inheritdoc IOrangeDopexV2LPAutomator
     function convertToShares(uint256 assets) public view returns (uint256) {
         uint256 _supply = totalSupply;
 
         return _supply == 0 ? assets : assets.mulDivDown(_supply, totalAssets());
     }
 
+    /// @inheritdoc IOrangeDopexV2LPAutomator
     function convertToAssets(uint256 shares) public view returns (uint256) {
         uint256 _supply = totalSupply;
 
         return _supply == 0 ? shares : shares.mulDivDown(totalAssets(), _supply);
     }
 
+    /// @inheritdoc IOrangeDopexV2LPAutomator
     function getTickAllLiquidity(int24 tick) external view returns (uint128) {
         uint256 _share = handler.balanceOf(address(this), handler.tokenId(address(pool), tick, tick + poolTickSpacing));
 
@@ -270,6 +301,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
             handler.convertToAssets(_share.toUint128(), handler.tokenId(address(pool), tick, tick + poolTickSpacing));
     }
 
+    /// @inheritdoc IOrangeDopexV2LPAutomator
     function getTickFreeLiquidity(int24 tick) external view returns (uint128) {
         return
             handler
@@ -277,6 +309,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
                 .toUint128();
     }
 
+    /// @inheritdoc IOrangeDopexV2LPAutomator
     function calculateRebalanceSwapParamsInRebalance(
         RebalanceTickInfo[] memory ticksMint,
         RebalanceTickInfo[] memory ticksBurn
@@ -324,6 +357,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
             });
     }
 
+    /// @inheritdoc IOrangeDopexV2LPAutomator
     function getActiveTicks() external view returns (int24[] memory) {
         uint256[] memory _tempTicks = activeTicks.values();
         int24[] memory _activeTicks = new int24[](_tempTicks.length);
@@ -339,6 +373,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
                                                     USER ACTIONS
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
+    /// @inheritdoc IOrangeDopexV2LPAutomator
     function deposit(uint256 assets) external returns (uint256 shares) {
         if (assets == 0) revert AmountZero();
         if (assets < minDepositAssets) revert DepositTooSmall();
@@ -376,6 +411,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         uint256 lockedShareIndex;
     }
 
+    /// @inheritdoc IOrangeDopexV2LPAutomator
     function redeem(
         uint256 shares,
         uint256 minAssets
@@ -477,12 +513,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
                                                     STRATEGIST ACTIONS
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
-    /**
-     * @dev should be called by strategist when creating rebalance params.
-     * @dev this is a hack to avoid mint error in a Dopex UniV3 Handler.
-     * the handler will revert when accumulated fees are less than 10.
-     * this is because the liquidity calculation is rounded down to 0 against the accumulated fees, then mint for 0 will revert.
-     */
+    /// @inheritdoc IOrangeDopexV2LPAutomator
     function checkMintValidity(int24 lowerTick) external view returns (bool) {
         // (, , , uint128 _owed0, uint128 _owed1) = pool.positions(
         //     keccak256(abi.encodePacked(address(handler), lowerTick, lowerTick + poolTickSpacing))
@@ -502,6 +533,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         return true;
     }
 
+    /// @inheritdoc IOrangeDopexV2LPAutomator
     function rebalance(
         RebalanceTickInfo[] calldata ticksMint,
         RebalanceTickInfo[] calldata ticksBurn,
@@ -619,59 +651,4 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
                 )
             );
     }
-
-    // TODO: delete
-    /// @dev this is a testing only function to make debug easier
-    // function inefficientRebalance(
-    //     RebalanceTickInfo[] calldata ticksMint,
-    //     RebalanceTickInfo[] calldata ticksBurn,
-    //     RebalanceSwapParams calldata swapParams
-    // ) external onlyRole(STRATEGIST_ROLE) {
-    //     uint256 _mintLength = ticksMint.length;
-    //     uint256 _burnLength = ticksBurn.length;
-
-    //     int24 _lt;
-    //     int24 _ut;
-    //     uint256 _posId;
-    //     uint256 _shares;
-
-    //     for (uint256 i = 0; i < _burnLength; i++) {
-    //         _lt = ticksBurn[i].tick;
-    //         _ut = _lt + poolTickSpacing;
-
-    //         // if all shares will be burned, pop the active tick
-    //         _posId = uint256(keccak256(abi.encode(handler, pool, _lt, _ut)));
-    //         _shares = handler.convertToShares(ticksBurn[i].liquidity, _posId);
-    //         if (handler.balanceOf(address(this), _posId) - _shares == 0) activeTicks.remove(uint256(uint24(_lt)));
-
-    //         _burnPosition(_lt, _ut, _shares.toUint128());
-    //     }
-
-    //     _swapBeforeRebalanceMint(swapParams);
-
-    //     for (uint256 i = 0; i < _mintLength; i++) {
-    //         _lt = ticksMint[i].tick;
-    //         _ut = _lt + poolTickSpacing;
-
-    //         // If the position is not active, push it to the active ticks
-    //         _posId = uint256(keccak256(abi.encode(handler, pool, _lt, _ut)));
-    //         if (handler.balanceOf(address(this), _posId) == 0) activeTicks.add(uint256(uint24(_lt)));
-
-    //         _mintPosition(_lt, _ut, ticksMint[i].liquidity);
-    //     }
-    // }
-
-    // function _mintPosition(int24 lowerTick, int24 upperTick, uint128 liquidity) internal {
-    //     manager.mintPosition(
-    //         handler,
-    //         abi.encode(
-    //             IUniswapV3SingleTickLiquidityHandler.MintPositionParams({
-    //                 pool: address(pool),
-    //                 tickLower: lowerTick,
-    //                 tickUpper: upperTick,
-    //                 liquidity: liquidity
-    //             })
-    //         )
-    //     );
-    // }
 }
