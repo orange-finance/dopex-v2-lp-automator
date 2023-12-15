@@ -44,8 +44,10 @@ library AutomatorHelper {
             minDepositAssets_: minDepositAssets
         });
 
+        vm.startPrank(admin);
         automator.setDepositCap(depositCap);
         automator.grantRole(automator.STRATEGIST_ROLE(), strategist);
+        vm.stopPrank();
 
         vm.prank(dopexV2ManagerOwner);
         manager.updateWhitelistHandlerWithApp(address(uniV3Handler), address(admin), true);
