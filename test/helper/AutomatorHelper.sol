@@ -17,6 +17,10 @@ import {Vm} from "forge-std/Test.sol";
 library AutomatorHelper {
     ISwapRouter constant ROUTER = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
 
+    /*/////////////////////////////////////////////////////////////////////
+                                Automator utilities
+    /////////////////////////////////////////////////////////////////////*/
+
     function deployAutomator(
         Vm vm,
         address dopexV2ManagerOwner,
@@ -83,5 +87,63 @@ library AutomatorHelper {
             ticksBurn,
             automator.calculateRebalanceSwapParamsInRebalance(ticksMint, ticksBurn)
         );
+    }
+
+    /*/////////////////////////////////////////////////////////////////////
+                                Strategy utilities
+    /////////////////////////////////////////////////////////////////////*/
+
+    function decodeCheckLiquidizePooledAssets(
+        bytes memory data
+    )
+        internal
+        pure
+        returns (
+            IAutomator.RebalanceTickInfo[] memory mintTicks,
+            IAutomator.RebalanceTickInfo[] memory burnTicks,
+            IAutomator.RebalanceSwapParams memory swapParams
+        )
+    {
+        return
+            abi.decode(
+                _extractCalldata(data),
+                (IAutomator.RebalanceTickInfo[], IAutomator.RebalanceTickInfo[], IAutomator.RebalanceSwapParams)
+            );
+    }
+
+    // https://ethereum.stackexchange.com/questions/131283/how-do-i-decode-call-data-in-solidity
+    function _extractCalldata(bytes memory calldataWithSelector) internal pure returns (bytes memory) {
+        bytes memory calldataWithoutSelector;
+
+        require(calldataWithSelector.length >= 4);
+
+        assembly {
+            let totalLength := mload(calldataWithSelector)
+            let targetLength := sub(totalLength, 4)
+            calldataWithoutSelector := mload(0x40)
+
+            // Set the length of callDataWithoutSelector (initial length - 4)
+            mstore(calldataWithoutSelector, targetLength)
+
+            // Mark the memory space taken for callDataWithoutSelector as allocated
+            mstore(0x40, add(calldataWithoutSelector, add(0x20, targetLength)))
+
+            // Process first 32 bytes (we only take the last 28 bytes)
+            mstore(add(calldataWithoutSelector, 0x20), shl(0x20, mload(add(calldataWithSelector, 0x20))))
+
+            // Process all other data by chunks of 32 bytes
+            for {
+                let i := 0x1C
+            } lt(i, targetLength) {
+                i := add(i, 0x20)
+            } {
+                mstore(
+                    add(add(calldataWithoutSelector, 0x20), i),
+                    mload(add(add(calldataWithSelector, 0x20), add(i, 0x04)))
+                )
+            }
+        }
+
+        return calldataWithoutSelector;
     }
 }
