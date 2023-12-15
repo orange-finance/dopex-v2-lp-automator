@@ -72,7 +72,7 @@ interface IOrangeDopexV2LPAutomator {
     function router() external view returns (ISwapRouter);
 
     /**
-     * @dev Returns the asset token contract.
+     * @dev Returns the deposit asset token contract.
      */
     function asset() external view returns (IERC20);
 

@@ -43,6 +43,7 @@ library UniswapV3SingleTickLiquidityLib {
         uint256 _shares = handler.balanceOf(owner, tokenId_);
         IUniswapV3SingleTickLiquidityHandler.TokenIdInfo memory _tki = handler.tokenIds(tokenId_);
 
+        // NOTE: The amount of redeemable liquidity is the minimum of the amount of own shares and the amount of free liquidity.
         liquidity = Math.min(
             handler.convertToAssets(uint128(_shares), tokenId_),
             _tki.totalLiquidity - _tki.liquidityUsed

@@ -32,7 +32,7 @@ interface IMulticallProvider {
 
 /**
  * @title OrangeDopexV2LPAutomator
- * @dev This contract implements the OrangeDopexV2LPAutomator interface and inherits from ERC20, AccessControlEnumerable, and IERC1155Receiver.
+ * @dev Automate liquidity provision for Dopex V2 contract
  * @author Orange Finance
  */
 contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessControlEnumerable, IERC1155Receiver {
@@ -91,7 +91,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
      * @param handler_ The address of the UniswapV3SingleTickLiquidityHandler contract.
      * @param router_ The address of the SwapRouter contract.
      * @param pool_ The address of the UniswapV3Pool contract.
-     * @param asset_ The address of the ERC20 token used as the main asset in the pool.
+     * @param asset_ The address of the ERC20 token used as the deposit asset in this vault.
      * @param minDepositAssets_ The minimum amount of assets that can be deposited.
      */
     constructor(
@@ -380,6 +380,8 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         if (assets > depositCap) revert DepositCapExceeded();
 
         if (totalSupply == 0) {
+            // NOTE: mint small amount of shares to avoid sandwich attack on the first deposit
+            // https://mixbytes.io/blog/overview-of-the-inflation-attack
             uint256 _dead = 10 ** decimals / 1000;
             _mint(address(0), _dead);
 
@@ -515,14 +517,6 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
 
     /// @inheritdoc IOrangeDopexV2LPAutomator
     function checkMintValidity(int24 lowerTick) external view returns (bool) {
-        // (, , , uint128 _owed0, uint128 _owed1) = pool.positions(
-        //     keccak256(abi.encodePacked(address(handler), lowerTick, lowerTick + poolTickSpacing))
-        // );
-
-        // if (_owed0 > 0 && _owed0 < 10) return false;
-
-        // if (_owed1 > 0 && _owed1 < 10) return false;
-
         IUniswapV3SingleTickLiquidityHandler.TokenIdInfo memory _ti = handler.tokenIds(
             handler.tokenId(address(pool), lowerTick, lowerTick + poolTickSpacing)
         );

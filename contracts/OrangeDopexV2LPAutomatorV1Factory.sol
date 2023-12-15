@@ -8,6 +8,11 @@ import {AccessControlEnumerable} from "@openzeppelin/contracts/access/AccessCont
 
 import {IERC20Symbol} from "./interfaces/IERC20Extended.sol";
 
+/**
+ * @title OrangeDopexV2LPAutomatorV1Factory
+ * @dev This contract is the factory contract for creating instances of OrangeDopexV2LPAutomator
+ * @author Orange Finance
+ */
 contract OrangeDopexV2LPAutomatorV1Factory is AccessControlEnumerable {
     IOrangeVaultRegistry public immutable registry;
 
