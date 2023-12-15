@@ -93,8 +93,8 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
             })
         });
 
-        // set performance fee to 0.1%, set bob as recipient
-        automator.setPerformanceFeePips(bob, 1000);
+        // set deposit fee to 0.1%, set bob as recipient
+        automator.setDepositFeePips(bob, 1000);
 
         // fee:  9999999 (9999999000 * 0.1%)
 
@@ -125,8 +125,8 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
             })
         });
 
-        // set performance fee to 0.1%, set bob as recipient
-        automator.setPerformanceFeePips(bob, 1000);
+        // set deposit fee to 0.1%, set bob as recipient
+        automator.setDepositFeePips(bob, 1000);
 
         // alice deposits 10_000e6
         _depositFrom(alice, 10_000e6);

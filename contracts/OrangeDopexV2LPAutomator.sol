@@ -46,7 +46,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandler;
 
     bytes32 public constant STRATEGIST_ROLE = keccak256("STRATEGIST_ROLE");
-    /// @notice max performance fee percentage is 1%
+    /// @notice max deposit fee percentage is 1%
     uint24 constant MAX_PERF_FEE_PIPS = 100_000;
 
     IDopexV2PositionManager public immutable manager;
@@ -64,9 +64,9 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
 
     uint256 public depositCap;
 
-    /// @notice performance fee percentage, hundredths of a bip (1 bip = 0.0001%)
-    uint24 public performanceFeePips;
-    address public performanceFeeRecipient;
+    /// @notice deposit fee percentage, hundredths of a bip (1 pip = 0.0001%)
+    uint24 public depositFeePips;
+    address public depositFeeRecipient;
 
     EnumerableSet.UintSet activeTicks;
 
@@ -159,20 +159,20 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     }
 
     /**
-     * @dev Sets the performance fee pips for a recipient.
+     * @dev Sets the deposit fee pips for a recipient.
      * @param recipient The address of the recipient.
-     * @param pips The new performance fee pips value.
+     * @param pips The new deposit fee pips value.
      * Requirements:
      * - Caller must have the DEFAULT_ADMIN_ROLE.
      * - Recipient address must not be zero.
-     * - Performance fee pips must not exceed MAX_PERF_FEE_PIPS.
+     * - deposit fee pips must not exceed MAX_PERF_FEE_PIPS.
      */
-    function setPerformanceFeePips(address recipient, uint24 pips) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setDepositFeePips(address recipient, uint24 pips) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (recipient == address(0)) revert AddressZero();
         if (pips > MAX_PERF_FEE_PIPS) revert FeePipsTooHigh();
 
-        performanceFeeRecipient = recipient;
-        performanceFeePips = pips;
+        depositFeeRecipient = recipient;
+        depositFeePips = pips;
     }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -392,10 +392,10 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
             shares = convertToShares(assets);
         }
 
-        uint256 _fee = shares.mulDivDown(performanceFeePips, 1e6);
+        uint256 _fee = shares.mulDivDown(depositFeePips, 1e6);
         // NOTE: no possibility of minting to the zero address as we can't set zero address with fee pips
         if (_fee > 0) {
-            _mint(performanceFeeRecipient, _fee);
+            _mint(depositFeeRecipient, _fee);
             shares = shares - _fee;
         }
 
