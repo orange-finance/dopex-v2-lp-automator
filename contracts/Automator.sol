@@ -45,6 +45,8 @@ contract Automator is IAutomator, ERC20, AccessControlEnumerable, IERC1155Receiv
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandler;
 
     bytes32 public constant STRATEGIST_ROLE = keccak256("STRATEGIST_ROLE");
+    /// @notice max performance fee percentage is 1%
+    uint24 constant MAX_PERF_FEE_PIPS = 100_000;
 
     IDopexV2PositionManager public immutable manager;
     IUniswapV3SingleTickLiquidityHandler public immutable handler;
@@ -58,10 +60,16 @@ contract Automator is IAutomator, ERC20, AccessControlEnumerable, IERC1155Receiv
     int24 public immutable poolTickSpacing;
 
     uint256 public immutable minDepositAssets;
+
     uint256 public depositCap;
+
+    /// @notice performance fee percentage, hundredths of a bip (1 bip = 0.0001%)
+    uint24 public performanceFeePips;
+    address public performanceFeeRecipient;
 
     EnumerableSet.UintSet activeTicks;
 
+    error AddressZero();
     error AmountZero();
     error LengthMismatch();
     error InvalidRebalanceParams();
@@ -71,6 +79,7 @@ contract Automator is IAutomator, ERC20, AccessControlEnumerable, IERC1155Receiv
     error DepositCapExceeded();
     error SharesTooSmall();
     error InvalidPositionConstruction();
+    error FeePipsTooHigh();
 
     constructor(
         address admin,
@@ -129,6 +138,14 @@ contract Automator is IAutomator, ERC20, AccessControlEnumerable, IERC1155Receiv
 
     function setDepositCap(uint256 _depositCap) external onlyRole(DEFAULT_ADMIN_ROLE) {
         depositCap = _depositCap;
+    }
+
+    function setPerformanceFeePips(address recipient, uint24 pips) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (recipient == address(0)) revert AddressZero();
+        if (pips > MAX_PERF_FEE_PIPS) revert FeePipsTooHigh();
+
+        performanceFeeRecipient = recipient;
+        performanceFeePips = pips;
     }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -331,17 +348,23 @@ contract Automator is IAutomator, ERC20, AccessControlEnumerable, IERC1155Receiv
 
         if (totalSupply == 0) {
             uint256 _dead = 10 ** decimals / 1000;
+            _mint(address(0), _dead);
 
             unchecked {
                 shares = assets - _dead;
             }
-            _mint(address(0), _dead);
-            _mint(msg.sender, shares);
         } else {
             shares = convertToShares(assets);
-
-            _mint(msg.sender, shares);
         }
+
+        uint256 _fee = shares.mulDivDown(performanceFeePips, 1e6);
+        // NOTE: no possibility of minting to the zero address as we can't set zero address with fee pips
+        if (_fee > 0) {
+            _mint(performanceFeeRecipient, _fee);
+            shares = shares - _fee;
+        }
+
+        _mint(msg.sender, shares);
 
         asset.safeTransferFrom(msg.sender, address(this), assets);
     }
