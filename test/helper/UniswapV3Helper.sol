@@ -51,6 +51,34 @@ library UniswapV3Helper {
         return OracleLibrary.getQuoteAtTick(_currentTick, baseAmount, base, quote);
     }
 
+    function getAmount0ForSingleTickLiq(
+        IUniswapV3Pool pool,
+        int24 tickCurrent,
+        int24 tickLower,
+        uint128 liquidity
+    ) internal view returns (uint256 amount0) {
+        (amount0, ) = LiquidityAmounts.getAmountsForLiquidity(
+            tickCurrent.getSqrtRatioAtTick(),
+            tickLower.getSqrtRatioAtTick(),
+            (tickLower + pool.tickSpacing()).getSqrtRatioAtTick(),
+            liquidity
+        );
+    }
+
+    function getAmount1ForSingleTickLiq(
+        IUniswapV3Pool pool,
+        int24 tickCurrent,
+        int24 tickLower,
+        uint128 liquidity
+    ) internal view returns (uint256 amount1) {
+        (, amount1) = LiquidityAmounts.getAmountsForLiquidity(
+            tickCurrent.getSqrtRatioAtTick(),
+            tickLower.getSqrtRatioAtTick(),
+            (tickLower + pool.tickSpacing()).getSqrtRatioAtTick(),
+            liquidity
+        );
+    }
+
     function exactInputSingleSwap(
         ISwapRouter router,
         address tokenIn,
