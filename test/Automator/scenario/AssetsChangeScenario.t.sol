@@ -19,7 +19,7 @@ import {Automator, IAutomator} from "../../../contracts/Automator.sol";
  *
     * position | locked | tick_position | price | user_action | strategist_action
     ✓ some     | none   | below         | t1up  | none        | mint
-    ↻ some     | some   | above         | t0up  | deposit     | mint
+    ✓ some     | some   | above         | t0up  | deposit     | mint
     □ full     | none   | above         | stay  | redeem      | burn
     □ some     | full   | none          | stay  | deposit     | none
     □ none     | none   | none          | t0up  | redeem      | mint
