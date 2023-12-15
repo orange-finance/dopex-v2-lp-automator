@@ -1,5 +1,29 @@
 {
-  "cSpell.words": ["Automator", "clamm", "dopex"],
+  "cSpell.words": [
+    "Arbitrum",
+    "Automator",
+    "clamm",
+    "concat",
+    "dopex",
+    "Gelato",
+    "IERC",
+    "inheritdoc",
+    "keccak",
+    "mload",
+    "mstore",
+    "Multicall",
+    "nomicfoundation",
+    "odpx",
+    "rebalance",
+    "rebalancing",
+    "solmate",
+    "STIP",
+    "struct",
+    "structs",
+    "Unburnable",
+    "unuse",
+    "USDCE"
+  ],
   "solidity.compileUsingRemoteVersion": "0.8.19",
   "[solidity]": {
     "editor.defaultFormatter": "JuanBlanco.solidity"
