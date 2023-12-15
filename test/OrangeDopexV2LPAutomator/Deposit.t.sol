@@ -77,18 +77,20 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
     function test_deposit_deductedPerfFee_firstDeposit() public {
         automator = AutomatorHelper.deployOrangeDopexV2LPAutomator({
             vm: vm,
-            dopexV2ManagerOwner: managerOwner,
-            name: "OrangeDopexV2LPAutomator",
-            symbol: "ODV2LP",
-            admin: address(this),
-            strategist: address(this),
-            manager: manager,
-            uniV3Handler: uniV3Handler,
-            router: router,
-            pool: pool,
-            asset: USDCE,
-            minDepositAssets: 1e6,
-            depositCap: 10000e6
+            args: AutomatorHelper.DeployArgs({
+                dopexV2ManagerOwner: managerOwner,
+                name: "OrangeDopexV2LPAutomator",
+                symbol: "ODV2LP",
+                admin: address(this),
+                strategist: address(this),
+                manager: manager,
+                handler: uniV3Handler,
+                router: router,
+                pool: pool,
+                asset: USDCE,
+                minDepositAssets: 1e6,
+                depositCap: 10000e6
+            })
         });
 
         // set performance fee to 0.1%, set bob as recipient
@@ -107,18 +109,20 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
     function test_deposit_deductedPerfFee_secondDeposit() public {
         automator = AutomatorHelper.deployOrangeDopexV2LPAutomator({
             vm: vm,
-            dopexV2ManagerOwner: managerOwner,
-            name: "OrangeDopexV2LPAutomator",
-            symbol: "ODV2LP",
-            admin: address(this),
-            strategist: address(this),
-            manager: manager,
-            uniV3Handler: uniV3Handler,
-            router: router,
-            pool: pool,
-            asset: USDCE,
-            minDepositAssets: 1e6,
-            depositCap: 10000e6
+            args: AutomatorHelper.DeployArgs({
+                dopexV2ManagerOwner: managerOwner,
+                name: "OrangeDopexV2LPAutomator",
+                symbol: "ODV2LP",
+                admin: address(this),
+                strategist: address(this),
+                manager: manager,
+                handler: uniV3Handler,
+                router: router,
+                pool: pool,
+                asset: USDCE,
+                minDepositAssets: 1e6,
+                depositCap: 10000e6
+            })
         });
 
         // set performance fee to 0.1%, set bob as recipient
