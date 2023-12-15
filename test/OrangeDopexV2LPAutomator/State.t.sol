@@ -2,9 +2,9 @@
 
 pragma solidity 0.8.19;
 
-import "./Fixture.sol";
+import "./Fixture.t.sol";
 import {IOrangeDopexV2LPAutomator} from "../../contracts/interfaces/IOrangeDopexV2LPAutomator.sol";
-import {deployAutomatorHarness, AutomatorHarness} from "./harness/AutomatorHarness.sol";
+import {deployAutomatorHarness, AutomatorHarness} from "./harness/AutomatorHarness.t.sol";
 
 contract TestOrangeDopexV2LPAutomatorState is Fixture {
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandler;

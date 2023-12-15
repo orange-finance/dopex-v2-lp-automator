@@ -5,8 +5,8 @@ pragma solidity 0.8.19;
 import "forge-std/Test.sol";
 import {IOrangeVaultRegistry} from "../../contracts/vendor/orange/IOrangeVaultRegistry.sol";
 import {OrangeDopexV2LPAutomatorV1Factory, OrangeDopexV2LPAutomator, IUniswapV3Pool, IERC20} from "../../contracts/OrangeDopexV2LPAutomatorV1Factory.sol";
-import {DopexV2Helper} from "../helper/DopexV2Helper.sol";
-import {AutomatorHelper} from "../helper/AutomatorHelper.sol";
+import {DopexV2Helper} from "../helper/DopexV2Helper.t.sol";
+import {AutomatorHelper} from "../helper/AutomatorHelper.t.sol";
 import {IAccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {IAccessControlEnumerable} from "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 

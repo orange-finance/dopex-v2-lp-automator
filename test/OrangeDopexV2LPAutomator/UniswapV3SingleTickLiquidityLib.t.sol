@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.19;
 
-import "./Fixture.sol";
+import "./Fixture.t.sol";
 
 contract TestUniswapV3SingleTickLiquidityLib is Fixture {
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandler;

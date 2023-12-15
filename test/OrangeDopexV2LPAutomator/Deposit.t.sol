@@ -2,9 +2,9 @@
 
 pragma solidity 0.8.19;
 
-import "./Fixture.sol";
+import "./Fixture.t.sol";
 // TODO: migrate all utility to this helper functions
-import "../helper/AutomatorHelper.sol";
+import "../helper/AutomatorHelper.t.sol";
 
 contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
     function setUp() public override {

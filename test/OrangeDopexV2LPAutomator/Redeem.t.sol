@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.19;
 
-import "./Fixture.sol";
+import "./Fixture.t.sol";
 import {IOrangeDopexV2LPAutomator} from "../../contracts/interfaces/IOrangeDopexV2LPAutomator.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 
