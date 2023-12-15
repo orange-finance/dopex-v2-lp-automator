@@ -38,6 +38,8 @@ contract TestOrangeDopexV2LPAutomatorInvariant is Test {
         vm.createSelectFork("arb", 151299689);
 
         automator = new OrangeDopexV2LPAutomator({
+            name: "OrangeDopexV2LPAutomator",
+            symbol: "ODV2LP",
             admin: address(this),
             manager_: manager,
             handler_: uniV3Handler,

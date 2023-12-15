@@ -24,8 +24,6 @@ import {UniswapV3SingleTickLiquidityLib} from "./lib/UniswapV3SingleTickLiquidit
 import {AutomatorUniswapV3PoolLib} from "./lib/AutomatorUniswapV3PoolLib.sol";
 import {IDopexV2PositionManager} from "./vendor/dopexV2/IDopexV2PositionManager.sol";
 
-import "forge-std/console2.sol";
-
 interface IMulticallProvider {
     function multicall(bytes[] calldata data) external returns (bytes[] memory results);
 }
@@ -82,6 +80,8 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     error FeePipsTooHigh();
 
     constructor(
+        string memory name,
+        string memory symbol,
         address admin,
         IDopexV2PositionManager manager_,
         IUniswapV3SingleTickLiquidityHandler handler_,
@@ -91,7 +91,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         uint256 minDepositAssets_
     )
         // TODO: change name and symbol
-        ERC20("OrangeDopexV2LPAutomator", "AUTO", IERC20Decimals(address(asset_)).decimals())
+        ERC20(name, symbol, IERC20Decimals(address(asset_)).decimals())
     {
         if (asset_ != IERC20(pool_.token0()) && asset_ != IERC20(pool_.token1())) revert TokenAddressMismatch();
 

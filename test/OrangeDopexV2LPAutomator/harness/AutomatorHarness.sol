@@ -6,6 +6,8 @@ import {OrangeDopexV2LPAutomator, EnumerableSet, IDopexV2PositionManager, IUnisw
 
 contract AutomatorHarness is OrangeDopexV2LPAutomator {
     constructor(
+        string memory name,
+        string memory symbol,
         address admin,
         IDopexV2PositionManager manager_,
         IUniswapV3SingleTickLiquidityHandler handler_,
@@ -13,7 +15,7 @@ contract AutomatorHarness is OrangeDopexV2LPAutomator {
         IUniswapV3Pool pool_,
         IERC20 asset_,
         uint256 minDepositAssets_
-    ) OrangeDopexV2LPAutomator(admin, manager_, handler_, router_, pool_, asset_, minDepositAssets_) {}
+    ) OrangeDopexV2LPAutomator(name, symbol, admin, manager_, handler_, router_, pool_, asset_, minDepositAssets_) {}
 
     function pushActiveTick(int24 tick) external {
         EnumerableSet.add(activeTicks, uint256(uint24(tick)));
@@ -21,6 +23,8 @@ contract AutomatorHarness is OrangeDopexV2LPAutomator {
 }
 
 function deployAutomatorHarness(
+    string memory name,
+    string memory symbol,
     address admin,
     address strategist,
     IDopexV2PositionManager manager_,
@@ -31,7 +35,7 @@ function deployAutomatorHarness(
     uint256 minDepositAssets_,
     uint256 depositCap
 ) returns (AutomatorHarness harness) {
-    harness = new AutomatorHarness(admin, manager_, handler_, router_, pool_, asset_, minDepositAssets_);
+    harness = new AutomatorHarness(name, symbol, admin, manager_, handler_, router_, pool_, asset_, minDepositAssets_);
     harness.grantRole(harness.STRATEGIST_ROLE(), strategist);
     harness.setDepositCap(depositCap);
 }

@@ -23,6 +23,8 @@ library AutomatorHelper {
 
     function deployOrangeDopexV2LPAutomator(
         Vm vm,
+        string memory name,
+        string memory symbol,
         address dopexV2ManagerOwner,
         address admin,
         address strategist,
@@ -35,6 +37,8 @@ library AutomatorHelper {
         uint256 depositCap
     ) external returns (OrangeDopexV2LPAutomator automator) {
         automator = new OrangeDopexV2LPAutomator({
+            name: name,
+            symbol: symbol,
             admin: admin,
             manager_: manager,
             handler_: uniV3Handler,

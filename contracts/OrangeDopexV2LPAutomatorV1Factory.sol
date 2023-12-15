@@ -33,6 +33,9 @@ contract OrangeDopexV2LPAutomatorV1Factory is AccessControlEnumerable {
 
     function _create(InitArgs calldata initArgs) internal returns (OrangeDopexV2LPAutomator) {
         OrangeDopexV2LPAutomator automator = new OrangeDopexV2LPAutomator({
+            // TODO: dynamic name and symbol
+            name: "OrangeDopexV2LPAutomator",
+            symbol: "ODV2LP",
             admin: initArgs.admin,
             manager_: initArgs.manager,
             handler_: initArgs.handler,

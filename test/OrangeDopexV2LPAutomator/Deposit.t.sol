@@ -78,6 +78,8 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
         automator = AutomatorHelper.deployOrangeDopexV2LPAutomator({
             vm: vm,
             dopexV2ManagerOwner: managerOwner,
+            name: "OrangeDopexV2LPAutomator",
+            symbol: "ODV2LP",
             admin: address(this),
             strategist: address(this),
             manager: manager,
@@ -106,6 +108,8 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
         automator = AutomatorHelper.deployOrangeDopexV2LPAutomator({
             vm: vm,
             dopexV2ManagerOwner: managerOwner,
+            name: "OrangeDopexV2LPAutomator",
+            symbol: "ODV2LP",
             admin: address(this),
             strategist: address(this),
             manager: manager,

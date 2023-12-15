@@ -546,6 +546,8 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
 
     function test_getActiveTicks() public {
         AutomatorHarness _automator = deployAutomatorHarness({
+            name: "OrangeDopexV2LPAutomator",
+            symbol: "ODV2LP",
             admin: address(this),
             strategist: address(this),
             manager_: manager,

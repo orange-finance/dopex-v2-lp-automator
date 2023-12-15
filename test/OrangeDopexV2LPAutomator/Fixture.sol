@@ -44,6 +44,8 @@ abstract contract Fixture is Test {
 
     function setUp() public virtual {
         automator = new OrangeDopexV2LPAutomator({
+            name: "OrangeDopexV2LPAutomator",
+            symbol: "ODV2LP",
             admin: address(this),
             manager_: manager,
             handler_: uniV3Handler,
@@ -194,6 +196,8 @@ abstract contract Fixture is Test {
         uint256 depositCap
     ) internal {
         automator = new OrangeDopexV2LPAutomator({
+            name: "OrangeDopexV2LPAutomator",
+            symbol: "ODV2LP",
             admin: admin,
             manager_: manager,
             handler_: uniV3Handler,
