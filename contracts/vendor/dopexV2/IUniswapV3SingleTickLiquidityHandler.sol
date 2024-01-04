@@ -49,4 +49,6 @@ interface IUniswapV3SingleTickLiquidityHandler is IHandler, IERC1155 {
     function convertToAssets(uint128 shares, uint256 tokenId) external view returns (uint128 liquidity);
 
     function lockedBlockDuration() external view returns (uint64);
+
+    function paused() external view returns (bool);
 }

@@ -18,6 +18,10 @@ library DopexV2Helper {
     IUniswapV3SingleTickLiquidityHandler constant DOPEX_UNIV3_HANDLER =
         IUniswapV3SingleTickLiquidityHandler(0xe11d346757d052214686bCbC860C94363AfB4a9A);
 
+    function balanceOfHandler(address account, IUniswapV3Pool pool, int24 tickLower) internal view returns (uint256) {
+        return DOPEX_UNIV3_HANDLER.balanceOf(account, _tokenId(pool, tickLower));
+    }
+
     function useDopexPosition(IUniswapV3Pool pool, int24 tickLower, uint128 liquidityToUse) internal {
         IUniswapV3SingleTickLiquidityHandler.UsePositionParams memory _params = IUniswapV3SingleTickLiquidityHandler
             .UsePositionParams({

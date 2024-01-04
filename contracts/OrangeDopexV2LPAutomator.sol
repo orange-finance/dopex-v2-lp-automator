@@ -452,7 +452,11 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
 
             // redeemable share is burned
             if (c.shareRedeemable > 0)
-                _burnPosition(c.lowerTick, c.lowerTick + poolTickSpacing, c.shareRedeemable.toUint128());
+                if (handler.paused()) {
+                    handler.safeTransferFrom(address(this), msg.sender, c.tokenId, c.shareRedeemable, "");
+                } else {
+                    _burnPosition(c.lowerTick, c.lowerTick + poolTickSpacing, c.shareRedeemable.toUint128());
+                }
 
             unchecked {
                 i++;
