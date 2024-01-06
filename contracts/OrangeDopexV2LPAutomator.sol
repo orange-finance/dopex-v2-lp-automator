@@ -4,11 +4,11 @@ pragma solidity 0.8.19;
 
 import {IOrangeDopexV2LPAutomator} from "./interfaces/IOrangeDopexV2LPAutomator.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
+import {FullMath} from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
-import {LiquidityAmounts} from "./vendor/uniswapV3/LiquidityAmounts.sol";
-import {TickMath} from "./vendor/uniswapV3/TickMath.sol";
-import {OracleLibrary} from "./vendor/uniswapV3/OracleLibrary.sol";
-import {FullMath} from "./vendor/uniswapV3/FullMath.sol";
+import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
+import {OracleLibrary} from "@uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Receiver.sol";
