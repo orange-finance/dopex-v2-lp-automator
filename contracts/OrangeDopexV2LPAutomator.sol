@@ -399,6 +399,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
             shares = shares - _fee;
         }
 
+        if (shares == 0) revert DepositTooSmall();
         _mint(msg.sender, shares);
 
         asset.safeTransferFrom(msg.sender, address(this), assets);
