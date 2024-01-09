@@ -180,6 +180,39 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /// @inheritdoc IOrangeDopexV2LPAutomator
+    function getAutomatorPositions()
+        external
+        view
+        returns (uint256 balanceDepositAsset, uint256 balanceCounterAsset, RebalanceTickInfo[] memory ticks)
+    {
+        int24 _spacing = poolTickSpacing;
+
+        // 1. calculate the total assets in Dopex pools
+        uint256 _length = activeTicks.length();
+        uint256 _tid;
+        uint128 _liquidity;
+        (int24 _lt, int24 _ut) = (0, 0);
+
+        ticks = new RebalanceTickInfo[](_length);
+
+        for (uint256 i = 0; i < _length; ) {
+            _lt = int24(uint24(activeTicks.at(i)));
+            _ut = _lt + _spacing;
+            _tid = handler.tokenId(address(pool), _lt, _ut);
+
+            _liquidity = handler.convertToAssets((handler.balanceOf(address(this), _tid)).toUint128(), _tid);
+
+            ticks[i] = RebalanceTickInfo({tick: _lt, liquidity: _liquidity});
+
+            unchecked {
+                i++;
+            }
+        }
+
+        return (asset.balanceOf(address(this)), counterAsset.balanceOf(address(this)), ticks);
+    }
+
+    /// @inheritdoc IOrangeDopexV2LPAutomator
     function totalAssets() public view returns (uint256) {
         // 1. calculate the total assets in Dopex pools
         uint256 _length = activeTicks.length();
