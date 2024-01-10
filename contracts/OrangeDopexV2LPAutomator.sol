@@ -116,6 +116,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     constructor(InitArgs memory args) ERC20(args.name, args.symbol, IERC20Decimals(address(args.asset)).decimals()) {
         if (args.asset != IERC20(args.pool.token0()) && args.asset != IERC20(args.pool.token1()))
             revert TokenAddressMismatch();
+        if (args.assetUsdFeed == address(0) || args.counterAssetUsdFeed == address(0)) revert AddressZero();
 
         quoter = args.quoter;
         assetUsdFeed = args.assetUsdFeed;
