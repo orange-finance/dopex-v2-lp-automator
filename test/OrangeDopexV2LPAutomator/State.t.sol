@@ -4,7 +4,9 @@ pragma solidity 0.8.19;
 
 import "./Fixture.t.sol";
 import {IOrangeDopexV2LPAutomator} from "../../contracts/interfaces/IOrangeDopexV2LPAutomator.sol";
-import {deployAutomatorHarness, AutomatorHarness} from "./harness/AutomatorHarness.t.sol";
+import {ChainlinkQuoter} from "../../contracts/ChainlinkQuoter.sol";
+import {OrangeDopexV2LPAutomator, deployAutomatorHarness, AutomatorHarness} from "./harness/AutomatorHarness.t.sol";
+import "../helper/AutomatorHelper.t.sol";
 
 contract TestOrangeDopexV2LPAutomatorState is Fixture {
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandler;
@@ -25,8 +27,6 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
         deal(address(USDCE), address(automator), _balanceUSDCE);
 
         uint256 _expected = _balanceWETH + _getQuote(address(USDCE), address(WETH), uint128(_balanceUSDCE));
-
-        emit log_named_uint("expected", _expected);
 
         assertEq(automator.totalAssets(), _expected);
     }
@@ -77,15 +77,26 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
     }
 
     function test_totalAssets_reversedPair() public {
-        _deployOrangeDopexV2LPAutomator({
-            admin: address(this),
-            strategist: address(this),
-            pool_: pool,
-            asset: USDCE,
-            minDepositAssets: 1e6,
-            depositCap: 10_000e6
-        });
-
+        automator = AutomatorHelper.deployOrangeDopexV2LPAutomator(
+            vm,
+            AutomatorHelper.DeployArgs({
+                name: "OrangeDopexV2LPAutomator",
+                symbol: "ODV2LP",
+                dopexV2ManagerOwner: managerOwner,
+                admin: address(this),
+                strategist: address(this),
+                quoter: new ChainlinkQuoter(),
+                assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
+                counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
+                manager: manager,
+                router: router,
+                handler: uniV3Handler,
+                pool: pool,
+                asset: USDCE,
+                minDepositAssets: 1e6,
+                depositCap: 10_000e6
+            })
+        );
         deal(address(USDCE), address(automator), 100e6);
 
         assertEq(automator.totalAssets(), 100e6);
@@ -280,14 +291,26 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
     }
 
     function test_freeAssets_reversedPair() public {
-        _deployOrangeDopexV2LPAutomator({
-            admin: address(this),
-            strategist: address(this),
-            pool_: pool,
-            asset: USDCE,
-            minDepositAssets: 1e6,
-            depositCap: 10_000e6
-        });
+        automator = AutomatorHelper.deployOrangeDopexV2LPAutomator(
+            vm,
+            AutomatorHelper.DeployArgs({
+                name: "OrangeDopexV2LPAutomator",
+                symbol: "ODV2LP",
+                dopexV2ManagerOwner: managerOwner,
+                admin: address(this),
+                strategist: address(this),
+                quoter: new ChainlinkQuoter(),
+                assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
+                counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
+                manager: manager,
+                router: router,
+                handler: uniV3Handler,
+                pool: pool,
+                asset: USDCE,
+                minDepositAssets: 1e6,
+                depositCap: 10_000e6
+            })
+        );
 
         deal(address(USDCE), address(automator), 100e6);
 
@@ -545,19 +568,24 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
     }
 
     function test_getActiveTicks() public {
-        AutomatorHarness _automator = deployAutomatorHarness({
-            name: "OrangeDopexV2LPAutomator",
-            symbol: "ODV2LP",
-            admin: address(this),
-            strategist: address(this),
-            manager_: manager,
-            handler_: uniV3Handler,
-            router_: router,
-            pool_: pool,
-            asset_: USDCE,
-            minDepositAssets_: 1e6,
-            depositCap: 10_000e6
-        });
+        AutomatorHarness _automator = deployAutomatorHarness(
+            OrangeDopexV2LPAutomator.InitArgs({
+                name: "OrangeDopexV2LPAutomator",
+                symbol: "ODV2LP",
+                admin: address(this),
+                manager: manager,
+                handler: uniV3Handler,
+                router: router,
+                pool: pool,
+                asset: USDCE,
+                minDepositAssets: 1e6,
+                assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
+                counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
+                quoter: new ChainlinkQuoter()
+            }),
+            address(this),
+            10_000e6
+        );
         _automator.pushActiveTick(1);
         _automator.pushActiveTick(2);
 

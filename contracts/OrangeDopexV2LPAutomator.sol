@@ -7,7 +7,6 @@ import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Po
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import {LiquidityAmounts} from "./vendor/uniswapV3/LiquidityAmounts.sol";
 import {TickMath} from "./vendor/uniswapV3/TickMath.sol";
-import {OracleLibrary} from "./vendor/uniswapV3/OracleLibrary.sol";
 import {FullMath} from "./vendor/uniswapV3/FullMath.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -19,6 +18,7 @@ import {AccessControlEnumerable} from "@openzeppelin/contracts/access/AccessCont
 import {ERC20} from "solmate/src/tokens/ERC20.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 
+import {ChainlinkQuoter} from "./ChainlinkQuoter.sol";
 import {IUniswapV3SingleTickLiquidityHandler} from "./vendor/dopexV2/IUniswapV3SingleTickLiquidityHandler.sol";
 import {UniswapV3SingleTickLiquidityLib} from "./lib/UniswapV3SingleTickLiquidityLib.sol";
 import {AutomatorUniswapV3PoolLib} from "./lib/AutomatorUniswapV3PoolLib.sol";
@@ -52,6 +52,10 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     IDopexV2PositionManager public immutable manager;
     IUniswapV3SingleTickLiquidityHandler public immutable handler;
 
+    ChainlinkQuoter public immutable quoter;
+    address public immutable assetUsdFeed;
+    address public immutable counterAssetUsdFeed;
+
     IUniswapV3Pool public immutable pool;
     ISwapRouter public immutable router;
 
@@ -83,47 +87,59 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     error FeePipsTooHigh();
 
     /**
-     * @dev Constructor function for OrangeDopexV2LPAutomator contract.
+     * @dev Constructor arguments for OrangeDopexV2LPAutomator contract.
      * @param name The name of the ERC20 token.
      * @param symbol The symbol of the ERC20 token.
      * @param admin The address of the admin role.
-     * @param manager_ The address of the DopexV2PositionManager contract.
-     * @param handler_ The address of the UniswapV3SingleTickLiquidityHandler contract.
-     * @param router_ The address of the SwapRouter contract.
-     * @param pool_ The address of the UniswapV3Pool contract.
-     * @param asset_ The address of the ERC20 token used as the deposit asset in this vault.
-     * @param minDepositAssets_ The minimum amount of assets that can be deposited.
+     * @param manager The address of the DopexV2PositionManager contract.
+     * @param handler The address of the UniswapV3SingleTickLiquidityHandler contract.
+     * @param router The address of the SwapRouter contract.
+     * @param pool The address of the UniswapV3Pool contract.
+     * @param asset The address of the ERC20 token used as the deposit asset in this vault.
+     * @param minDepositAssets The minimum amount of assets that can be deposited.
      */
-    constructor(
-        string memory name,
-        string memory symbol,
-        address admin,
-        IDopexV2PositionManager manager_,
-        IUniswapV3SingleTickLiquidityHandler handler_,
-        ISwapRouter router_,
-        IUniswapV3Pool pool_,
-        IERC20 asset_,
-        uint256 minDepositAssets_
-    ) ERC20(name, symbol, IERC20Decimals(address(asset_)).decimals()) {
-        if (asset_ != IERC20(pool_.token0()) && asset_ != IERC20(pool_.token1())) revert TokenAddressMismatch();
+    struct InitArgs {
+        string name;
+        string symbol;
+        address admin;
+        IDopexV2PositionManager manager;
+        IUniswapV3SingleTickLiquidityHandler handler;
+        ISwapRouter router;
+        IUniswapV3Pool pool;
+        IERC20 asset;
+        ChainlinkQuoter quoter;
+        address assetUsdFeed;
+        address counterAssetUsdFeed;
+        uint256 minDepositAssets;
+    }
 
-        manager = manager_;
-        handler = handler_;
-        router = router_;
-        pool = pool_;
-        asset = asset_;
-        counterAsset = pool_.token0() == address(asset_) ? IERC20(pool_.token1()) : IERC20(pool_.token0());
-        poolTickSpacing = pool_.tickSpacing();
+    constructor(InitArgs memory args) ERC20(args.name, args.symbol, IERC20Decimals(address(args.asset)).decimals()) {
+        if (args.asset != IERC20(args.pool.token0()) && args.asset != IERC20(args.pool.token1()))
+            revert TokenAddressMismatch();
 
-        _grantRole(DEFAULT_ADMIN_ROLE, admin);
+        quoter = args.quoter;
+        assetUsdFeed = args.assetUsdFeed;
+        counterAssetUsdFeed = args.counterAssetUsdFeed;
 
-        minDepositAssets = minDepositAssets_;
+        manager = args.manager;
+        handler = args.handler;
+        router = args.router;
+        pool = args.pool;
+        asset = args.asset;
+        counterAsset = args.pool.token0() == address(args.asset)
+            ? IERC20(args.pool.token1())
+            : IERC20(args.pool.token0());
+        poolTickSpacing = args.pool.tickSpacing();
 
-        asset_.safeApprove(address(manager_), type(uint256).max);
-        asset_.safeApprove(address(router_), type(uint256).max);
+        _grantRole(DEFAULT_ADMIN_ROLE, args.admin);
 
-        counterAsset.safeApprove(address(manager_), type(uint256).max);
-        counterAsset.safeApprove(address(router_), type(uint256).max);
+        minDepositAssets = args.minDepositAssets;
+
+        args.asset.safeApprove(address(args.manager), type(uint256).max);
+        args.asset.safeApprove(address(args.router), type(uint256).max);
+
+        counterAsset.safeApprove(address(args.manager), type(uint256).max);
+        counterAsset.safeApprove(address(args.router), type(uint256).max);
     }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -226,7 +242,15 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
 
         return
             _quote +
-            OracleLibrary.getQuoteAtTick(pool.currentTick(), _base.toUint128(), address(counterAsset), address(asset));
+            quoter.getQuote(
+                ChainlinkQuoter.QuoteRequest({
+                    baseToken: address(counterAsset),
+                    quoteToken: address(asset),
+                    baseAmount: _base,
+                    baseUsdFeed: counterAssetUsdFeed,
+                    quoteUsdFeed: assetUsdFeed
+                })
+            );
     }
 
     /// @inheritdoc IOrangeDopexV2LPAutomator
@@ -276,7 +300,15 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
 
         return
             _quote +
-            OracleLibrary.getQuoteAtTick(pool.currentTick(), _base.toUint128(), address(counterAsset), address(asset));
+            quoter.getQuote(
+                ChainlinkQuoter.QuoteRequest({
+                    baseToken: address(counterAsset),
+                    quoteToken: address(asset),
+                    baseAmount: _base,
+                    baseUsdFeed: counterAssetUsdFeed,
+                    quoteUsdFeed: assetUsdFeed
+                })
+            );
     }
 
     /// @inheritdoc IOrangeDopexV2LPAutomator
