@@ -24,6 +24,8 @@ import {UniswapV3SingleTickLiquidityLib} from "./lib/UniswapV3SingleTickLiquidit
 import {AutomatorUniswapV3PoolLib} from "./lib/AutomatorUniswapV3PoolLib.sol";
 import {IDopexV2PositionManager} from "./vendor/dopexV2/IDopexV2PositionManager.sol";
 
+import "forge-std/console2.sol";
+
 import {IERC20Decimals} from "./interfaces/IERC20Extended.sol";
 
 interface IMulticallProvider {
@@ -533,18 +535,26 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         RebalanceTickInfo[] calldata ticksBurn,
         RebalanceSwapParams calldata swapParams
     ) external onlyRole(STRATEGIST_ROLE) {
-        uint256 _mintLength = ticksMint.length;
+        (uint256 _actualMintLen, uint256 ignoreIndex) = _getSafeMintParams(ticksMint);
         uint256 _burnLength = ticksBurn.length;
 
-        bytes[] memory _mintCalldataBatch = new bytes[](_mintLength);
+        bytes[] memory _mintCalldataBatch = new bytes[](_actualMintLen);
         int24 _lt;
         int24 _ut;
         uint256 _posId;
-        for (uint256 i = 0; i < _mintLength; ) {
-            _lt = ticksMint[i].tick;
-            _ut = _lt + poolTickSpacing;
+        uint256 j;
+        for (uint256 i = 0; i < ticksMint.length; ) {
+            if (i == ignoreIndex) {
+                unchecked {
+                    i++;
+                }
+                continue;
+            }
 
-            _mintCalldataBatch[i] = _createMintCalldata(_lt, _ut, ticksMint[i].liquidity);
+            _lt = ticksMint[i].tick;
+            // _ut = _lt + poolTickSpacing;
+
+            _mintCalldataBatch[j] = _createMintCalldata(_lt, _ut, ticksMint[i].liquidity);
 
             // If the position is not active, push it to the active ticks
             _posId = uint256(keccak256(abi.encode(handler, pool, _lt, _ut)));
@@ -552,6 +562,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
 
             unchecked {
                 i++;
+                j++;
             }
         }
 
@@ -579,7 +590,42 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         // NOTE: after receiving the assets from the burned position, swap should be called to get the assets for mint
         _swapBeforeRebalanceMint(swapParams);
 
-        if (_mintLength > 0) IMulticallProvider(address(manager)).multicall(_mintCalldataBatch);
+        if (_actualMintLen > 0) IMulticallProvider(address(manager)).multicall(_mintCalldataBatch);
+    }
+
+    // NOTE: skip current tick as it is not allowed to mint on Dopex
+    /**
+     * @dev Returns the length of the ticksMint array after skipping the current tick if it is included.
+     *      Also returns the index of the current tick in the ticksMint array if it is included.
+     *      We need to avoid revert when mint Dopex position in the current tick.
+     *      This should be done on automator because current tick got on caller (this must be off-chain) is different from the current tick got on automator.
+     * @param ticksMint An array of RebalanceTickInfo structs representing the ticks to mint.
+     */
+    function _getSafeMintParams(
+        RebalanceTickInfo[] calldata ticksMint
+    ) internal view returns (uint256 mintLength, uint256 ignoreIndex) {
+        mintLength = ticksMint.length;
+        int24 _ct = pool.currentTick();
+        int24 _spacing = poolTickSpacing;
+
+        // current lower tick is calculated by rounding down the current tick to the nearest tick spacing
+        // if current tick is negative and not divisible by tick spacing, we need to subtract one tick spacing to get the correct lower tick
+        int24 _currentLt = _ct < 0 && _ct % _spacing != 0
+            ? (_ct / _spacing - 1) * _spacing
+            : (_ct / _spacing) * _spacing;
+
+        for (uint256 i = 0; i < mintLength; ) {
+            if (ticksMint[i].tick == _currentLt) {
+                unchecked {
+                    mintLength--;
+                    ignoreIndex = i;
+                    break;
+                }
+            }
+            unchecked {
+                i++;
+            }
+        }
     }
 
     function _swapBeforeRebalanceMint(RebalanceSwapParams calldata swapParams) internal {
@@ -615,6 +661,11 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     }
 
     function _createMintCalldata(int24 lt, int24 ut, uint128 liq) internal view returns (bytes memory) {
+        console2.log("createMintCalldata");
+        console2.logInt(lt);
+        console2.logInt(ut);
+        console2.logUint(liq);
+
         return
             abi.encodeWithSelector(
                 IDopexV2PositionManager.mintPosition.selector,
