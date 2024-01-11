@@ -280,10 +280,9 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     }
 
     /// @inheritdoc IOrangeDopexV2LPAutomator
-    function convertToShares(uint256 assets) public view returns (uint256) {
-        uint256 _supply = totalSupply;
-
-        return _supply == 0 ? assets : assets.mulDivDown(_supply, totalAssets());
+    function convertToShares(uint256 assets) external view returns (uint256) {
+        // NOTE: no need to check total supply as it is checked in deposit function.
+        return assets.mulDivDown(totalSupply, totalAssets());
     }
 
     /// @inheritdoc IOrangeDopexV2LPAutomator
