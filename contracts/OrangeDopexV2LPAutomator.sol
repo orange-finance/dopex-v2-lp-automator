@@ -81,6 +81,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     error SharesTooSmall();
     error InvalidPositionConstruction();
     error FeePipsTooHigh();
+    error UnsupportedDecimals();
 
     /**
      * @dev Constructor function for OrangeDopexV2LPAutomator contract.
@@ -114,6 +115,9 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         asset = asset_;
         counterAsset = pool_.token0() == address(asset_) ? IERC20(pool_.token1()) : IERC20(pool_.token0());
         poolTickSpacing = pool_.tickSpacing();
+
+        if (IERC20Decimals(address(asset_)).decimals() < 3) revert UnsupportedDecimals();
+        if (IERC20Decimals(address(counterAsset)).decimals() < 3) revert UnsupportedDecimals();
 
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
 
@@ -380,9 +384,14 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         if (assets > depositCap) revert DepositCapExceeded();
 
         if (totalSupply == 0) {
+            uint256 _dead;
+            // this cannot overflow as we ensure that the decimals is at least 3 in the constructor
+            unchecked {
+                _dead = 10 ** decimals / 1000;
+            }
+
             // NOTE: mint small amount of shares to avoid sandwich attack on the first deposit
             // https://mixbytes.io/blog/overview-of-the-inflation-attack
-            uint256 _dead = 10 ** decimals / 1000;
             _mint(address(0), _dead);
 
             unchecked {
