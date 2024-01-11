@@ -76,6 +76,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     error InvalidRebalanceParams();
     error MinAssetsRequired(uint256 minAssets, uint256 actualAssets);
     error TokenAddressMismatch();
+    error TokenNotPermitted();
     error DepositTooSmall();
     error DepositCapExceeded();
     error SharesTooSmall();
@@ -509,6 +510,16 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
                 sqrtPriceLimitX96: 0
             })
         );
+    }
+
+    /**
+     * @dev withdraw pooled assets from the automator. This is used when the automator is rewarded by protocols with another token to prevent lock up.
+     * @param token The address of the ERC20 token to withdraw.
+     */
+    function withdraw(IERC20 token) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (token == asset) revert TokenNotPermitted();
+        if (token == counterAsset) revert TokenNotPermitted();
+        token.safeTransfer(msg.sender, token.balanceOf(address(this)));
     }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
