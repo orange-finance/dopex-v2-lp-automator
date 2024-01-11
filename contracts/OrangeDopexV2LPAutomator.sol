@@ -120,7 +120,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
 
         minDepositAssets = minDepositAssets_;
 
-        // The minimum deposit must be set to at least 0.1% of the asset's value, otherwise, the transaction will result in zero shares being allocated.
+        // The minimum deposit must be set to greater than 0.1% of the asset's value, otherwise, the transaction will result in zero shares being allocated.
         if (minDepositAssets_ <= (10 ** IERC20Decimals(address(asset_)).decimals() / 1000))
             revert MinDepositAssetsTooSmall();
         // The minimum deposit should be set to 1e6 (equivalent to 100% in pip units). Failing to do so will result in a zero deposit fee for the recipient.
