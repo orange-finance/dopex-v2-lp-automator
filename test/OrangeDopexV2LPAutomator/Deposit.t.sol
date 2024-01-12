@@ -77,11 +77,12 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
                 depositCap: 10_000e6
             })
         );
-        deal(address(USDCE), alice, 10001e6);
+        deal(address(USDCE), alice, 10_001e6);
+
+        _depositFrom(alice, 5_000e6);
 
         vm.expectRevert(OrangeDopexV2LPAutomator.DepositCapExceeded.selector);
-        vm.prank(alice);
-        automator.deposit(10_001e6);
+        automator.deposit(5_001e6);
     }
 
     function test_deposit_revertWhenDepositTooSmall() public {
@@ -162,7 +163,7 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
                 pool: pool,
                 asset: USDCE,
                 minDepositAssets: 1e6,
-                depositCap: 10_000e6
+                depositCap: 20000e6
             })
         );
 
@@ -176,5 +177,43 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
         // fee: 10000000 (10000000000 * 0.1%) from second deposit, no dead shares exist
         uint256 _shares = _depositFrom(carol, 10_000e6);
         assertEq(_shares, 9990000000);
+    }
+
+    function test_deposit_sharesRoundedToZero() public {
+        automator = AutomatorHelper.deployOrangeDopexV2LPAutomator({
+            vm: vm,
+            args: AutomatorHelper.DeployArgs({
+                dopexV2ManagerOwner: managerOwner,
+                name: "OrangeDopexV2LPAutomator",
+                symbol: "ODV2LP",
+                admin: address(this),
+                strategist: address(this),
+                quoter: new ChainlinkQuoter(),
+                assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
+                counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
+                manager: manager,
+                handler: uniV3Handler,
+                router: router,
+                pool: pool,
+                asset: USDCE,
+                minDepositAssets: 1e6,
+                depositCap: 20_000_000_001e6
+            })
+        });
+
+        // alice deposits 10_000e6
+        _depositFrom(alice, 10_000e6);
+
+        // assume that vault earned 10 billion and one
+        deal(address(USDCE), address(automator), 10_000_000_001e6);
+
+        // 1 * 10_000e6 / 10_000_000_001e6 = 0
+        // this is the quite rare case because the vault has to earn huge amount of profit
+        deal(address(USDCE), bob, 1e6);
+        vm.startPrank(bob);
+        USDCE.approve(address(automator), 1e6);
+        vm.expectRevert(OrangeDopexV2LPAutomator.DepositTooSmall.selector);
+        automator.deposit(1e6);
+        vm.stopPrank();
     }
 }

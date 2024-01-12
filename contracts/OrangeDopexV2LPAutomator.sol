@@ -410,7 +410,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     function deposit(uint256 assets) external returns (uint256 shares) {
         if (assets == 0) revert AmountZero();
         if (assets < minDepositAssets) revert DepositTooSmall();
-        if (assets > depositCap) revert DepositCapExceeded();
+        if (assets + totalAssets() > depositCap) revert DepositCapExceeded();
 
         if (totalSupply == 0) {
             // NOTE: mint small amount of shares to avoid sandwich attack on the first deposit
@@ -432,6 +432,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
             shares = shares - _fee;
         }
 
+        if (shares == 0) revert DepositTooSmall();
         _mint(msg.sender, shares);
 
         asset.safeTransferFrom(msg.sender, address(this), assets);
@@ -485,7 +486,11 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
 
             // redeemable share is burned
             if (c.shareRedeemable > 0)
-                _burnPosition(c.lowerTick, c.lowerTick + poolTickSpacing, c.shareRedeemable.toUint128());
+                if (handler.paused()) {
+                    handler.safeTransferFrom(address(this), msg.sender, c.tokenId, c.shareRedeemable, "");
+                } else {
+                    _burnPosition(c.lowerTick, c.lowerTick + poolTickSpacing, c.shareRedeemable.toUint128());
+                }
 
             unchecked {
                 i++;
@@ -502,7 +507,11 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
             }
         }
 
-        uint256 _payBase = counterAsset.balanceOf(address(this)) - _preBase;
+        /**
+         * 1. shares.mulDivDown(_preBase, _totalSupply) means the portion of idle base asset
+         * 2. counterAsset.balanceOf(address(this)) - _preBase means the base asset from redeemed positions
+         */
+        uint256 _payBase = shares.mulDivDown(_preBase, _totalSupply) + counterAsset.balanceOf(address(this)) - _preBase;
 
         if (_payBase > 0) _swapToRedeemAssets(_payBase);
 
