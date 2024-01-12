@@ -377,7 +377,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     function deposit(uint256 assets) external returns (uint256 shares) {
         if (assets == 0) revert AmountZero();
         if (assets < minDepositAssets) revert DepositTooSmall();
-        if (assets > depositCap) revert DepositCapExceeded();
+        if (assets + totalAssets() > depositCap) revert DepositCapExceeded();
 
         if (totalSupply == 0) {
             // NOTE: mint small amount of shares to avoid sandwich attack on the first deposit

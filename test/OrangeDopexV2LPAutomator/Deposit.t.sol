@@ -53,11 +53,12 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
             minDepositAssets: 1e6,
             depositCap: 10_000e6
         });
-        deal(address(USDCE), alice, 10001e6);
+        deal(address(USDCE), alice, 10_001e6);
+
+        _depositFrom(alice, 5_000e6);
 
         vm.expectRevert(OrangeDopexV2LPAutomator.DepositCapExceeded.selector);
-        vm.prank(alice);
-        automator.deposit(10_001e6);
+        automator.deposit(5_001e6);
     }
 
     function test_deposit_revertWhenDepositTooSmall() public {
@@ -121,7 +122,7 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
                 pool: pool,
                 asset: USDCE,
                 minDepositAssets: 1e6,
-                depositCap: 10000e6
+                depositCap: 20000e6
             })
         });
 
