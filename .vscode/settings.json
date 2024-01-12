@@ -18,6 +18,7 @@
     "rebalancing",
     "reentrancy",
     "solmate",
+    "stdstore",
     "STIP",
     "struct",
     "structs",
