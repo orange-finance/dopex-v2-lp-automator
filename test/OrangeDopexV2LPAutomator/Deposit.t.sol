@@ -137,4 +137,39 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
         uint256 _shares = _depositFrom(carol, 10_000e6);
         assertEq(_shares, 9990000000);
     }
+
+    function test_deposit_sharesRoundedToZero() public {
+        automator = AutomatorHelper.deployOrangeDopexV2LPAutomator({
+            vm: vm,
+            args: AutomatorHelper.DeployArgs({
+                dopexV2ManagerOwner: managerOwner,
+                name: "OrangeDopexV2LPAutomator",
+                symbol: "ODV2LP",
+                admin: address(this),
+                strategist: address(this),
+                manager: manager,
+                handler: uniV3Handler,
+                router: router,
+                pool: pool,
+                asset: USDCE,
+                minDepositAssets: 1e6,
+                depositCap: 10_000e6
+            })
+        });
+
+        // alice deposits 10_000e6
+        _depositFrom(alice, 10_000e6);
+
+        // assume that vault earned 10 billion and one
+        deal(address(USDCE), address(automator), 10_000_000_001e6);
+
+        // 1 * 10_000e6 / 10_000_000_001e6 = 0
+        // this is the quite rare case because the vault has to earn huge amount of profit
+        deal(address(USDCE), bob, 1e6);
+        vm.startPrank(bob);
+        USDCE.approve(address(automator), 1e6);
+        vm.expectRevert(OrangeDopexV2LPAutomator.DepositTooSmall.selector);
+        automator.deposit(1e6);
+        vm.stopPrank();
+    }
 }
