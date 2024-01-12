@@ -70,6 +70,13 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
 
     EnumerableSet.UintSet activeTicks;
 
+    event Deposit(address indexed sender, uint256 assets, uint256 sharesMinted);
+    event Redeem(address indexed sender, uint256 shares, uint256 assetsWithdrawn);
+    event Rebalance(address indexed sender, RebalanceTickInfo[] ticksMint, RebalanceTickInfo[] ticksBurn);
+
+    event DepositCapSet(uint256 depositCap);
+    event DepositFeePipsSet(uint24 depositFeePips);
+
     error AddressZero();
     error AmountZero();
     error LengthMismatch();
@@ -157,6 +164,8 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
      */
     function setDepositCap(uint256 _depositCap) external onlyRole(DEFAULT_ADMIN_ROLE) {
         depositCap = _depositCap;
+
+        emit DepositCapSet(_depositCap);
     }
 
     /**
@@ -174,6 +183,8 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
 
         depositFeeRecipient = recipient;
         depositFeePips = pips;
+
+        emit DepositFeePipsSet(pips);
     }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -404,6 +415,8 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         _mint(msg.sender, shares);
 
         asset.safeTransferFrom(msg.sender, address(this), assets);
+
+        emit Deposit(msg.sender, assets, shares);
     }
 
     /// @dev avoid stack too deep error
@@ -490,6 +503,8 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         _burn(msg.sender, shares);
 
         asset.safeTransfer(msg.sender, assets);
+
+        emit Redeem(msg.sender, shares, assets);
     }
 
     function _burnPosition(int24 lowerTick, int24 upperTick, uint128 shares) internal {
@@ -600,6 +615,8 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         _swapBeforeRebalanceMint(swapParams);
 
         if (_mintLength > 0) IMulticallProvider(address(manager)).multicall(_mintCalldataBatch);
+
+        emit Rebalance(msg.sender, ticksMint, ticksBurn);
     }
 
     function _swapBeforeRebalanceMint(RebalanceSwapParams calldata swapParams) internal {
