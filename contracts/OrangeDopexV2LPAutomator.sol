@@ -70,12 +70,20 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
 
     EnumerableSet.UintSet activeTicks;
 
+    event Deposit(address indexed sender, uint256 assets, uint256 sharesMinted);
+    event Redeem(address indexed sender, uint256 shares, uint256 assetsWithdrawn);
+    event Rebalance(address indexed sender, RebalanceTickInfo[] ticksMint, RebalanceTickInfo[] ticksBurn);
+
+    event DepositCapSet(uint256 depositCap);
+    event DepositFeePipsSet(uint24 depositFeePips);
+
     error AddressZero();
     error AmountZero();
     error LengthMismatch();
     error InvalidRebalanceParams();
     error MinAssetsRequired(uint256 minAssets, uint256 actualAssets);
     error TokenAddressMismatch();
+    error TokenNotPermitted();
     error DepositTooSmall();
     error DepositCapExceeded();
     error SharesTooSmall();
@@ -156,6 +164,8 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
      */
     function setDepositCap(uint256 _depositCap) external onlyRole(DEFAULT_ADMIN_ROLE) {
         depositCap = _depositCap;
+
+        emit DepositCapSet(_depositCap);
     }
 
     /**
@@ -173,6 +183,8 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
 
         depositFeeRecipient = recipient;
         depositFeePips = pips;
+
+        emit DepositFeePipsSet(pips);
     }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -377,7 +389,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     function deposit(uint256 assets) external returns (uint256 shares) {
         if (assets == 0) revert AmountZero();
         if (assets < minDepositAssets) revert DepositTooSmall();
-        if (assets > depositCap) revert DepositCapExceeded();
+        if (assets + totalAssets() > depositCap) revert DepositCapExceeded();
 
         if (totalSupply == 0) {
             // NOTE: mint small amount of shares to avoid sandwich attack on the first deposit
@@ -399,9 +411,12 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
             shares = shares - _fee;
         }
 
+        if (shares == 0) revert DepositTooSmall();
         _mint(msg.sender, shares);
 
         asset.safeTransferFrom(msg.sender, address(this), assets);
+
+        emit Deposit(msg.sender, assets, shares);
     }
 
     /// @dev avoid stack too deep error
@@ -452,7 +467,11 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
 
             // redeemable share is burned
             if (c.shareRedeemable > 0)
-                _burnPosition(c.lowerTick, c.lowerTick + poolTickSpacing, c.shareRedeemable.toUint128());
+                if (handler.paused()) {
+                    handler.safeTransferFrom(address(this), msg.sender, c.tokenId, c.shareRedeemable, "");
+                } else {
+                    _burnPosition(c.lowerTick, c.lowerTick + poolTickSpacing, c.shareRedeemable.toUint128());
+                }
 
             unchecked {
                 i++;
@@ -469,7 +488,11 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
             }
         }
 
-        uint256 _payBase = counterAsset.balanceOf(address(this)) - _preBase;
+        /**
+         * 1. shares.mulDivDown(_preBase, _totalSupply) means the portion of idle base asset
+         * 2. counterAsset.balanceOf(address(this)) - _preBase means the base asset from redeemed positions
+         */
+        uint256 _payBase = shares.mulDivDown(_preBase, _totalSupply) + counterAsset.balanceOf(address(this)) - _preBase;
 
         if (_payBase > 0) _swapToRedeemAssets(_payBase);
 
@@ -480,6 +503,8 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         _burn(msg.sender, shares);
 
         asset.safeTransfer(msg.sender, assets);
+
+        emit Redeem(msg.sender, shares, assets);
     }
 
     function _burnPosition(int24 lowerTick, int24 upperTick, uint128 shares) internal {
@@ -509,6 +534,16 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
                 sqrtPriceLimitX96: 0
             })
         );
+    }
+
+    /**
+     * @dev withdraw pooled assets from the automator. This is used when the automator is rewarded by protocols with another token to prevent lock up.
+     * @param token The address of the ERC20 token to withdraw.
+     */
+    function withdraw(IERC20 token) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (token == asset) revert TokenNotPermitted();
+        if (token == counterAsset) revert TokenNotPermitted();
+        token.safeTransfer(msg.sender, token.balanceOf(address(this)));
     }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -544,6 +579,8 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         _swapBeforeRebalanceMint(swapParams);
 
         if (_mintCalldataBatch.length > 0) IMulticallProvider(address(manager)).multicall(_mintCalldataBatch);
+
+        emit Rebalance(msg.sender, ticksMint, ticksBurn);
     }
 
     function _swapBeforeRebalanceMint(RebalanceSwapParams calldata swapParams) internal {
