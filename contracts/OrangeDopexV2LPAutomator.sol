@@ -469,7 +469,11 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
             }
         }
 
-        uint256 _payBase = counterAsset.balanceOf(address(this)) - _preBase;
+        /**
+         * 1. shares.mulDivDown(_preBase, _totalSupply) means the portion of idle base asset
+         * 2. counterAsset.balanceOf(address(this)) - _preBase means the base asset from redeemed positions
+         */
+        uint256 _payBase = shares.mulDivDown(_preBase, _totalSupply) + counterAsset.balanceOf(address(this)) - _preBase;
 
         if (_payBase > 0) _swapToRedeemAssets(_payBase);
 
