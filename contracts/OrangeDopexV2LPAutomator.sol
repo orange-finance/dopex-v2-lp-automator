@@ -568,15 +568,15 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         RebalanceTickInfo[] calldata ticksBurn,
         RebalanceSwapParams calldata swapParams
     ) external onlyRole(STRATEGIST_ROLE) {
-        bytes[] memory _mintCalldataBatch = _createMintCalldataBatch(ticksMint);
-
         bytes[] memory _burnCalldataBatch = _createBurnCalldataBatch(ticksBurn);
-
         // NOTE: burn should be called before mint to receive the assets from the burned position
         if (_burnCalldataBatch.length > 0) IMulticallProvider(address(manager)).multicall(_burnCalldataBatch);
 
         // NOTE: after receiving the assets from the burned position, swap should be called to get the assets for mint
+        // ! this should be called before mint. otherwise current tick might be changed and mint will fail
         _swapBeforeRebalanceMint(swapParams);
+
+        bytes[] memory _mintCalldataBatch = _createMintCalldataBatch(ticksMint);
 
         if (_mintCalldataBatch.length > 0) IMulticallProvider(address(manager)).multicall(_mintCalldataBatch);
 
