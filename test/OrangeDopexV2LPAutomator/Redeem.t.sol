@@ -3,10 +3,12 @@
 pragma solidity 0.8.19;
 
 import "./Fixture.t.sol";
+import {DopexV2Helper} from "../helper/DopexV2Helper.t.sol";
 import {IOrangeDopexV2LPAutomator} from "../../contracts/interfaces/IOrangeDopexV2LPAutomator.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 
 contract TestOrangeDopexV2LPAutomatorRedeem is Fixture {
+    using stdStorage for StdStorage;
     using FixedPointMathLib for uint256;
 
     function setUp() public override {
@@ -114,6 +116,27 @@ contract TestOrangeDopexV2LPAutomatorRedeem is Fixture {
 
         assertEq(_locked.length, 1);
         assertApproxEqAbs(_assets, _balExpected, 1);
+    }
+
+    function test_redeem_dopexHandlerPaused() public {
+        _depositFrom(bob, 1 ether);
+        _depositFrom(alice, 1.3 ether);
+
+        // mint dopex position using 1.3 WETH
+        // liquidity(-199330, -199320, 1.3 WETH, 0 USDC.e) = 122158608466771138 (current tick: -199349)
+        _rebalanceMintSingle(-199330, 122158608466771138);
+
+        stdstore.target(address(uniV3Handler)).sig("paused()").checked_write(true);
+
+        // now the balance of WETH in automator ≈ 1 ether
+        vm.prank(alice);
+        (uint256 _assets, ) = automator.redeem(1.3 ether, 0);
+
+        // assets = 1.3 ether * 1 ether (redeemable WETH in automator) / 2.3 ether(automator total supply) = 565217391304347826
+        assertApproxEqRel(_assets, 565217391304347826, 0.0001e18); // allow 0.01% diff
+        assertApproxEqRel(WETH.balanceOf(alice), 565217391304347826, 0.0001e18); // allow 0.01% diff
+        // shares = 1.3 ether * 121557834267548568 (automator total handler shares) / 2.3 ether (automator total supply) = 68706601977310060
+        assertApproxEqRel(DopexV2Helper.balanceOfHandler(alice, pool, -199330), 68706601977310060, 0.0001e18); // allow 0.01% diff
     }
 
     function test_redeem_revertWhenMinAssetsNotReached() public {
