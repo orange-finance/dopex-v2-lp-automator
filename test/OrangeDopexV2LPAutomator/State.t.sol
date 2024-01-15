@@ -86,7 +86,7 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
                 dopexV2ManagerOwner: managerOwner,
                 admin: address(this),
                 strategist: address(this),
-                quoter: new ChainlinkQuoter(),
+                quoter: new ChainlinkQuoter(address(0xFdB631F5EE196F0ed6FAa767959853A9F217697D)),
                 assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
                 counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
                 manager: manager,
@@ -300,7 +300,7 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
                 dopexV2ManagerOwner: managerOwner,
                 admin: address(this),
                 strategist: address(this),
-                quoter: new ChainlinkQuoter(),
+                quoter: new ChainlinkQuoter(address(0xFdB631F5EE196F0ed6FAa767959853A9F217697D)),
                 assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
                 counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
                 manager: manager,
@@ -580,7 +580,7 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
                 minDepositAssets: 1e6,
                 assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
                 counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
-                quoter: new ChainlinkQuoter()
+                quoter: new ChainlinkQuoter(address(0xFdB631F5EE196F0ed6FAa767959853A9F217697D))
             }),
             address(this),
             10_000e6

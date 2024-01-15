@@ -26,12 +26,32 @@ contract ChainlinkQuoter {
         address quoteUsdFeed;
     }
 
+    uint256 private constant GRACE_PERIOD_TIME = 3600;
+
+    address public immutable l2SequencerUptimeFeed;
+
+    error SequencerDown();
+    error GracePeriodNotOver();
+
+    constructor(address l2SequencerUptimeFeed_) {
+        l2SequencerUptimeFeed = l2SequencerUptimeFeed_;
+    }
+
     /**
      * @notice Returns the quote for a given token pair
      * @param req The quote request
      * @return quote The quote
      */
     function getQuote(QuoteRequest memory req) public view returns (uint256 quote) {
+        (, int256 answer, uint256 startedAt, , ) = AggregatorV3Interface(l2SequencerUptimeFeed).latestRoundData();
+
+        // answer == 1 means the sequencer is down (0 means it's up)
+        if (answer == 1) revert SequencerDown();
+
+        // Make sure the grace period has passed after the sequencer is back up
+        if (block.timestamp - startedAt <= GRACE_PERIOD_TIME) revert GracePeriodNotOver();
+
+        // Now we can safely calculate the quote from latest data
         uint8 baseTokenDecimals = IERC20Decimals(req.baseToken).decimals();
         uint8 quoteTokenDecimals = IERC20Decimals(req.quoteToken).decimals();
 

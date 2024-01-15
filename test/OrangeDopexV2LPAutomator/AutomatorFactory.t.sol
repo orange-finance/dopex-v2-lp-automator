@@ -37,7 +37,7 @@ contract TestOrangeDopexV2LPAutomatorFactory is Test {
 
         _grantVaultDeployerRoleFromRegistry(address(factory));
 
-        ChainlinkQuoter quoter = new ChainlinkQuoter();
+        ChainlinkQuoter quoter = new ChainlinkQuoter(address(0xFdB631F5EE196F0ed6FAa767959853A9F217697D));
 
         vm.prank(alice);
 
@@ -72,7 +72,7 @@ contract TestOrangeDopexV2LPAutomatorFactory is Test {
 
         _grantVaultDeployerRoleFromRegistry(address(factory));
 
-        ChainlinkQuoter quoter = new ChainlinkQuoter();
+        ChainlinkQuoter quoter = new ChainlinkQuoter(address(0xFdB631F5EE196F0ed6FAa767959853A9F217697D));
 
         vm.expectRevert();
         vm.prank(bob);

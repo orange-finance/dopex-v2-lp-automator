@@ -16,7 +16,7 @@ contract TestChainlinkQuoter is Test {
 
     function setUp() public {
         vm.createSelectFork("arb", 168679427);
-        quoter = new ChainlinkQuoter();
+        quoter = new ChainlinkQuoter(address(0xFdB631F5EE196F0ed6FAa767959853A9F217697D));
     }
 
     function test_getQuote_ethToUsdc() public {
