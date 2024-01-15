@@ -577,53 +577,18 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         RebalanceSwapParams calldata swapParams
     ) external onlyRole(STRATEGIST_ROLE) {
         if (ticksMint.length + activeTicks.length() > MAX_TICKS) revert MaxTicksReached();
-        uint256 _mintLength = ticksMint.length;
-        uint256 _burnLength = ticksBurn.length;
 
-        bytes[] memory _mintCalldataBatch = new bytes[](_mintLength);
-        int24 _lt;
-        int24 _ut;
-        uint256 _posId;
-        for (uint256 i = 0; i < _mintLength; ) {
-            _lt = ticksMint[i].tick;
-            _ut = _lt + poolTickSpacing;
-
-            _mintCalldataBatch[i] = _createMintCalldata(_lt, _ut, ticksMint[i].liquidity);
-
-            // If the position is not active, push it to the active ticks
-            _posId = uint256(keccak256(abi.encode(handler, pool, _lt, _ut)));
-            if (handler.balanceOf(address(this), _posId) == 0) activeTicks.add(uint256(uint24(_lt)));
-
-            unchecked {
-                i++;
-            }
-        }
-
-        bytes[] memory _burnCalldataBatch = new bytes[](_burnLength);
-        uint256 _shares;
-        for (uint256 i = 0; i < _burnLength; ) {
-            _lt = ticksBurn[i].tick;
-            _ut = _lt + poolTickSpacing;
-
-            _posId = uint256(keccak256(abi.encode(handler, pool, _lt, _ut)));
-            _shares = handler.convertToShares(ticksBurn[i].liquidity, _posId);
-            _burnCalldataBatch[i] = _createBurnCalldata(_lt, _ut, _shares.toUint128());
-
-            // if all shares will be burned, pop the active tick
-            if (handler.balanceOf(address(this), _posId) - _shares == 0) activeTicks.remove(uint256(uint24(_lt)));
-
-            unchecked {
-                i++;
-            }
-        }
-
+        bytes[] memory _burnCalldataBatch = _createBurnCalldataBatch(ticksBurn);
         // NOTE: burn should be called before mint to receive the assets from the burned position
-        if (_burnLength > 0) IMulticallProvider(address(manager)).multicall(_burnCalldataBatch);
+        if (_burnCalldataBatch.length > 0) IMulticallProvider(address(manager)).multicall(_burnCalldataBatch);
 
         // NOTE: after receiving the assets from the burned position, swap should be called to get the assets for mint
+        // ! this should be called before mint. otherwise current tick might be changed and mint will fail
         _swapBeforeRebalanceMint(swapParams);
 
-        if (_mintLength > 0) IMulticallProvider(address(manager)).multicall(_mintCalldataBatch);
+        bytes[] memory _mintCalldataBatch = _createMintCalldataBatch(ticksMint);
+
+        if (_mintCalldataBatch.length > 0) IMulticallProvider(address(manager)).multicall(_mintCalldataBatch);
 
         emit Rebalance(msg.sender, ticksMint, ticksBurn);
     }
@@ -657,6 +622,105 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
                     sqrtPriceLimitX96: 0
                 })
             );
+        }
+    }
+
+    function _createMintCalldataBatch(
+        RebalanceTickInfo[] calldata ticksMint
+    ) internal returns (bytes[] memory mintCalldataBatch) {
+        (uint256 _actualMintLen, uint256 ignoreIndex) = _getSafeMintParams(ticksMint);
+        mintCalldataBatch = new bytes[](_actualMintLen);
+
+        int24 _lt;
+        int24 _ut;
+        uint256 _posId;
+        uint256 j;
+        for (uint256 i = 0; i < ticksMint.length; ) {
+            if (i == ignoreIndex) {
+                unchecked {
+                    i++;
+                }
+                continue;
+            }
+
+            _lt = ticksMint[i].tick;
+            _ut = _lt + poolTickSpacing;
+
+            mintCalldataBatch[j] = _createMintCalldata(_lt, _ut, ticksMint[i].liquidity);
+
+            // If the position is not active, push it to the active ticks
+            _posId = uint256(keccak256(abi.encode(handler, pool, _lt, _ut)));
+            if (handler.balanceOf(address(this), _posId) == 0) activeTicks.add(uint256(uint24(_lt)));
+
+            unchecked {
+                i++;
+                j++;
+            }
+        }
+    }
+
+    // NOTE: skip current tick as it is not allowed to mint on Dopex
+    /**
+     * @dev Returns the length of the ticksMint array after skipping the current tick if it is included.
+     *      Also returns the index of the current tick in the ticksMint array if it is included.
+     *      We need to avoid revert when mint Dopex position in the current tick.
+     *      This should be done on automator because current tick got on caller (this must be off-chain) is different from the current tick got on automator.
+     * @param ticksMint An array of RebalanceTickInfo structs representing the ticks to mint.
+     */
+    function _getSafeMintParams(
+        RebalanceTickInfo[] calldata ticksMint
+    ) internal view returns (uint256 mintLength, uint256 ignoreIndex) {
+        uint256 _providedLength = ticksMint.length;
+        mintLength = _providedLength;
+
+        int24 _ct = pool.currentTick();
+        int24 _spacing = poolTickSpacing;
+
+        // current lower tick is calculated by rounding down the current tick to the nearest tick spacing
+        // if current tick is negative and not divisible by tick spacing, we need to subtract one tick spacing to get the correct lower tick
+        int24 _currentLt = _ct < 0 && _ct % _spacing != 0
+            ? (_ct / _spacing - 1) * _spacing
+            : (_ct / _spacing) * _spacing;
+
+        for (uint256 i = 0; i < _providedLength; ) {
+            if (ticksMint[i].tick == _currentLt) {
+                unchecked {
+                    mintLength--;
+                    ignoreIndex = i;
+                    break;
+                }
+            }
+            unchecked {
+                i++;
+            }
+        }
+
+        if (mintLength == _providedLength) ignoreIndex = type(uint256).max;
+    }
+
+    function _createBurnCalldataBatch(
+        RebalanceTickInfo[] calldata ticksBurn
+    ) internal returns (bytes[] memory burnCalldataBatch) {
+        int24 _lt;
+        int24 _ut;
+        uint256 _posId;
+        uint256 _shares;
+        uint256 _burnLength = ticksBurn.length;
+        burnCalldataBatch = new bytes[](_burnLength);
+        for (uint256 i = 0; i < _burnLength; ) {
+            _lt = ticksBurn[i].tick;
+            _ut = _lt + poolTickSpacing;
+
+            _posId = uint256(keccak256(abi.encode(handler, pool, _lt, _ut)));
+            _shares = handler.convertToShares(ticksBurn[i].liquidity, _posId);
+            burnCalldataBatch[i] = _createBurnCalldata(_lt, _ut, _shares.toUint128());
+
+            // if all shares will be burned, pop the active tick
+            if (handler.balanceOf(address(this), _posId) - _shares == 0) activeTicks.remove(uint256(uint24(_lt)));
+
+            unchecked {
+                i++;
+            }
         }
     }
 
