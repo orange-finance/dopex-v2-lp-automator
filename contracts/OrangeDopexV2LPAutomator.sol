@@ -89,6 +89,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     error SharesTooSmall();
     error InvalidPositionConstruction();
     error FeePipsTooHigh();
+    error MinDepositAssetsTooSmall();
 
     /**
      * @dev Constructor function for OrangeDopexV2LPAutomator contract.
@@ -126,6 +127,12 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
 
         minDepositAssets = minDepositAssets_;
+
+        // The minimum deposit must be set to greater than 0.1% of the asset's value, otherwise, the transaction will result in zero shares being allocated.
+        if (minDepositAssets_ <= (10 ** IERC20Decimals(address(asset_)).decimals() / 1000))
+            revert MinDepositAssetsTooSmall();
+        // The minimum deposit should be set to 1e6 (equivalent to 100% in pip units). Failing to do so will result in a zero deposit fee for the recipient.
+        if (minDepositAssets < 1e6) revert MinDepositAssetsTooSmall();
 
         asset_.safeApprove(address(manager_), type(uint256).max);
         asset_.safeApprove(address(router_), type(uint256).max);
