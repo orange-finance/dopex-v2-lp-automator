@@ -46,8 +46,9 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandler;
 
     bytes32 public constant STRATEGIST_ROLE = keccak256("STRATEGIST_ROLE");
-    /// @notice max deposit fee percentage is 1%
-    uint24 constant MAX_PERF_FEE_PIPS = 100_000;
+    uint24 constant MAX_TICKS = 120;
+    /// @notice max deposit fee percentage is 1% (hundredth of 1e6)
+    uint24 constant MAX_PERF_FEE_PIPS = 10_000;
 
     IDopexV2PositionManager public immutable manager;
     IUniswapV3SingleTickLiquidityHandler public immutable handler;
@@ -79,7 +80,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
 
     error AddressZero();
     error AmountZero();
-    error LengthMismatch();
+    error MaxTicksReached();
     error InvalidRebalanceParams();
     error MinAssetsRequired(uint256 minAssets, uint256 actualAssets);
     error TokenAddressMismatch();
@@ -89,6 +90,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     error SharesTooSmall();
     error InvalidPositionConstruction();
     error FeePipsTooHigh();
+    error MinDepositAssetsTooSmall();
 
     /**
      * @dev Constructor function for OrangeDopexV2LPAutomator contract.
@@ -126,6 +128,12 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
 
         minDepositAssets = minDepositAssets_;
+
+        // The minimum deposit must be set to greater than 0.1% of the asset's value, otherwise, the transaction will result in zero shares being allocated.
+        if (minDepositAssets_ <= (10 ** IERC20Decimals(address(asset_)).decimals() / 1000))
+            revert MinDepositAssetsTooSmall();
+        // The minimum deposit should be set to 1e6 (equivalent to 100% in pip units). Failing to do so will result in a zero deposit fee for the recipient.
+        if (minDepositAssets < 1e6) revert MinDepositAssetsTooSmall();
 
         asset_.safeApprove(address(manager_), type(uint256).max);
         asset_.safeApprove(address(router_), type(uint256).max);
@@ -568,6 +576,8 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         RebalanceTickInfo[] calldata ticksBurn,
         RebalanceSwapParams calldata swapParams
     ) external onlyRole(STRATEGIST_ROLE) {
+        if (ticksMint.length + activeTicks.length() > MAX_TICKS) revert MaxTicksReached();
+
         bytes[] memory _burnCalldataBatch = _createBurnCalldataBatch(ticksBurn);
         // NOTE: burn should be called before mint to receive the assets from the burned position
         if (_burnCalldataBatch.length > 0) IMulticallProvider(address(manager)).multicall(_burnCalldataBatch);

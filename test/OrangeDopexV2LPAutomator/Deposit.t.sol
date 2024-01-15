@@ -138,6 +138,36 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
         assertEq(_shares, 9990000000);
     }
 
+    function test_constructor_minDepositAssetsTooSmall() public {
+        // set to 1 / 1000 of 1e18 will fail
+        vm.expectRevert(OrangeDopexV2LPAutomator.MinDepositAssetsTooSmall.selector);
+        new OrangeDopexV2LPAutomator({
+            name: "OrangeDopexV2LPAutomator",
+            symbol: "ODV2LP",
+            admin: address(this),
+            manager_: manager,
+            handler_: uniV3Handler,
+            router_: router,
+            pool_: pool,
+            asset_: WETH,
+            minDepositAssets_: 0.001 ether
+        });
+
+        // set to 1e6 (100% in pip) - 1 will fail
+        vm.expectRevert(OrangeDopexV2LPAutomator.MinDepositAssetsTooSmall.selector);
+        new OrangeDopexV2LPAutomator({
+            name: "OrangeDopexV2LPAutomator",
+            symbol: "ODV2LP",
+            admin: address(this),
+            manager_: manager,
+            handler_: uniV3Handler,
+            router_: router,
+            pool_: pool,
+            asset_: USDCE,
+            minDepositAssets_: 999999 // 1e6 - 1
+        });
+    }
+
     function test_deposit_sharesRoundedToZero() public {
         automator = AutomatorHelper.deployOrangeDopexV2LPAutomator({
             vm: vm,
