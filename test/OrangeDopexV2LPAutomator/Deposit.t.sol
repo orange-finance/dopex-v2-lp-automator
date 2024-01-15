@@ -180,6 +180,46 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
         assertEq(_shares, 9990000000);
     }
 
+    function test_constructor_minDepositAssetsTooSmall() public {
+        // set to 1 / 1000 of 1e18 will fail
+        vm.expectRevert(OrangeDopexV2LPAutomator.MinDepositAssetsTooSmall.selector);
+        new OrangeDopexV2LPAutomator(
+            OrangeDopexV2LPAutomator.InitArgs({
+                name: "OrangeDopexV2LPAutomator",
+                symbol: "ODV2LP",
+                admin: address(this),
+                manager: manager,
+                quoter: ChainlinkQuoter(address(1)),
+                assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
+                counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
+                handler: uniV3Handler,
+                router: router,
+                pool: pool,
+                asset: WETH,
+                minDepositAssets: 0.001 ether
+            })
+        );
+
+        // set to 1e6 (100% in pip) - 1 will fail
+        vm.expectRevert(OrangeDopexV2LPAutomator.MinDepositAssetsTooSmall.selector);
+        new OrangeDopexV2LPAutomator(
+            OrangeDopexV2LPAutomator.InitArgs({
+                name: "OrangeDopexV2LPAutomator",
+                symbol: "ODV2LP",
+                admin: address(this),
+                manager: manager,
+                quoter: ChainlinkQuoter(address(1)),
+                assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
+                counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
+                handler: uniV3Handler,
+                router: router,
+                pool: pool,
+                asset: USDCE,
+                minDepositAssets: 999999 // 1e6 - 1
+            })
+        );
+    }
+
     function test_deposit_sharesRoundedToZero() public {
         automator = AutomatorHelper.deployOrangeDopexV2LPAutomator({
             vm: vm,
