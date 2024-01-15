@@ -46,8 +46,8 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandler;
 
     bytes32 public constant STRATEGIST_ROLE = keccak256("STRATEGIST_ROLE");
-    /// @notice max deposit fee percentage is 1%
-    uint24 constant MAX_PERF_FEE_PIPS = 100_000;
+    /// @notice max deposit fee percentage is 1% (hundredth of 1e6)
+    uint24 constant MAX_PERF_FEE_PIPS = 10_000;
 
     IDopexV2PositionManager public immutable manager;
     IUniswapV3SingleTickLiquidityHandler public immutable handler;
