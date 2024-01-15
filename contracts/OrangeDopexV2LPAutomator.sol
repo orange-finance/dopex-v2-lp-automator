@@ -300,10 +300,9 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     }
 
     /// @inheritdoc IOrangeDopexV2LPAutomator
-    function convertToShares(uint256 assets) public view returns (uint256) {
-        uint256 _supply = totalSupply;
-
-        return _supply == 0 ? assets : assets.mulDivDown(_supply, totalAssets());
+    function convertToShares(uint256 assets) external view returns (uint256) {
+        // NOTE: no need to check total supply as it is checked in deposit function.
+        return assets.mulDivDown(totalSupply, totalAssets());
     }
 
     /// @inheritdoc IOrangeDopexV2LPAutomator
@@ -399,6 +398,15 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         if (assets < minDepositAssets) revert DepositTooSmall();
         if (assets + totalAssets() > depositCap) revert DepositCapExceeded();
 
+        uint256 _beforeTotalAssets = totalAssets();
+
+        // NOTE: Call transfer on first to avoid reentrancy of ERC777 assets that have hook before transfer.
+        // This is a common practice, similar to OpenZeppelin's ERC4626.
+        //
+        // Reference: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/a72c9561b9c200bac87f14ffd43a8c719fd6fa5a/contracts/token/ERC20/extensions/ERC4626.sol#L244
+
+        asset.safeTransferFrom(msg.sender, address(this), assets);
+
         if (totalSupply == 0) {
             // NOTE: mint small amount of shares to avoid sandwich attack on the first deposit
             // https://mixbytes.io/blog/overview-of-the-inflation-attack
@@ -409,7 +417,8 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
                 shares = assets - _dead;
             }
         } else {
-            shares = convertToShares(assets);
+            // NOTE: Assets are already transferred before calculation, so we can use the total assets before deposit
+            shares = assets.mulDivDown(totalSupply, _beforeTotalAssets);
         }
 
         uint256 _fee = shares.mulDivDown(depositFeePips, 1e6);
@@ -421,8 +430,6 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
 
         if (shares == 0) revert DepositTooSmall();
         _mint(msg.sender, shares);
-
-        asset.safeTransferFrom(msg.sender, address(this), assets);
 
         emit Deposit(msg.sender, assets, shares);
     }
@@ -444,7 +451,11 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         if (shares == 0) revert AmountZero();
         if (convertToAssets(shares) == 0) revert SharesTooSmall();
 
-        uint256 _totalSupply = totalSupply;
+        uint256 _tsBeforeBurn = totalSupply;
+
+        // To avoid any reentrancy, we burn the shares first
+        _burn(msg.sender, shares);
+
         uint256 _preBase = counterAsset.balanceOf(address(this));
         uint256 _preQuote = asset.balanceOf(address(this));
 
@@ -457,12 +468,14 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
             c.lowerTick = int24(uint24(activeTicks.at(i)));
 
             c.tokenId = handler.tokenId(address(pool), c.lowerTick, c.lowerTick + poolTickSpacing);
+
+            // total supply before burn is used to calculate the precise share
             c.shareRedeemable = uint256(
                 handler.convertToShares(handler.redeemableLiquidity(address(this), c.tokenId).toUint128(), c.tokenId)
-            ).mulDivDown(shares, _totalSupply);
+            ).mulDivDown(shares, _tsBeforeBurn);
             c.shareLocked = uint256(
                 handler.convertToShares(handler.lockedLiquidity(address(this), c.tokenId).toUint128(), c.tokenId)
-            ).mulDivDown(shares, _totalSupply);
+            ).mulDivDown(shares, _tsBeforeBurn);
 
             // locked share is transferred to the user
             if (c.shareLocked > 0) {
@@ -500,15 +513,15 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
          * 1. shares.mulDivDown(_preBase, _totalSupply) means the portion of idle base asset
          * 2. counterAsset.balanceOf(address(this)) - _preBase means the base asset from redeemed positions
          */
-        uint256 _payBase = shares.mulDivDown(_preBase, _totalSupply) + counterAsset.balanceOf(address(this)) - _preBase;
+        uint256 _payBase = shares.mulDivDown(_preBase, _tsBeforeBurn) +
+            counterAsset.balanceOf(address(this)) -
+            _preBase;
 
         if (_payBase > 0) _swapToRedeemAssets(_payBase);
 
-        assets = shares.mulDivDown(_preQuote, _totalSupply) + asset.balanceOf(address(this)) - _preQuote;
+        assets = shares.mulDivDown(_preQuote, _tsBeforeBurn) + asset.balanceOf(address(this)) - _preQuote;
 
         if (assets < minAssets) revert MinAssetsRequired(minAssets, assets);
-
-        _burn(msg.sender, shares);
 
         asset.safeTransfer(msg.sender, assets);
 
