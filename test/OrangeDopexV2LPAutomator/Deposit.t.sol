@@ -77,6 +77,7 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
                 depositCap: 10_000e6
             })
         );
+
         deal(address(USDCE), alice, 10_001e6);
 
         _depositFrom(alice, 5_000e6);

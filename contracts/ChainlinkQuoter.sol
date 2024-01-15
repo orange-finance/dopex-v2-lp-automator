@@ -4,12 +4,13 @@ pragma solidity 0.8.19;
 
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import {IERC20Decimals} from "./interfaces/IERC20Extended.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title ChainlinkQuoter
  * @notice Provides quotes for token pairs using Chainlink price feeds
  */
-contract ChainlinkQuoter {
+contract ChainlinkQuoter is Ownable {
     /**
      * @notice Quote request
      * @param baseToken The base token to get a quote for
@@ -30,8 +31,13 @@ contract ChainlinkQuoter {
 
     address public immutable l2SequencerUptimeFeed;
 
+    /// @dev The staleness threshold for each feed.
+    /// this should be set to each feed's heartbeat interval: https://docs.chain.link/data-feeds/price-feeds/addresses
+    mapping(address feed => uint256) public stalenessThresholdOf;
+
     error SequencerDown();
     error GracePeriodNotOver();
+    error StalePrice();
 
     constructor(address l2SequencerUptimeFeed_) {
         l2SequencerUptimeFeed = l2SequencerUptimeFeed_;
@@ -55,12 +61,27 @@ contract ChainlinkQuoter {
         uint8 baseTokenDecimals = IERC20Decimals(req.baseToken).decimals();
         uint8 quoteTokenDecimals = IERC20Decimals(req.quoteToken).decimals();
 
-        (, int256 basePriceUsd, , , ) = AggregatorV3Interface(req.baseUsdFeed).latestRoundData();
-        (, int256 quotePriceUsd, , , ) = AggregatorV3Interface(req.quoteUsdFeed).latestRoundData();
+        (, int256 basePriceUsd, , uint256 lastUpdateBase, ) = AggregatorV3Interface(req.baseUsdFeed).latestRoundData();
+        (, int256 quotePriceUsd, , uint256 lastUpdateQuote, ) = AggregatorV3Interface(req.quoteUsdFeed)
+            .latestRoundData();
+
+        if (block.timestamp - lastUpdateBase > stalenessThresholdOf[req.baseUsdFeed]) revert StalePrice();
+        if (block.timestamp - lastUpdateQuote > stalenessThresholdOf[req.quoteUsdFeed]) revert StalePrice();
 
         uint256 _numerator = uint256(basePriceUsd) * req.baseAmount * 10 ** quoteTokenDecimals;
         uint256 _denominator = uint256(quotePriceUsd) * 10 ** baseTokenDecimals;
 
         return _numerator / _denominator;
+    }
+
+    /**
+     * @dev Sets the staleness threshold for a specific feed.
+     * It should be changeable in case the feed's heartbeat interval changes.
+     * @param feed The address of the feed.
+     * @param threshold The staleness threshold to be set.
+     * Only the contract owner can call this function.
+     */
+    function setStalenessThreshold(address feed, uint256 threshold) external onlyOwner {
+        stalenessThresholdOf[feed] = threshold;
     }
 }

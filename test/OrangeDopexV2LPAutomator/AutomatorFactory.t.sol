@@ -38,6 +38,8 @@ contract TestOrangeDopexV2LPAutomatorFactory is Test {
         _grantVaultDeployerRoleFromRegistry(address(factory));
 
         ChainlinkQuoter quoter = new ChainlinkQuoter(address(0xFdB631F5EE196F0ed6FAa767959853A9F217697D));
+        quoter.setStalenessThreshold(0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612, 86400);
+        quoter.setStalenessThreshold(0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3, 86400);
 
         vm.prank(alice);
 
@@ -73,6 +75,8 @@ contract TestOrangeDopexV2LPAutomatorFactory is Test {
         _grantVaultDeployerRoleFromRegistry(address(factory));
 
         ChainlinkQuoter quoter = new ChainlinkQuoter(address(0xFdB631F5EE196F0ed6FAa767959853A9F217697D));
+        quoter.setStalenessThreshold(0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612, 86400);
+        quoter.setStalenessThreshold(0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3, 86400);
 
         vm.expectRevert();
         vm.prank(bob);
