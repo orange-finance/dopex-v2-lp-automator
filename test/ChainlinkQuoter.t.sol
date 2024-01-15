@@ -2,8 +2,9 @@
 pragma solidity 0.8.19;
 
 import "forge-std/Test.sol";
-import {UniswapV3Helper, IUniswapV3Pool} from "./helper/UniswapV3Helper.t.sol";
+import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
+import {UniswapV3Helper, IUniswapV3Pool} from "./helper/UniswapV3Helper.t.sol";
 import {ChainlinkQuoter} from "../contracts/ChainlinkQuoter.sol";
 
 contract TestChainlinkQuoter is Test {
@@ -148,5 +149,111 @@ contract TestChainlinkQuoter is Test {
         );
 
         assertApproxEqRel(uniQuote, clQuote, 0.001e18); // 0.1%
+    }
+
+    function test_getQuote_noBaseFallbackOracleSet() public {
+        // assume the primary WETH oracle is down
+        vm.mockCallRevert(
+            0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
+            abi.encodeWithSelector(AggregatorV3Interface.latestRoundData.selector),
+            abi.encode("UNAVAILABLE")
+        );
+
+        vm.expectRevert(ChainlinkQuoter.FeedNotAvailable.selector);
+        quoter.getQuote(
+            ChainlinkQuoter.QuoteRequest({
+                baseToken: WETH,
+                quoteToken: USDCE,
+                baseAmount: 10_000 ether,
+                baseUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
+                quoteUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3
+            })
+        );
+    }
+
+    function test_getQuote_revert_noQuoteFallbackOracleSet() public {
+        // assume the primary USDC.e oracle is down
+        vm.mockCallRevert(
+            0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
+            abi.encodeWithSelector(AggregatorV3Interface.latestRoundData.selector),
+            abi.encode("UNAVAILABLE")
+        );
+
+        vm.expectRevert(ChainlinkQuoter.FeedNotAvailable.selector);
+        quoter.getQuote(
+            ChainlinkQuoter.QuoteRequest({
+                baseToken: WETH,
+                quoteToken: USDCE,
+                baseAmount: 10_000 ether,
+                baseUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
+                quoteUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3
+            })
+        );
+    }
+
+    function test_getQuote_fallbackToSecondaryBaseOracle() public {
+        // assume the primary ETH oracle is down
+        vm.mockCallRevert(
+            0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
+            abi.encodeWithSelector(AggregatorV3Interface.latestRoundData.selector),
+            abi.encode("UNAVAILABLE")
+        );
+
+        address secondaryBaseOracle = makeAddr("secondEthOracle");
+
+        // return same price as primary oracle
+        vm.mockCall(
+            secondaryBaseOracle,
+            abi.encodeWithSelector(AggregatorV3Interface.latestRoundData.selector),
+            abi.encode(uint80(0), int256(229899026182), uint256(0), block.timestamp, uint80(0))
+        );
+
+        quoter.setSecondaryOracleOf(0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612, secondaryBaseOracle);
+
+        assertEq(
+            quoter.getQuote(
+                ChainlinkQuoter.QuoteRequest({
+                    baseToken: WETH,
+                    quoteToken: USDCE,
+                    baseAmount: 10_000 ether,
+                    baseUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
+                    quoteUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3
+                })
+            ),
+            22987155653099
+        );
+    }
+
+    function test_getQuote_fallbackToSecondaryQuoteOracle() public {
+        // assume the primary USDC.e oracle is down
+        vm.mockCallRevert(
+            0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
+            abi.encodeWithSelector(AggregatorV3Interface.latestRoundData.selector),
+            abi.encode("UNAVAILABLE")
+        );
+
+        address secondaryQuoteOracle = makeAddr("secondUsdceOracle");
+
+        // return same price as primary oracle
+        vm.mockCall(
+            secondaryQuoteOracle,
+            abi.encodeWithSelector(AggregatorV3Interface.latestRoundData.selector),
+            abi.encode(uint80(0), int256(100011950), uint256(0), block.timestamp, uint80(0))
+        );
+
+        quoter.setSecondaryOracleOf(0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3, secondaryQuoteOracle);
+
+        assertEq(
+            quoter.getQuote(
+                ChainlinkQuoter.QuoteRequest({
+                    baseToken: WETH,
+                    quoteToken: USDCE,
+                    baseAmount: 10_000 ether,
+                    baseUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
+                    quoteUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3
+                })
+            ),
+            22987155653099
+        );
     }
 }
