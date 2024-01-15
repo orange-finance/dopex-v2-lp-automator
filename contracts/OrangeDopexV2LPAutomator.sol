@@ -46,6 +46,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandler;
 
     bytes32 public constant STRATEGIST_ROLE = keccak256("STRATEGIST_ROLE");
+    uint24 constant MAX_TICKS = 120;
     /// @notice max deposit fee percentage is 1% (hundredth of 1e6)
     uint24 constant MAX_PERF_FEE_PIPS = 10_000;
 
@@ -79,7 +80,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
 
     error AddressZero();
     error AmountZero();
-    error LengthMismatch();
+    error MaxTicksReached();
     error InvalidRebalanceParams();
     error MinAssetsRequired(uint256 minAssets, uint256 actualAssets);
     error TokenAddressMismatch();
@@ -575,6 +576,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         RebalanceTickInfo[] calldata ticksBurn,
         RebalanceSwapParams calldata swapParams
     ) external onlyRole(STRATEGIST_ROLE) {
+        if (ticksMint.length + activeTicks.length() > MAX_TICKS) revert MaxTicksReached();
         uint256 _mintLength = ticksMint.length;
         uint256 _burnLength = ticksBurn.length;
 
