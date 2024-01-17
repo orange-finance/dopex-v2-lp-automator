@@ -8,8 +8,8 @@
   "dependencies": {
     "@chainlink/contracts": "^0.8.0",
     "@openzeppelin/contracts": "^4.9.3",
-    "@uniswap/v3-core": "^1.0.1",
-    "@uniswap/v3-periphery": "^1.4.4",
+    "@uniswap/v3-core": "git+https://github.com/Uniswap/v3-core.git#0.8",
+    "@uniswap/v3-periphery": "git+https://github.com/Uniswap/v3-periphery.git#0.8",
     "solmate": "^6.2.0"
   },
   "volta": {
