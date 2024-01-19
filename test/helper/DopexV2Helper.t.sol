@@ -5,7 +5,7 @@ pragma solidity 0.8.19;
 import {IDopexV2PositionManager} from "../../contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
 import {IUniswapV3SingleTickLiquidityHandler} from "../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandler.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import {TickMath} from "../../contracts/vendor/uniswapV3/TickMath.sol";
+import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 
 library DopexV2Helper {
     using TickMath for int24;
@@ -17,6 +17,10 @@ library DopexV2Helper {
 
     IUniswapV3SingleTickLiquidityHandler constant DOPEX_UNIV3_HANDLER =
         IUniswapV3SingleTickLiquidityHandler(0xe11d346757d052214686bCbC860C94363AfB4a9A);
+
+    function balanceOfHandler(address account, IUniswapV3Pool pool, int24 tickLower) internal view returns (uint256) {
+        return DOPEX_UNIV3_HANDLER.balanceOf(account, _tokenId(pool, tickLower));
+    }
 
     function useDopexPosition(IUniswapV3Pool pool, int24 tickLower, uint128 liquidityToUse) internal {
         IUniswapV3SingleTickLiquidityHandler.UsePositionParams memory _params = IUniswapV3SingleTickLiquidityHandler

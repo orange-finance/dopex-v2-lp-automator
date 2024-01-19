@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 
 import "forge-std/Test.sol";
 import {IOrangeVaultRegistry} from "../../contracts/vendor/orange/IOrangeVaultRegistry.sol";
-import {OrangeDopexV2LPAutomatorV1Factory, OrangeDopexV2LPAutomator, IUniswapV3Pool, IERC20} from "../../contracts/OrangeDopexV2LPAutomatorV1Factory.sol";
+import {OrangeDopexV2LPAutomatorV1Factory, OrangeDopexV2LPAutomator, ChainlinkQuoter, IUniswapV3Pool, IERC20} from "../../contracts/OrangeDopexV2LPAutomatorV1Factory.sol";
 import {DopexV2Helper} from "../helper/DopexV2Helper.t.sol";
 import {AutomatorHelper} from "../helper/AutomatorHelper.t.sol";
 import {IAccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
@@ -37,7 +37,12 @@ contract TestOrangeDopexV2LPAutomatorFactory is Test {
 
         _grantVaultDeployerRoleFromRegistry(address(factory));
 
+        ChainlinkQuoter quoter = new ChainlinkQuoter(address(0xFdB631F5EE196F0ed6FAa767959853A9F217697D));
+        quoter.setStalenessThreshold(0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612, 86400);
+        quoter.setStalenessThreshold(0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3, 86400);
+
         vm.prank(alice);
+
         OrangeDopexV2LPAutomator automator = factory.createOrangeDopexV2LPAutomator(
             OrangeDopexV2LPAutomatorV1Factory.InitArgs({
                 admin: alice,
@@ -46,6 +51,9 @@ contract TestOrangeDopexV2LPAutomatorFactory is Test {
                 router: AutomatorHelper.ROUTER,
                 pool: WETH_USDCE_500,
                 asset: USDCE,
+                quoter: quoter,
+                assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
+                counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
                 minDepositAssets: 100e6
             })
         );
@@ -66,6 +74,10 @@ contract TestOrangeDopexV2LPAutomatorFactory is Test {
 
         _grantVaultDeployerRoleFromRegistry(address(factory));
 
+        ChainlinkQuoter quoter = new ChainlinkQuoter(address(0xFdB631F5EE196F0ed6FAa767959853A9F217697D));
+        quoter.setStalenessThreshold(0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612, 86400);
+        quoter.setStalenessThreshold(0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3, 86400);
+
         vm.expectRevert();
         vm.prank(bob);
         factory.createOrangeDopexV2LPAutomator(
@@ -76,6 +88,9 @@ contract TestOrangeDopexV2LPAutomatorFactory is Test {
                 router: AutomatorHelper.ROUTER,
                 pool: WETH_USDCE_500,
                 asset: USDCE,
+                quoter: quoter,
+                assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
+                counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
                 minDepositAssets: 100e6
             })
         );
