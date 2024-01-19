@@ -23,7 +23,7 @@ contract OrangeDopexV2LPAutomatorV1Factory is AccessControlEnumerable {
     constructor(IOrangeVaultRegistry _registry) {
         registry = _registry;
 
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     /**

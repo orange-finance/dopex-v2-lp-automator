@@ -154,11 +154,11 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
 
         minDepositAssets = args.minDepositAssets;
 
-        args.asset.safeApprove(address(args.manager), type(uint256).max);
-        args.asset.safeApprove(address(args.router), type(uint256).max);
+        args.asset.safeIncreaseAllowance(address(args.manager), type(uint256).max);
+        args.asset.safeIncreaseAllowance(address(args.router), type(uint256).max);
 
-        counterAsset.safeApprove(address(args.manager), type(uint256).max);
-        counterAsset.safeApprove(address(args.router), type(uint256).max);
+        counterAsset.safeIncreaseAllowance(address(args.manager), type(uint256).max);
+        counterAsset.safeIncreaseAllowance(address(args.router), type(uint256).max);
     }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
