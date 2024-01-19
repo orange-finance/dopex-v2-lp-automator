@@ -102,6 +102,17 @@ interface IOrangeDopexV2LPAutomator {
     function getActiveTicks() external view returns (int24[] memory);
 
     /**
+     * @dev Retrieves the positions of the automator.
+     * @return balanceDepositAsset The balance of the deposit asset.
+     * @return balanceCounterAsset The balance of the counter asset.
+     * @return ticks An array of structs representing the active ticks and its liquidity.
+     */
+    function getAutomatorPositions()
+        external
+        view
+        returns (uint256 balanceDepositAsset, uint256 balanceCounterAsset, RebalanceTickInfo[] memory ticks);
+
+    /**
      * @dev Calculates the total assets in the automator contract.
      * It includes the assets in the Dopex pools and the automator contract itself.
      * @return The total assets in the automator contract.

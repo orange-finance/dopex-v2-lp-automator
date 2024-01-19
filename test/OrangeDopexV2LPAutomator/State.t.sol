@@ -5,8 +5,8 @@ pragma solidity 0.8.19;
 import "./Fixture.t.sol";
 import {IOrangeDopexV2LPAutomator} from "../../contracts/interfaces/IOrangeDopexV2LPAutomator.sol";
 import {ChainlinkQuoter} from "../../contracts/ChainlinkQuoter.sol";
-import {OrangeDopexV2LPAutomator, deployAutomatorHarness, AutomatorHarness} from "./harness/AutomatorHarness.t.sol";
-import "../helper/AutomatorHelper.t.sol";
+import {deployAutomatorHarness, AutomatorHarness} from "./harness/AutomatorHarness.t.sol";
+import {AutomatorHelper} from "../helper/AutomatorHelper.t.sol";
 
 contract TestOrangeDopexV2LPAutomatorState is Fixture {
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandler;
@@ -593,5 +593,56 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
         assertEq(_actual.length, 2);
         assertEq(_actual[0], 1);
         assertEq(_actual[1], 2);
+    }
+
+    function test_getAutomatorPositions() public {
+        OrangeDopexV2LPAutomator _automator = AutomatorHelper.deployOrangeDopexV2LPAutomator(
+            vm,
+            AutomatorHelper.DeployArgs({
+                name: "odpx-WETH-USDCE",
+                symbol: "odpx-WETH-USDCE",
+                dopexV2ManagerOwner: managerOwner,
+                admin: address(this),
+                strategist: address(this),
+                manager: manager,
+                handler: uniV3Handler,
+                router: router,
+                pool: pool,
+                asset: WETH,
+                minDepositAssets: 0.01 ether,
+                depositCap: 1000 ether,
+                quoter: new ChainlinkQuoter(address(0xFdB631F5EE196F0ed6FAa767959853A9F217697D)),
+                assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
+                counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612
+            })
+        );
+
+        deal(address(WETH), address(_automator), 100 ether);
+        deal(address(USDCE), address(_automator), 100_000e6);
+
+        IOrangeDopexV2LPAutomator.RebalanceTickInfo[]
+            memory _ticksMint = new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](2);
+        // mint liquidity use 50k USDCE at -199360
+        _ticksMint[0] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({tick: -199360, liquidity: 2131788420041464685});
+        // mint liquidity use 50 WETH at -199340
+        _ticksMint[1] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({tick: -199340, liquidity: 4696059518540551032});
+
+        AutomatorHelper.rebalanceMint(_automator, _ticksMint);
+
+        (
+            uint256 _balAsset,
+            uint256 _balCounterAsset,
+            IOrangeDopexV2LPAutomator.RebalanceTickInfo[] memory _ticks
+        ) = _automator.getAutomatorPositions();
+
+        assertApproxEqAbs(_balAsset, 50 ether, 10);
+        assertApproxEqAbs(_balCounterAsset, 50_000e6, 10);
+
+        assertEq(_ticks.length, 2);
+
+        assertEq(_ticks[0].tick, -199360);
+        assertApproxEqRel(_ticks[0].liquidity, 2131788420041464685, 0.00001e18); // 0.001% tolerance
+        assertEq(_ticks[1].tick, -199340);
+        assertApproxEqRel(_ticks[1].liquidity, 4696059518540551032, 0.00001e18); // 0.001% tolerance
     }
 }
