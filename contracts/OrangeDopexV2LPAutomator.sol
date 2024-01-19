@@ -93,9 +93,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     error DepositTooSmall();
     error DepositCapExceeded();
     error SharesTooSmall();
-    error InvalidPositionConstruction();
     error FeePipsTooHigh();
-    error TooLargeLiquidity();
     error UnsupportedDecimals();
     error MinDepositAssetsTooSmall();
 
@@ -401,56 +399,6 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     }
 
     /// @inheritdoc IOrangeDopexV2LPAutomator
-    function calculateRebalanceSwapParamsInRebalance(
-        RebalanceTickInfo[] memory ticksMint,
-        RebalanceTickInfo[] memory ticksBurn
-    ) external view returns (RebalanceSwapParams memory) {
-        uint256 _mintAssets;
-        uint256 _mintCAssets;
-        uint256 _burnAssets;
-        uint256 _burnCAssets;
-
-        if (pool.token0() == address(asset)) {
-            (_mintAssets, _mintCAssets) = pool.estimateTotalTokensFromPositions(ticksMint);
-            (_burnAssets, _burnCAssets) = pool.estimateTotalTokensFromPositions(ticksBurn);
-        } else {
-            (_mintCAssets, _mintAssets) = pool.estimateTotalTokensFromPositions(ticksMint);
-            (_burnCAssets, _burnAssets) = pool.estimateTotalTokensFromPositions(ticksBurn);
-        }
-
-        uint256 _freeAssets = _burnAssets + asset.balanceOf(address(this));
-        uint256 _freeCAssets = _burnCAssets + counterAsset.balanceOf(address(this));
-
-        uint256 _assetsShortage;
-        if (_mintAssets > _freeAssets) _assetsShortage = _mintAssets - _freeAssets;
-
-        uint256 _counterAssetsShortage;
-        if (_mintCAssets > _freeCAssets) _counterAssetsShortage = _mintCAssets - _freeCAssets;
-
-        if (_assetsShortage > 0 && _counterAssetsShortage > 0) revert InvalidPositionConstruction();
-
-        uint256 _maxCounterAssetsUseForSwap;
-        if (_assetsShortage > 0) {
-            _maxCounterAssetsUseForSwap = _freeCAssets - _mintCAssets;
-        }
-
-        uint256 _maxAssetsUseForSwap;
-        if (_counterAssetsShortage > 0) {
-            _maxAssetsUseForSwap = _freeAssets - _mintAssets;
-        }
-
-        if (_assetsShortage != 0 && _counterAssetsShortage != 0) revert TooLargeLiquidity();
-
-        return
-            RebalanceSwapParams({
-                assetsShortage: _assetsShortage,
-                counterAssetsShortage: _counterAssetsShortage,
-                maxCounterAssetsUseForSwap: _maxCounterAssetsUseForSwap,
-                maxAssetsUseForSwap: _maxAssetsUseForSwap
-            });
-    }
-
-    /// @inheritdoc IOrangeDopexV2LPAutomator
     function getActiveTicks() external view returns (int24[] memory) {
         uint256[] memory _tempTicks = activeTicks.values();
         int24[] memory _activeTicks = new int24[](_tempTicks.length);
@@ -649,18 +597,6 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                     STRATEGIST ACTIONS
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
-
-    /// @inheritdoc IOrangeDopexV2LPAutomator
-    function checkMintValidity(int24 lowerTick) external view returns (bool) {
-        IUniswapV3SingleTickLiquidityHandler.TokenIdInfo memory _ti = handler.tokenIds(
-            handler.tokenId(address(pool), lowerTick, lowerTick + poolTickSpacing)
-        );
-
-        if (_ti.tokensOwed0 > 0 && _ti.tokensOwed0 < 10) return false;
-        if (_ti.tokensOwed1 > 0 && _ti.tokensOwed1 < 10) return false;
-
-        return true;
-    }
 
     /// @inheritdoc IOrangeDopexV2LPAutomator
     function rebalance(

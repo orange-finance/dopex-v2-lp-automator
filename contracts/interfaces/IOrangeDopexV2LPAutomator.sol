@@ -160,17 +160,6 @@ interface IOrangeDopexV2LPAutomator {
     function getTickFreeLiquidity(int24 tick) external view returns (uint128);
 
     /**
-     * @dev Calculates the swap parameters for rebalancing in the OrangeDopexV2LPAutomator contract.
-     * @param ticksMint An array of RebalanceTickInfo structs representing the ticks to be minted.
-     * @param ticksBurn An array of RebalanceTickInfo structs representing the ticks to be burned.
-     * @return RebalanceSwapParams A struct containing the calculated swap parameters for rebalancing.
-     */
-    function calculateRebalanceSwapParamsInRebalance(
-        RebalanceTickInfo[] memory ticksMint,
-        RebalanceTickInfo[] memory ticksBurn
-    ) external view returns (RebalanceSwapParams memory);
-
-    /**
      * @dev Deposits the specified amount of assets into the contract and returns the corresponding number of shares.
      * @param assets The amount of assets to deposit.
      * @return shares The number of shares received after the deposit.
@@ -193,15 +182,6 @@ interface IOrangeDopexV2LPAutomator {
         uint256 shares,
         uint256 minAssets
     ) external returns (uint256 assets, LockedDopexShares[] memory lockedDopexShares);
-
-    /**
-     * @dev should be called by strategist when creating rebalance params.
-     * @dev this is a hack to avoid mint error in a Dopex UniV3 Handler.
-     * the handler will revert when accumulated fees are less than 10.
-     * this is because the liquidity calculation is rounded down to 0 against the accumulated fees, then mint for 0 will revert.
-     * @param lowerTick The lower tick of the range.
-     */
-    function checkMintValidity(int24 lowerTick) external view returns (bool);
 
     /**
      * @dev Rebalance the liquidity positions in the OrangeDopexV2LPAutomator contract.
