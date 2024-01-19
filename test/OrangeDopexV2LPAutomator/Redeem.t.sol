@@ -202,7 +202,7 @@ contract TestOrangeDopexV2LPAutomatorRedeem is Fixture {
         automator.rebalance(
             _ticksMint,
             _ticksBurn,
-            automator.calculateRebalanceSwapParamsInRebalance(_ticksMint, _ticksBurn)
+            strategy.calculateRebalanceSwapParamsInRebalance(_ticksMint, _ticksBurn)
         );
     }
 }
