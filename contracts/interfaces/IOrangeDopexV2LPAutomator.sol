@@ -6,7 +6,6 @@ import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Po
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {ERC20} from "solmate/src/tokens/ERC20.sol";
 
 import {IUniswapV3SingleTickLiquidityHandler} from "../vendor/dopexV2/IUniswapV3SingleTickLiquidityHandler.sol";
 import {IDopexV2PositionManager} from "../vendor/dopexV2/IDopexV2PositionManager.sol";
@@ -153,7 +152,7 @@ interface IOrangeDopexV2LPAutomator {
      * @dev Calculates the swap parameters for rebalancing in the OrangeDopexV2LPAutomator contract.
      * @param ticksMint An array of RebalanceTickInfo structs representing the ticks to be minted.
      * @param ticksBurn An array of RebalanceTickInfo structs representing the ticks to be burned.
-     * @return rebalanceSwapParams A struct containing the calculated swap parameters for rebalancing.
+     * @return RebalanceSwapParams A struct containing the calculated swap parameters for rebalancing.
      */
     function calculateRebalanceSwapParamsInRebalance(
         RebalanceTickInfo[] memory ticksMint,
@@ -189,6 +188,7 @@ interface IOrangeDopexV2LPAutomator {
      * @dev this is a hack to avoid mint error in a Dopex UniV3 Handler.
      * the handler will revert when accumulated fees are less than 10.
      * this is because the liquidity calculation is rounded down to 0 against the accumulated fees, then mint for 0 will revert.
+     * @param lowerTick The lower tick of the range.
      */
     function checkMintValidity(int24 lowerTick) external view returns (bool);
 

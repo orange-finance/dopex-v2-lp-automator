@@ -16,14 +16,26 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
     }
 
     function test_deposit_firstTime() public {
-        _deployOrangeDopexV2LPAutomator({
-            admin: address(this),
-            strategist: address(this),
-            pool_: pool,
-            asset: USDCE,
-            minDepositAssets: 1e6,
-            depositCap: 10000e6
-        });
+        automator = AutomatorHelper.deployOrangeDopexV2LPAutomator(
+            vm,
+            AutomatorHelper.DeployArgs({
+                name: "OrangeDopexV2LPAutomator",
+                symbol: "ODV2LP",
+                dopexV2ManagerOwner: managerOwner,
+                admin: address(this),
+                strategist: address(this),
+                quoter: new ChainlinkQuoter(address(0xFdB631F5EE196F0ed6FAa767959853A9F217697D)),
+                assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
+                counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
+                manager: manager,
+                router: router,
+                handler: uniV3Handler,
+                pool: pool,
+                asset: USDCE,
+                minDepositAssets: 1e6,
+                depositCap: 10_000e6
+            })
+        );
 
         uint256 _shares = _depositFrom(alice, 10000e6);
 
@@ -45,14 +57,27 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
     }
 
     function test_deposit_revertWhenDepositCapExceeded() public {
-        _deployOrangeDopexV2LPAutomator({
-            admin: address(this),
-            strategist: address(this),
-            pool_: pool,
-            asset: USDCE,
-            minDepositAssets: 1e6,
-            depositCap: 10_000e6
-        });
+        automator = AutomatorHelper.deployOrangeDopexV2LPAutomator(
+            vm,
+            AutomatorHelper.DeployArgs({
+                name: "OrangeDopexV2LPAutomator",
+                symbol: "ODV2LP",
+                dopexV2ManagerOwner: managerOwner,
+                admin: address(this),
+                strategist: address(this),
+                quoter: new ChainlinkQuoter(address(0xFdB631F5EE196F0ed6FAa767959853A9F217697D)),
+                assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
+                counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
+                manager: manager,
+                router: router,
+                handler: uniV3Handler,
+                pool: pool,
+                asset: USDCE,
+                minDepositAssets: 1e6,
+                depositCap: 10_000e6
+            })
+        );
+
         deal(address(USDCE), alice, 10_001e6);
 
         _depositFrom(alice, 5_000e6);
@@ -62,38 +87,52 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
     }
 
     function test_deposit_revertWhenDepositTooSmall() public {
-        _deployOrangeDopexV2LPAutomator({
-            admin: address(this),
-            strategist: address(this),
-            pool_: pool,
-            asset: USDCE,
-            minDepositAssets: 1e6,
-            depositCap: 10_000e6
-        });
+        automator = AutomatorHelper.deployOrangeDopexV2LPAutomator(
+            vm,
+            AutomatorHelper.DeployArgs({
+                name: "OrangeDopexV2LPAutomator",
+                symbol: "ODV2LP",
+                dopexV2ManagerOwner: managerOwner,
+                admin: address(this),
+                strategist: address(this),
+                quoter: new ChainlinkQuoter(address(0xFdB631F5EE196F0ed6FAa767959853A9F217697D)),
+                assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
+                counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
+                manager: manager,
+                router: router,
+                handler: uniV3Handler,
+                pool: pool,
+                asset: USDCE,
+                minDepositAssets: 1e6,
+                depositCap: 10_000e6
+            })
+        );
 
         vm.expectRevert(OrangeDopexV2LPAutomator.DepositTooSmall.selector);
         automator.deposit(999999);
     }
 
     function test_deposit_deductedPerfFee_firstDeposit() public {
-        automator = AutomatorHelper.deployOrangeDopexV2LPAutomator({
-            vm: vm,
-            args: AutomatorHelper.DeployArgs({
-                dopexV2ManagerOwner: managerOwner,
+        automator = AutomatorHelper.deployOrangeDopexV2LPAutomator(
+            vm,
+            AutomatorHelper.DeployArgs({
                 name: "OrangeDopexV2LPAutomator",
                 symbol: "ODV2LP",
+                dopexV2ManagerOwner: managerOwner,
                 admin: address(this),
                 strategist: address(this),
+                quoter: new ChainlinkQuoter(address(0xFdB631F5EE196F0ed6FAa767959853A9F217697D)),
+                assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
+                counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
                 manager: manager,
-                handler: uniV3Handler,
                 router: router,
+                handler: uniV3Handler,
                 pool: pool,
                 asset: USDCE,
                 minDepositAssets: 1e6,
-                depositCap: 10000e6
+                depositCap: 10_000e6
             })
-        });
-
+        );
         // set deposit fee to 0.1%, set bob as recipient
         automator.setDepositFeePips(bob, 1000);
 
@@ -108,23 +147,26 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
     }
 
     function test_deposit_deductedPerfFee_secondDeposit() public {
-        automator = AutomatorHelper.deployOrangeDopexV2LPAutomator({
-            vm: vm,
-            args: AutomatorHelper.DeployArgs({
-                dopexV2ManagerOwner: managerOwner,
+        automator = AutomatorHelper.deployOrangeDopexV2LPAutomator(
+            vm,
+            AutomatorHelper.DeployArgs({
                 name: "OrangeDopexV2LPAutomator",
                 symbol: "ODV2LP",
+                dopexV2ManagerOwner: managerOwner,
                 admin: address(this),
                 strategist: address(this),
+                quoter: new ChainlinkQuoter(address(0xFdB631F5EE196F0ed6FAa767959853A9F217697D)),
+                assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
+                counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
                 manager: manager,
-                handler: uniV3Handler,
                 router: router,
+                handler: uniV3Handler,
                 pool: pool,
                 asset: USDCE,
                 minDepositAssets: 1e6,
                 depositCap: 20000e6
             })
-        });
+        );
 
         // set deposit fee to 0.1%, set bob as recipient
         automator.setDepositFeePips(bob, 1000);
@@ -141,31 +183,41 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
     function test_constructor_minDepositAssetsTooSmall() public {
         // set to 1 / 1000 of 1e18 will fail
         vm.expectRevert(OrangeDopexV2LPAutomator.MinDepositAssetsTooSmall.selector);
-        new OrangeDopexV2LPAutomator({
-            name: "OrangeDopexV2LPAutomator",
-            symbol: "ODV2LP",
-            admin: address(this),
-            manager_: manager,
-            handler_: uniV3Handler,
-            router_: router,
-            pool_: pool,
-            asset_: WETH,
-            minDepositAssets_: 0.001 ether
-        });
+        new OrangeDopexV2LPAutomator(
+            OrangeDopexV2LPAutomator.InitArgs({
+                name: "OrangeDopexV2LPAutomator",
+                symbol: "ODV2LP",
+                admin: address(this),
+                manager: manager,
+                quoter: ChainlinkQuoter(address(1)),
+                assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
+                counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
+                handler: uniV3Handler,
+                router: router,
+                pool: pool,
+                asset: WETH,
+                minDepositAssets: 0.001 ether
+            })
+        );
 
         // set to 1e6 (100% in pip) - 1 will fail
         vm.expectRevert(OrangeDopexV2LPAutomator.MinDepositAssetsTooSmall.selector);
-        new OrangeDopexV2LPAutomator({
-            name: "OrangeDopexV2LPAutomator",
-            symbol: "ODV2LP",
-            admin: address(this),
-            manager_: manager,
-            handler_: uniV3Handler,
-            router_: router,
-            pool_: pool,
-            asset_: USDCE,
-            minDepositAssets_: 999999 // 1e6 - 1
-        });
+        new OrangeDopexV2LPAutomator(
+            OrangeDopexV2LPAutomator.InitArgs({
+                name: "OrangeDopexV2LPAutomator",
+                symbol: "ODV2LP",
+                admin: address(this),
+                manager: manager,
+                quoter: ChainlinkQuoter(address(1)),
+                assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
+                counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
+                handler: uniV3Handler,
+                router: router,
+                pool: pool,
+                asset: USDCE,
+                minDepositAssets: 999999 // 1e6 - 1
+            })
+        );
     }
 
     function test_deposit_sharesRoundedToZero() public {
@@ -177,6 +229,9 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
                 symbol: "ODV2LP",
                 admin: address(this),
                 strategist: address(this),
+                quoter: new ChainlinkQuoter(address(0xFdB631F5EE196F0ed6FAa767959853A9F217697D)),
+                assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
+                counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
                 manager: manager,
                 handler: uniV3Handler,
                 router: router,
