@@ -9,7 +9,6 @@ import {FullMath} from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
 import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
-import {OracleLibrary} from "@uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Receiver.sol";
@@ -96,6 +95,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     error SharesTooSmall();
     error InvalidPositionConstruction();
     error FeePipsTooHigh();
+    error UnsupportedDecimals();
     error MinDepositAssetsTooSmall();
 
     /**
@@ -144,7 +144,8 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
             : IERC20(args.pool.token0());
         poolTickSpacing = args.pool.tickSpacing();
 
-        _grantRole(DEFAULT_ADMIN_ROLE, args.admin);
+        if (IERC20Decimals(address(args.asset)).decimals() < 3) revert UnsupportedDecimals();
+        if (IERC20Decimals(address(counterAsset)).decimals() < 3) revert UnsupportedDecimals();
 
         // The minimum deposit must be set to greater than 0.1% of the asset's value, otherwise, the transaction will result in zero shares being allocated.
         if (args.minDepositAssets <= (10 ** IERC20Decimals(address(args.asset)).decimals() / 1000))
@@ -159,6 +160,8 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
 
         counterAsset.safeIncreaseAllowance(address(args.manager), type(uint256).max);
         counterAsset.safeIncreaseAllowance(address(args.router), type(uint256).max);
+
+        _grantRole(DEFAULT_ADMIN_ROLE, args.admin);
     }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -443,9 +446,14 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         asset.safeTransferFrom(msg.sender, address(this), assets);
 
         if (totalSupply == 0) {
+            uint256 _dead;
+            // this cannot overflow as we ensure that the decimals is at least 3 in the constructor
+            unchecked {
+                _dead = 10 ** decimals / 1000;
+            }
+
             // NOTE: mint small amount of shares to avoid sandwich attack on the first deposit
             // https://mixbytes.io/blog/overview-of-the-inflation-attack
-            uint256 _dead = 10 ** decimals / 1000;
             _mint(address(0), _dead);
 
             unchecked {
