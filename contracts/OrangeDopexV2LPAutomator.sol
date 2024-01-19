@@ -95,6 +95,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     error SharesTooSmall();
     error InvalidPositionConstruction();
     error FeePipsTooHigh();
+    error TooLargeLiquidity();
     error UnsupportedDecimals();
     error MinDepositAssetsTooSmall();
 
@@ -437,6 +438,8 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         if (_counterAssetsShortage > 0) {
             _maxAssetsUseForSwap = _freeAssets - _mintAssets;
         }
+
+        if (_assetsShortage != 0 && _counterAssetsShortage != 0) revert TooLargeLiquidity();
 
         return
             RebalanceSwapParams({
