@@ -3,7 +3,7 @@
 pragma solidity 0.8.19;
 
 import {IOrangeVaultRegistry} from "./vendor/orange/IOrangeVaultRegistry.sol";
-import {OrangeDopexV2LPAutomator, IDopexV2PositionManager, IUniswapV3SingleTickLiquidityHandler, ISwapRouter, IUniswapV3Pool, IERC20} from "./OrangeDopexV2LPAutomator.sol";
+import {OrangeDopexV2LPAutomator, ChainlinkQuoter, IDopexV2PositionManager, IUniswapV3SingleTickLiquidityHandler, ISwapRouter, IUniswapV3Pool, IERC20} from "./OrangeDopexV2LPAutomator.sol";
 import {AccessControlEnumerable} from "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 
 import {IERC20Symbol} from "./interfaces/IERC20Extended.sol";
@@ -31,6 +31,9 @@ contract OrangeDopexV2LPAutomatorV1Factory is AccessControlEnumerable {
      */
     struct InitArgs {
         address admin; // The address of the admin
+        ChainlinkQuoter quoter; // The instance of the ChainlinkQuoter contract
+        address assetUsdFeed; // The address of the asset USD price feed by Chainlink
+        address counterAssetUsdFeed; // The address of the counter asset USD price feed by Chainlink
         IDopexV2PositionManager manager; // The instance of the DopexV2PositionManager contract
         IUniswapV3SingleTickLiquidityHandler handler; // The instance of the UniswapV3SingleTickLiquidityHandler contract
         ISwapRouter router; // The instance of the SwapRouter contract
@@ -62,17 +65,22 @@ contract OrangeDopexV2LPAutomatorV1Factory is AccessControlEnumerable {
             IERC20Symbol(initArgs.pool.token1()).symbol()
         );
 
-        OrangeDopexV2LPAutomator automator = new OrangeDopexV2LPAutomator({
-            name: _tokenName,
-            symbol: _tokenName,
-            admin: initArgs.admin,
-            manager_: initArgs.manager,
-            handler_: initArgs.handler,
-            router_: initArgs.router,
-            pool_: initArgs.pool,
-            asset_: initArgs.asset,
-            minDepositAssets_: initArgs.minDepositAssets
-        });
+        OrangeDopexV2LPAutomator automator = new OrangeDopexV2LPAutomator(
+            OrangeDopexV2LPAutomator.InitArgs({
+                name: _tokenName,
+                symbol: _tokenName,
+                admin: initArgs.admin,
+                quoter: initArgs.quoter,
+                assetUsdFeed: initArgs.assetUsdFeed,
+                counterAssetUsdFeed: initArgs.counterAssetUsdFeed,
+                manager: initArgs.manager,
+                handler: initArgs.handler,
+                router: initArgs.router,
+                pool: initArgs.pool,
+                asset: initArgs.asset,
+                minDepositAssets: initArgs.minDepositAssets
+            })
+        );
 
         registry.add({
             vault: address(automator),

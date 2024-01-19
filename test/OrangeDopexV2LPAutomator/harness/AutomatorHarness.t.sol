@@ -2,20 +2,29 @@
 
 pragma solidity 0.8.19;
 
-import {OrangeDopexV2LPAutomator, EnumerableSet, IDopexV2PositionManager, IUniswapV3SingleTickLiquidityHandler, ISwapRouter, IUniswapV3Pool, IERC20} from "../../../contracts/OrangeDopexV2LPAutomator.sol";
+import {OrangeDopexV2LPAutomator, EnumerableSet} from "../../../contracts/OrangeDopexV2LPAutomator.sol";
 
 contract AutomatorHarness is OrangeDopexV2LPAutomator {
     constructor(
-        string memory name,
-        string memory symbol,
-        address admin,
-        IDopexV2PositionManager manager_,
-        IUniswapV3SingleTickLiquidityHandler handler_,
-        ISwapRouter router_,
-        IUniswapV3Pool pool_,
-        IERC20 asset_,
-        uint256 minDepositAssets_
-    ) OrangeDopexV2LPAutomator(name, symbol, admin, manager_, handler_, router_, pool_, asset_, minDepositAssets_) {}
+        InitArgs memory args
+    )
+        OrangeDopexV2LPAutomator(
+            OrangeDopexV2LPAutomator.InitArgs({
+                name: args.name,
+                symbol: args.symbol,
+                admin: args.admin,
+                assetUsdFeed: args.assetUsdFeed,
+                counterAssetUsdFeed: args.counterAssetUsdFeed,
+                quoter: args.quoter,
+                manager: args.manager,
+                handler: args.handler,
+                router: args.router,
+                pool: args.pool,
+                asset: args.asset,
+                minDepositAssets: args.minDepositAssets
+            })
+        )
+    {}
 
     function pushActiveTick(int24 tick) external {
         EnumerableSet.add(activeTicks, uint256(uint24(tick)));
@@ -23,19 +32,11 @@ contract AutomatorHarness is OrangeDopexV2LPAutomator {
 }
 
 function deployAutomatorHarness(
-    string memory name,
-    string memory symbol,
-    address admin,
+    OrangeDopexV2LPAutomator.InitArgs memory args,
     address strategist,
-    IDopexV2PositionManager manager_,
-    IUniswapV3SingleTickLiquidityHandler handler_,
-    ISwapRouter router_,
-    IUniswapV3Pool pool_,
-    IERC20 asset_,
-    uint256 minDepositAssets_,
     uint256 depositCap
 ) returns (AutomatorHarness harness) {
-    harness = new AutomatorHarness(name, symbol, admin, manager_, handler_, router_, pool_, asset_, minDepositAssets_);
+    harness = new AutomatorHarness(args);
     harness.grantRole(harness.STRATEGIST_ROLE(), strategist);
     harness.setDepositCap(depositCap);
 }
