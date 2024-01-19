@@ -4,6 +4,7 @@ pragma solidity 0.8.19;
 
 import "./Fixture.t.sol";
 import {IOrangeDopexV2LPAutomator} from "../../contracts/interfaces/IOrangeDopexV2LPAutomator.sol";
+import {ChainlinkQuoter} from "../../contracts/ChainlinkQuoter.sol";
 import {deployAutomatorHarness, AutomatorHarness} from "./harness/AutomatorHarness.t.sol";
 import {AutomatorHelper} from "../helper/AutomatorHelper.t.sol";
 
@@ -27,9 +28,7 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
 
         uint256 _expected = _balanceWETH + _getQuote(address(USDCE), address(WETH), uint128(_balanceUSDCE));
 
-        emit log_named_uint("expected", _expected);
-
-        assertEq(automator.totalAssets(), _expected);
+        assertApproxEqRel(automator.totalAssets(), _expected, 0.0001e18);
     }
 
     function test_totalAssets_hasDopexPositions() public {
@@ -68,28 +67,40 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
         emit log_named_uint("assets in automator", _assetsInOrangeDopexV2LPAutomator);
 
         // allow bit of error because rounding will happen from different position => assets calculations
-        assertApproxEqAbs(
+        // also error can happen from difference between the uniswap v3 pool price and chainlink price
+        assertApproxEqRel(
             automator.totalAssets(),
             _assetsInOrangeDopexV2LPAutomator +
                 _positionToAssets(_oor_belowLower, address(automator)) +
                 _positionToAssets(_oor_aboveLower, address(automator)),
-            1
+            0.0001e18
         );
     }
 
     function test_totalAssets_reversedPair() public {
-        _deployOrangeDopexV2LPAutomator({
-            admin: address(this),
-            strategist: address(this),
-            pool_: pool,
-            asset: USDCE,
-            minDepositAssets: 1e6,
-            depositCap: 10_000e6
-        });
-
+        automator = AutomatorHelper.deployOrangeDopexV2LPAutomator(
+            vm,
+            AutomatorHelper.DeployArgs({
+                name: "OrangeDopexV2LPAutomator",
+                symbol: "ODV2LP",
+                dopexV2ManagerOwner: managerOwner,
+                admin: address(this),
+                strategist: address(this),
+                quoter: new ChainlinkQuoter(address(0xFdB631F5EE196F0ed6FAa767959853A9F217697D)),
+                assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
+                counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
+                manager: manager,
+                router: router,
+                handler: uniV3Handler,
+                pool: pool,
+                asset: USDCE,
+                minDepositAssets: 1e6,
+                depositCap: 10_000e6
+            })
+        );
         deal(address(USDCE), address(automator), 100e6);
 
-        assertEq(automator.totalAssets(), 100e6);
+        assertApproxEqRel(automator.totalAssets(), 100e6, 0.0001e18);
     }
 
     function test_convertToAssets_noDopexPosition() public {
@@ -105,10 +116,10 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
         WETH.approve(address(automator), type(uint256).max);
         uint256 _aliceShares = automator.deposit(_aliceDeposit);
 
-        assertEq(
+        assertApproxEqRel(
             automator.convertToAssets(_aliceShares),
             _aliceDeposit - automator.convertToAssets(_deadInFirstDeposit),
-            "first deposit"
+            0.0001e18
         );
 
         /*///////////////////////////////////////////////////////
@@ -121,7 +132,7 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
             automator.convertToAssets(_deadInFirstDeposit) +
             _getQuote(address(USDCE), address(WETH), uint128(_usdceInVault));
 
-        assertApproxEqAbs(automator.convertToAssets(_aliceShares), _aliceAssets, 1, "automator allocation changed");
+        assertApproxEqRel(automator.convertToAssets(_aliceShares), _aliceAssets, 0.0001e18);
 
         /*///////////////////////////////////////////////////////
                         case: 2 depositors (pair token)
@@ -134,8 +145,8 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
         WETH.approve(address(automator), type(uint256).max);
         uint256 _bobShares = automator.deposit(_bobDeposit);
 
-        assertApproxEqAbs(automator.convertToAssets(_bobShares), _bobDeposit, 1, "bob entered");
-        assertApproxEqAbs(automator.convertToAssets(_aliceShares), _aliceAssets, 1, "alice assets unchanged");
+        assertApproxEqRel(automator.convertToAssets(_bobShares), _bobDeposit, 0.0001e18);
+        assertApproxEqRel(automator.convertToAssets(_aliceShares), _aliceAssets, 0.0001e18);
     }
 
     function test_convertToAssets_hasDopexPositions() public {
@@ -152,10 +163,10 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
         uint256 _aliceShares = automator.deposit(_aliceDeposit);
         vm.stopPrank();
 
-        assertEq(
+        assertApproxEqRel(
             automator.convertToAssets(_aliceShares),
             _aliceDeposit - automator.convertToAssets(_deadInFirstDeposit),
-            "first deposit"
+            0.0001e18
         );
 
         /*///////////////////////////////////////////////////////
@@ -168,7 +179,7 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
             automator.convertToAssets(_deadInFirstDeposit) +
             _getQuote(address(USDCE), address(WETH), uint128(_usdceInVault));
 
-        assertApproxEqAbs(automator.convertToAssets(_aliceShares), _aliceAssets, 1, "automator allocation changed");
+        assertApproxEqRel(automator.convertToAssets(_aliceShares), _aliceAssets, 0.0001e18);
 
         /*///////////////////////////////////////////////////////
                         case: 2 depositors (pair token)
@@ -182,8 +193,8 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
         uint256 _bobShares = automator.deposit(_bobDeposit);
         vm.stopPrank();
 
-        assertApproxEqAbs(automator.convertToAssets(_bobShares), _bobDeposit, 1, "bob entered");
-        assertApproxEqAbs(automator.convertToAssets(_aliceShares), _aliceAssets, 1, "alice assets unchanged");
+        assertApproxEqRel(automator.convertToAssets(_bobShares), _bobDeposit, 0.0001e18);
+        assertApproxEqRel(automator.convertToAssets(_aliceShares), _aliceAssets, 0.0001e18);
 
         /*///////////////////////////////////////////////////////
                         case: dopex position minted
@@ -216,16 +227,16 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
             IOrangeDopexV2LPAutomator.RebalanceSwapParams(0, 0, 0, 0)
         );
 
-        assertEq(
+        assertApproxEqRel(
             automator.convertToAssets(_aliceShares),
             (_aliceShares * automator.totalAssets()) / automator.totalSupply(),
-            "alice assets includes dopex positions"
+            0.0001e18
         );
 
-        assertEq(
+        assertApproxEqRel(
             automator.convertToAssets(_bobShares),
             (_bobShares * automator.totalAssets()) / automator.totalSupply(),
-            "bob assets includes dopex positions"
+            0.0001e18
         );
     }
 
@@ -238,7 +249,7 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
 
         uint256 _expected = _balanceWETH + _getQuote(address(USDCE), address(WETH), uint128(_balanceUSDCE));
 
-        assertEq(automator.freeAssets(), _expected);
+        assertApproxEqRel(automator.freeAssets(), _expected, 0.0001e18);
     }
 
     function test_freeAssets_hasDopexPositions() public {
@@ -277,22 +288,34 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
             _positionToAssets(_oor_belowLower, address(automator)) +
             _positionToAssets(_oor_aboveLower, address(automator));
 
-        assertEq(automator.freeAssets(), _freeAssets);
+        assertApproxEqRel(automator.freeAssets(), _freeAssets, 0.0001e18);
     }
 
     function test_freeAssets_reversedPair() public {
-        _deployOrangeDopexV2LPAutomator({
-            admin: address(this),
-            strategist: address(this),
-            pool_: pool,
-            asset: USDCE,
-            minDepositAssets: 1e6,
-            depositCap: 10_000e6
-        });
+        automator = AutomatorHelper.deployOrangeDopexV2LPAutomator(
+            vm,
+            AutomatorHelper.DeployArgs({
+                name: "OrangeDopexV2LPAutomator",
+                symbol: "ODV2LP",
+                dopexV2ManagerOwner: managerOwner,
+                admin: address(this),
+                strategist: address(this),
+                quoter: new ChainlinkQuoter(address(0xFdB631F5EE196F0ed6FAa767959853A9F217697D)),
+                assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
+                counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
+                manager: manager,
+                router: router,
+                handler: uniV3Handler,
+                pool: pool,
+                asset: USDCE,
+                minDepositAssets: 1e6,
+                depositCap: 10_000e6
+            })
+        );
 
         deal(address(USDCE), address(automator), 100e6);
 
-        assertEq(automator.freeAssets(), 100e6);
+        assertApproxEqRel(automator.freeAssets(), 100e6, 0.0001e18);
     }
 
     function test_convertToShares_noDopexPosition() public {
@@ -309,7 +332,7 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
         uint256 _aliceShares = automator.deposit(_aliceDeposit);
         vm.stopPrank();
 
-        assertEq(automator.convertToShares(1.3 ether), _aliceShares + _deadInFirstDeposit, "first deposit");
+        assertApproxEqRel(automator.convertToShares(1.3 ether), _aliceShares + _deadInFirstDeposit, 0.0001e18);
 
         /*///////////////////////////////////////////////////////
                         case: 1 depositor (pair token)
@@ -321,7 +344,7 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
             automator.convertToAssets(_deadInFirstDeposit) +
             _getQuote(address(USDCE), address(WETH), uint128(_usdceInVault));
 
-        assertEq(automator.convertToShares(_aliceAssets), _aliceShares, "automator allocation changed");
+        assertApproxEqRel(automator.convertToShares(_aliceAssets), _aliceShares, 0.0001e18);
 
         /*///////////////////////////////////////////////////////
                         case: 2 depositors (pair token)
@@ -335,8 +358,8 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
         uint256 _bobShares = automator.deposit(_bobDeposit);
         vm.stopPrank();
 
-        assertApproxEqAbs(automator.convertToShares(_bobDeposit), _bobShares, 1, "bob entered");
-        assertApproxEqAbs(automator.convertToShares(_aliceAssets), _aliceShares, 1, "alice assets unchanged");
+        assertApproxEqRel(automator.convertToShares(_bobDeposit), _bobShares, 0.0001e18);
+        assertApproxEqRel(automator.convertToShares(_aliceAssets), _aliceShares, 0.0001e18);
     }
 
     function test_convertToShares_hasDopexPositions() public {
@@ -353,7 +376,7 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
         uint256 _aliceShares = automator.deposit(_aliceDeposit);
         vm.stopPrank();
 
-        assertEq(automator.convertToShares(1.3 ether), _aliceShares + _deadInFirstDeposit, "first deposit");
+        assertApproxEqRel(automator.convertToShares(1.3 ether), _aliceShares + _deadInFirstDeposit, 0.0001e18);
 
         /*///////////////////////////////////////////////////////
                         case: 1 depositor (pair token)
@@ -365,7 +388,7 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
             automator.convertToAssets(_deadInFirstDeposit) +
             _getQuote(address(USDCE), address(WETH), uint128(_usdceInVault));
 
-        assertEq(automator.convertToShares(_aliceAssets), _aliceShares, "automator allocation changed");
+        assertApproxEqRel(automator.convertToShares(_aliceAssets), _aliceShares, 0.0001e18);
 
         /*///////////////////////////////////////////////////////
                         case: 2 depositors (pair token)
@@ -379,8 +402,8 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
         uint256 _bobShares = automator.deposit(_bobDeposit);
         vm.stopPrank();
 
-        assertApproxEqAbs(automator.convertToShares(_bobDeposit), _bobShares, 1, "bob entered");
-        assertApproxEqAbs(automator.convertToShares(_aliceAssets), _aliceShares, 1, "alice assets unchanged");
+        assertApproxEqRel(automator.convertToShares(_bobDeposit), _bobShares, 0.0001e18);
+        assertApproxEqRel(automator.convertToShares(_aliceAssets), _aliceShares, 0.0001e18);
 
         /*///////////////////////////////////////////////////////
                         case: dopex position minted
@@ -415,18 +438,16 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
             IOrangeDopexV2LPAutomator.RebalanceSwapParams(0, 0, 0, 0)
         );
 
-        assertApproxEqAbs(
+        assertApproxEqRel(
             automator.convertToShares((_aliceShares * automator.totalAssets()) / automator.totalSupply()),
             _aliceShares,
-            1,
-            "alice shares includes dopex positions"
+            0.0001e18
         );
 
-        assertApproxEqAbs(
+        assertApproxEqRel(
             automator.convertToShares((_bobShares * automator.totalAssets()) / automator.totalSupply()),
             _bobShares,
-            1,
-            "bob shares includes dopex positions"
+            0.0001e18
         );
     }
 
@@ -464,19 +485,19 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
         uint256 _belowId = uniV3Handler.tokenId(address(pool), _oor_belowLower, _oor_belowLower + pool.tickSpacing());
         uint256 _aboveId = uniV3Handler.tokenId(address(pool), _oor_aboveLower, _oor_aboveLower + pool.tickSpacing());
 
-        assertEq(
+        assertApproxEqRel(
             automator.getTickAllLiquidity(_oor_belowLower),
             uniV3Handler.convertToAssets(uint128(uniV3Handler.balanceOf(address(automator), _belowId)), _belowId),
-            "below liquidity"
+            0.0001e18
         );
 
-        assertEq(
+        assertApproxEqRel(
             automator.getTickAllLiquidity(_oor_aboveLower),
             uniV3Handler.convertToAssets(uint128(uniV3Handler.balanceOf(address(automator), _aboveId)), _aboveId),
-            "above liquidity"
+            0.0001e18
         );
 
-        assertEq(automator.getTickAllLiquidity(-200000), 0, "tick no position");
+        assertApproxEqRel(automator.getTickAllLiquidity(-200000), 0, 0.0001e18);
     }
 
     function test_getTickFreeLiquidity() public {
@@ -530,35 +551,40 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
             _belowInfo.totalLiquidity - _belowInfo.liquidityUsed - 1000
         );
 
-        assertEq(
+        assertApproxEqRel(
             automator.getTickFreeLiquidity(_oor_belowLower),
             uniV3Handler.redeemableLiquidity(address(automator), _belowId),
-            "below liquidity"
+            0.0001e18
         );
 
-        assertEq(
+        assertApproxEqRel(
             automator.getTickFreeLiquidity(_oor_aboveLower),
             uniV3Handler.redeemableLiquidity(address(automator), _aboveId),
-            "above liquidity"
+            0.0001e18
         );
 
-        assertEq(automator.getTickFreeLiquidity(-200000), 0, "tick no position");
+        assertApproxEqRel(automator.getTickFreeLiquidity(-200000), 0, 0.0001e18);
     }
 
     function test_getActiveTicks() public {
-        AutomatorHarness _automator = deployAutomatorHarness({
-            name: "OrangeDopexV2LPAutomator",
-            symbol: "ODV2LP",
-            admin: address(this),
-            strategist: address(this),
-            manager_: manager,
-            handler_: uniV3Handler,
-            router_: router,
-            pool_: pool,
-            asset_: USDCE,
-            minDepositAssets_: 1e6,
-            depositCap: 10_000e6
-        });
+        AutomatorHarness _automator = deployAutomatorHarness(
+            OrangeDopexV2LPAutomator.InitArgs({
+                name: "OrangeDopexV2LPAutomator",
+                symbol: "ODV2LP",
+                admin: address(this),
+                manager: manager,
+                handler: uniV3Handler,
+                router: router,
+                pool: pool,
+                asset: USDCE,
+                minDepositAssets: 1e6,
+                assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
+                counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
+                quoter: new ChainlinkQuoter(address(0xFdB631F5EE196F0ed6FAa767959853A9F217697D))
+            }),
+            address(this),
+            10_000e6
+        );
         _automator.pushActiveTick(1);
         _automator.pushActiveTick(2);
 
@@ -584,7 +610,10 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
                 pool: pool,
                 asset: WETH,
                 minDepositAssets: 0.01 ether,
-                depositCap: 1000 ether
+                depositCap: 1000 ether,
+                quoter: new ChainlinkQuoter(address(0xFdB631F5EE196F0ed6FAa767959853A9F217697D)),
+                assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
+                counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612
             })
         );
 

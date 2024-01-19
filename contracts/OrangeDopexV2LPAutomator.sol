@@ -4,11 +4,11 @@ pragma solidity 0.8.19;
 
 import {IOrangeDopexV2LPAutomator} from "./interfaces/IOrangeDopexV2LPAutomator.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
+import {FullMath} from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
-import {LiquidityAmounts} from "./vendor/uniswapV3/LiquidityAmounts.sol";
-import {TickMath} from "./vendor/uniswapV3/TickMath.sol";
-import {OracleLibrary} from "./vendor/uniswapV3/OracleLibrary.sol";
-import {FullMath} from "./vendor/uniswapV3/FullMath.sol";
+
+import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Receiver.sol";
@@ -19,6 +19,7 @@ import {AccessControlEnumerable} from "@openzeppelin/contracts/access/AccessCont
 import {ERC20} from "solmate/src/tokens/ERC20.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 
+import {ChainlinkQuoter} from "./ChainlinkQuoter.sol";
 import {IUniswapV3SingleTickLiquidityHandler} from "./vendor/dopexV2/IUniswapV3SingleTickLiquidityHandler.sol";
 import {UniswapV3SingleTickLiquidityLib} from "./lib/UniswapV3SingleTickLiquidityLib.sol";
 import {AutomatorUniswapV3PoolLib} from "./lib/AutomatorUniswapV3PoolLib.sol";
@@ -46,11 +47,16 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandler;
 
     bytes32 public constant STRATEGIST_ROLE = keccak256("STRATEGIST_ROLE");
-    /// @notice max deposit fee percentage is 1%
-    uint24 constant MAX_PERF_FEE_PIPS = 100_000;
+    uint24 constant MAX_TICKS = 120;
+    /// @notice max deposit fee percentage is 1% (hundredth of 1e6)
+    uint24 constant MAX_PERF_FEE_PIPS = 10_000;
 
     IDopexV2PositionManager public immutable manager;
     IUniswapV3SingleTickLiquidityHandler public immutable handler;
+
+    ChainlinkQuoter public immutable quoter;
+    address public immutable assetUsdFeed;
+    address public immutable counterAssetUsdFeed;
 
     IUniswapV3Pool public immutable pool;
     ISwapRouter public immutable router;
@@ -70,60 +76,92 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
 
     EnumerableSet.UintSet activeTicks;
 
+    event Deposit(address indexed sender, uint256 assets, uint256 sharesMinted);
+    event Redeem(address indexed sender, uint256 shares, uint256 assetsWithdrawn);
+    event Rebalance(address indexed sender, RebalanceTickInfo[] ticksMint, RebalanceTickInfo[] ticksBurn);
+
+    event DepositCapSet(uint256 depositCap);
+    event DepositFeePipsSet(uint24 depositFeePips);
+
     error AddressZero();
     error AmountZero();
-    error LengthMismatch();
+    error MaxTicksReached();
     error InvalidRebalanceParams();
     error MinAssetsRequired(uint256 minAssets, uint256 actualAssets);
     error TokenAddressMismatch();
+    error TokenNotPermitted();
     error DepositTooSmall();
     error DepositCapExceeded();
     error SharesTooSmall();
     error InvalidPositionConstruction();
     error FeePipsTooHigh();
+    error UnsupportedDecimals();
+    error MinDepositAssetsTooSmall();
 
     /**
-     * @dev Constructor function for OrangeDopexV2LPAutomator contract.
+     * @dev Constructor arguments for OrangeDopexV2LPAutomator contract.
      * @param name The name of the ERC20 token.
      * @param symbol The symbol of the ERC20 token.
      * @param admin The address of the admin role.
-     * @param manager_ The address of the DopexV2PositionManager contract.
-     * @param handler_ The address of the UniswapV3SingleTickLiquidityHandler contract.
-     * @param router_ The address of the SwapRouter contract.
-     * @param pool_ The address of the UniswapV3Pool contract.
-     * @param asset_ The address of the ERC20 token used as the deposit asset in this vault.
-     * @param minDepositAssets_ The minimum amount of assets that can be deposited.
+     * @param manager The address of the DopexV2PositionManager contract.
+     * @param handler The address of the UniswapV3SingleTickLiquidityHandler contract.
+     * @param router The address of the SwapRouter contract.
+     * @param pool The address of the UniswapV3Pool contract.
+     * @param asset The address of the ERC20 token used as the deposit asset in this vault.
+     * @param minDepositAssets The minimum amount of assets that can be deposited.
      */
-    constructor(
-        string memory name,
-        string memory symbol,
-        address admin,
-        IDopexV2PositionManager manager_,
-        IUniswapV3SingleTickLiquidityHandler handler_,
-        ISwapRouter router_,
-        IUniswapV3Pool pool_,
-        IERC20 asset_,
-        uint256 minDepositAssets_
-    ) ERC20(name, symbol, IERC20Decimals(address(asset_)).decimals()) {
-        if (asset_ != IERC20(pool_.token0()) && asset_ != IERC20(pool_.token1())) revert TokenAddressMismatch();
+    struct InitArgs {
+        string name;
+        string symbol;
+        address admin;
+        IDopexV2PositionManager manager;
+        IUniswapV3SingleTickLiquidityHandler handler;
+        ISwapRouter router;
+        IUniswapV3Pool pool;
+        IERC20 asset;
+        ChainlinkQuoter quoter;
+        address assetUsdFeed;
+        address counterAssetUsdFeed;
+        uint256 minDepositAssets;
+    }
 
-        manager = manager_;
-        handler = handler_;
-        router = router_;
-        pool = pool_;
-        asset = asset_;
-        counterAsset = pool_.token0() == address(asset_) ? IERC20(pool_.token1()) : IERC20(pool_.token0());
-        poolTickSpacing = pool_.tickSpacing();
+    constructor(InitArgs memory args) ERC20(args.name, args.symbol, IERC20Decimals(address(args.asset)).decimals()) {
+        if (args.asset != IERC20(args.pool.token0()) && args.asset != IERC20(args.pool.token1()))
+            revert TokenAddressMismatch();
+        if (args.assetUsdFeed == address(0) || args.counterAssetUsdFeed == address(0)) revert AddressZero();
 
-        _grantRole(DEFAULT_ADMIN_ROLE, admin);
+        quoter = args.quoter;
+        assetUsdFeed = args.assetUsdFeed;
+        counterAssetUsdFeed = args.counterAssetUsdFeed;
 
-        minDepositAssets = minDepositAssets_;
+        manager = args.manager;
+        handler = args.handler;
+        router = args.router;
+        pool = args.pool;
+        asset = args.asset;
+        counterAsset = args.pool.token0() == address(args.asset)
+            ? IERC20(args.pool.token1())
+            : IERC20(args.pool.token0());
+        poolTickSpacing = args.pool.tickSpacing();
 
-        asset_.safeApprove(address(manager_), type(uint256).max);
-        asset_.safeApprove(address(router_), type(uint256).max);
+        if (IERC20Decimals(address(args.asset)).decimals() < 3) revert UnsupportedDecimals();
+        if (IERC20Decimals(address(counterAsset)).decimals() < 3) revert UnsupportedDecimals();
 
-        counterAsset.safeApprove(address(manager_), type(uint256).max);
-        counterAsset.safeApprove(address(router_), type(uint256).max);
+        // The minimum deposit must be set to greater than 0.1% of the asset's value, otherwise, the transaction will result in zero shares being allocated.
+        if (args.minDepositAssets <= (10 ** IERC20Decimals(address(args.asset)).decimals() / 1000))
+            revert MinDepositAssetsTooSmall();
+        // The minimum deposit should be set to 1e6 (equivalent to 100% in pip units). Failing to do so will result in a zero deposit fee for the recipient.
+        if (args.minDepositAssets < 1e6) revert MinDepositAssetsTooSmall();
+
+        minDepositAssets = args.minDepositAssets;
+
+        args.asset.safeIncreaseAllowance(address(args.manager), type(uint256).max);
+        args.asset.safeIncreaseAllowance(address(args.router), type(uint256).max);
+
+        counterAsset.safeIncreaseAllowance(address(args.manager), type(uint256).max);
+        counterAsset.safeIncreaseAllowance(address(args.router), type(uint256).max);
+
+        _grantRole(DEFAULT_ADMIN_ROLE, args.admin);
     }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -156,6 +194,8 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
      */
     function setDepositCap(uint256 _depositCap) external onlyRole(DEFAULT_ADMIN_ROLE) {
         depositCap = _depositCap;
+
+        emit DepositCapSet(_depositCap);
     }
 
     /**
@@ -173,6 +213,8 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
 
         depositFeeRecipient = recipient;
         depositFeePips = pips;
+
+        emit DepositFeePipsSet(pips);
     }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -259,7 +301,15 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
 
         return
             _quote +
-            OracleLibrary.getQuoteAtTick(pool.currentTick(), _base.toUint128(), address(counterAsset), address(asset));
+            quoter.getQuote(
+                ChainlinkQuoter.QuoteRequest({
+                    baseToken: address(counterAsset),
+                    quoteToken: address(asset),
+                    baseAmount: _base,
+                    baseUsdFeed: counterAssetUsdFeed,
+                    quoteUsdFeed: assetUsdFeed
+                })
+            );
     }
 
     /// @inheritdoc IOrangeDopexV2LPAutomator
@@ -309,14 +359,21 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
 
         return
             _quote +
-            OracleLibrary.getQuoteAtTick(pool.currentTick(), _base.toUint128(), address(counterAsset), address(asset));
+            quoter.getQuote(
+                ChainlinkQuoter.QuoteRequest({
+                    baseToken: address(counterAsset),
+                    quoteToken: address(asset),
+                    baseAmount: _base,
+                    baseUsdFeed: counterAssetUsdFeed,
+                    quoteUsdFeed: assetUsdFeed
+                })
+            );
     }
 
     /// @inheritdoc IOrangeDopexV2LPAutomator
-    function convertToShares(uint256 assets) public view returns (uint256) {
-        uint256 _supply = totalSupply;
-
-        return _supply == 0 ? assets : assets.mulDivDown(_supply, totalAssets());
+    function convertToShares(uint256 assets) external view returns (uint256) {
+        // NOTE: no need to check total supply as it is checked in deposit function.
+        return assets.mulDivDown(totalSupply, totalAssets());
     }
 
     /// @inheritdoc IOrangeDopexV2LPAutomator
@@ -410,19 +467,34 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     function deposit(uint256 assets) external returns (uint256 shares) {
         if (assets == 0) revert AmountZero();
         if (assets < minDepositAssets) revert DepositTooSmall();
-        if (assets > depositCap) revert DepositCapExceeded();
+        if (assets + totalAssets() > depositCap) revert DepositCapExceeded();
+
+        uint256 _beforeTotalAssets = totalAssets();
+
+        // NOTE: Call transfer on first to avoid reentrancy of ERC777 assets that have hook before transfer.
+        // This is a common practice, similar to OpenZeppelin's ERC4626.
+        //
+        // Reference: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/a72c9561b9c200bac87f14ffd43a8c719fd6fa5a/contracts/token/ERC20/extensions/ERC4626.sol#L244
+
+        asset.safeTransferFrom(msg.sender, address(this), assets);
 
         if (totalSupply == 0) {
+            uint256 _dead;
+            // this cannot overflow as we ensure that the decimals is at least 3 in the constructor
+            unchecked {
+                _dead = 10 ** decimals / 1000;
+            }
+
             // NOTE: mint small amount of shares to avoid sandwich attack on the first deposit
             // https://mixbytes.io/blog/overview-of-the-inflation-attack
-            uint256 _dead = 10 ** decimals / 1000;
             _mint(address(0), _dead);
 
             unchecked {
                 shares = assets - _dead;
             }
         } else {
-            shares = convertToShares(assets);
+            // NOTE: Assets are already transferred before calculation, so we can use the total assets before deposit
+            shares = assets.mulDivDown(totalSupply, _beforeTotalAssets);
         }
 
         uint256 _fee = shares.mulDivDown(depositFeePips, 1e6);
@@ -432,9 +504,10 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
             shares = shares - _fee;
         }
 
+        if (shares == 0) revert DepositTooSmall();
         _mint(msg.sender, shares);
 
-        asset.safeTransferFrom(msg.sender, address(this), assets);
+        emit Deposit(msg.sender, assets, shares);
     }
 
     /// @dev avoid stack too deep error
@@ -454,7 +527,11 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         if (shares == 0) revert AmountZero();
         if (convertToAssets(shares) == 0) revert SharesTooSmall();
 
-        uint256 _totalSupply = totalSupply;
+        uint256 _tsBeforeBurn = totalSupply;
+
+        // To avoid any reentrancy, we burn the shares first
+        _burn(msg.sender, shares);
+
         uint256 _preBase = counterAsset.balanceOf(address(this));
         uint256 _preQuote = asset.balanceOf(address(this));
 
@@ -467,12 +544,14 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
             c.lowerTick = int24(uint24(activeTicks.at(i)));
 
             c.tokenId = handler.tokenId(address(pool), c.lowerTick, c.lowerTick + poolTickSpacing);
+
+            // total supply before burn is used to calculate the precise share
             c.shareRedeemable = uint256(
                 handler.convertToShares(handler.redeemableLiquidity(address(this), c.tokenId).toUint128(), c.tokenId)
-            ).mulDivDown(shares, _totalSupply);
+            ).mulDivDown(shares, _tsBeforeBurn);
             c.shareLocked = uint256(
                 handler.convertToShares(handler.lockedLiquidity(address(this), c.tokenId).toUint128(), c.tokenId)
-            ).mulDivDown(shares, _totalSupply);
+            ).mulDivDown(shares, _tsBeforeBurn);
 
             // locked share is transferred to the user
             if (c.shareLocked > 0) {
@@ -485,7 +564,11 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
 
             // redeemable share is burned
             if (c.shareRedeemable > 0)
-                _burnPosition(c.lowerTick, c.lowerTick + poolTickSpacing, c.shareRedeemable.toUint128());
+                if (handler.paused()) {
+                    handler.safeTransferFrom(address(this), msg.sender, c.tokenId, c.shareRedeemable, "");
+                } else {
+                    _burnPosition(c.lowerTick, c.lowerTick + poolTickSpacing, c.shareRedeemable.toUint128());
+                }
 
             unchecked {
                 i++;
@@ -502,17 +585,23 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
             }
         }
 
-        uint256 _payBase = counterAsset.balanceOf(address(this)) - _preBase;
+        /**
+         * 1. shares.mulDivDown(_preBase, _totalSupply) means the portion of idle base asset
+         * 2. counterAsset.balanceOf(address(this)) - _preBase means the base asset from redeemed positions
+         */
+        uint256 _payBase = shares.mulDivDown(_preBase, _tsBeforeBurn) +
+            counterAsset.balanceOf(address(this)) -
+            _preBase;
 
         if (_payBase > 0) _swapToRedeemAssets(_payBase);
 
-        assets = shares.mulDivDown(_preQuote, _totalSupply) + asset.balanceOf(address(this)) - _preQuote;
+        assets = shares.mulDivDown(_preQuote, _tsBeforeBurn) + asset.balanceOf(address(this)) - _preQuote;
 
         if (assets < minAssets) revert MinAssetsRequired(minAssets, assets);
 
-        _burn(msg.sender, shares);
-
         asset.safeTransfer(msg.sender, assets);
+
+        emit Redeem(msg.sender, shares, assets);
     }
 
     function _burnPosition(int24 lowerTick, int24 upperTick, uint128 shares) internal {
@@ -544,6 +633,16 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         );
     }
 
+    /**
+     * @dev withdraw pooled assets from the automator. This is used when the automator is rewarded by protocols with another token to prevent lock up.
+     * @param token The address of the ERC20 token to withdraw.
+     */
+    function withdraw(IERC20 token) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (token == asset) revert TokenNotPermitted();
+        if (token == counterAsset) revert TokenNotPermitted();
+        token.safeTransfer(msg.sender, token.balanceOf(address(this)));
+    }
+
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                     STRATEGIST ACTIONS
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -566,53 +665,21 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         RebalanceTickInfo[] calldata ticksBurn,
         RebalanceSwapParams calldata swapParams
     ) external onlyRole(STRATEGIST_ROLE) {
-        uint256 _mintLength = ticksMint.length;
-        uint256 _burnLength = ticksBurn.length;
+        if (ticksMint.length + activeTicks.length() > MAX_TICKS) revert MaxTicksReached();
 
-        bytes[] memory _mintCalldataBatch = new bytes[](_mintLength);
-        int24 _lt;
-        int24 _ut;
-        uint256 _posId;
-        for (uint256 i = 0; i < _mintLength; ) {
-            _lt = ticksMint[i].tick;
-            _ut = _lt + poolTickSpacing;
-
-            _mintCalldataBatch[i] = _createMintCalldata(_lt, _ut, ticksMint[i].liquidity);
-
-            // If the position is not active, push it to the active ticks
-            _posId = uint256(keccak256(abi.encode(handler, pool, _lt, _ut)));
-            if (handler.balanceOf(address(this), _posId) == 0) activeTicks.add(uint256(uint24(_lt)));
-
-            unchecked {
-                i++;
-            }
-        }
-
-        bytes[] memory _burnCalldataBatch = new bytes[](_burnLength);
-        uint256 _shares;
-        for (uint256 i = 0; i < _burnLength; ) {
-            _lt = ticksBurn[i].tick;
-            _ut = _lt + poolTickSpacing;
-
-            _posId = uint256(keccak256(abi.encode(handler, pool, _lt, _ut)));
-            _shares = handler.convertToShares(ticksBurn[i].liquidity, _posId);
-            _burnCalldataBatch[i] = _createBurnCalldata(_lt, _ut, _shares.toUint128());
-
-            // if all shares will be burned, pop the active tick
-            if (handler.balanceOf(address(this), _posId) - _shares == 0) activeTicks.remove(uint256(uint24(_lt)));
-
-            unchecked {
-                i++;
-            }
-        }
-
+        bytes[] memory _burnCalldataBatch = _createBurnCalldataBatch(ticksBurn);
         // NOTE: burn should be called before mint to receive the assets from the burned position
-        if (_burnLength > 0) IMulticallProvider(address(manager)).multicall(_burnCalldataBatch);
+        if (_burnCalldataBatch.length > 0) IMulticallProvider(address(manager)).multicall(_burnCalldataBatch);
 
         // NOTE: after receiving the assets from the burned position, swap should be called to get the assets for mint
+        // ! this should be called before mint. otherwise current tick might be changed and mint will fail
         _swapBeforeRebalanceMint(swapParams);
 
-        if (_mintLength > 0) IMulticallProvider(address(manager)).multicall(_mintCalldataBatch);
+        bytes[] memory _mintCalldataBatch = _createMintCalldataBatch(ticksMint);
+
+        if (_mintCalldataBatch.length > 0) IMulticallProvider(address(manager)).multicall(_mintCalldataBatch);
+
+        emit Rebalance(msg.sender, ticksMint, ticksBurn);
     }
 
     function _swapBeforeRebalanceMint(RebalanceSwapParams calldata swapParams) internal {
@@ -644,6 +711,105 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
                     sqrtPriceLimitX96: 0
                 })
             );
+        }
+    }
+
+    function _createMintCalldataBatch(
+        RebalanceTickInfo[] calldata ticksMint
+    ) internal returns (bytes[] memory mintCalldataBatch) {
+        (uint256 _actualMintLen, uint256 ignoreIndex) = _getSafeMintParams(ticksMint);
+        mintCalldataBatch = new bytes[](_actualMintLen);
+
+        int24 _lt;
+        int24 _ut;
+        uint256 _posId;
+        uint256 j;
+        for (uint256 i = 0; i < ticksMint.length; ) {
+            if (i == ignoreIndex) {
+                unchecked {
+                    i++;
+                }
+                continue;
+            }
+
+            _lt = ticksMint[i].tick;
+            _ut = _lt + poolTickSpacing;
+
+            mintCalldataBatch[j] = _createMintCalldata(_lt, _ut, ticksMint[i].liquidity);
+
+            // If the position is not active, push it to the active ticks
+            _posId = uint256(keccak256(abi.encode(handler, pool, _lt, _ut)));
+            if (handler.balanceOf(address(this), _posId) == 0) activeTicks.add(uint256(uint24(_lt)));
+
+            unchecked {
+                i++;
+                j++;
+            }
+        }
+    }
+
+    // NOTE: skip current tick as it is not allowed to mint on Dopex
+    /**
+     * @dev Returns the length of the ticksMint array after skipping the current tick if it is included.
+     *      Also returns the index of the current tick in the ticksMint array if it is included.
+     *      We need to avoid revert when mint Dopex position in the current tick.
+     *      This should be done on automator because current tick got on caller (this must be off-chain) is different from the current tick got on automator.
+     * @param ticksMint An array of RebalanceTickInfo structs representing the ticks to mint.
+     */
+    function _getSafeMintParams(
+        RebalanceTickInfo[] calldata ticksMint
+    ) internal view returns (uint256 mintLength, uint256 ignoreIndex) {
+        uint256 _providedLength = ticksMint.length;
+        mintLength = _providedLength;
+
+        int24 _ct = pool.currentTick();
+        int24 _spacing = poolTickSpacing;
+
+        // current lower tick is calculated by rounding down the current tick to the nearest tick spacing
+        // if current tick is negative and not divisible by tick spacing, we need to subtract one tick spacing to get the correct lower tick
+        int24 _currentLt = _ct < 0 && _ct % _spacing != 0
+            ? (_ct / _spacing - 1) * _spacing
+            : (_ct / _spacing) * _spacing;
+
+        for (uint256 i = 0; i < _providedLength; ) {
+            if (ticksMint[i].tick == _currentLt) {
+                unchecked {
+                    mintLength--;
+                    ignoreIndex = i;
+                    break;
+                }
+            }
+            unchecked {
+                i++;
+            }
+        }
+
+        if (mintLength == _providedLength) ignoreIndex = type(uint256).max;
+    }
+
+    function _createBurnCalldataBatch(
+        RebalanceTickInfo[] calldata ticksBurn
+    ) internal returns (bytes[] memory burnCalldataBatch) {
+        int24 _lt;
+        int24 _ut;
+        uint256 _posId;
+        uint256 _shares;
+        uint256 _burnLength = ticksBurn.length;
+        burnCalldataBatch = new bytes[](_burnLength);
+        for (uint256 i = 0; i < _burnLength; ) {
+            _lt = ticksBurn[i].tick;
+            _ut = _lt + poolTickSpacing;
+
+            _posId = uint256(keccak256(abi.encode(handler, pool, _lt, _ut)));
+            _shares = handler.convertToShares(ticksBurn[i].liquidity, _posId);
+            burnCalldataBatch[i] = _createBurnCalldata(_lt, _ut, _shares.toUint128());
+
+            // if all shares will be burned, pop the active tick
+            if (handler.balanceOf(address(this), _posId) - _shares == 0) activeTicks.remove(uint256(uint24(_lt)));
+
+            unchecked {
+                i++;
+            }
         }
     }
 

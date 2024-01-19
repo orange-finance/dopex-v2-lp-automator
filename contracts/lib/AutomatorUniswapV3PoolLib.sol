@@ -3,8 +3,8 @@
 pragma solidity 0.8.19;
 
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import {LiquidityAmounts} from "../vendor/uniswapV3/LiquidityAmounts.sol";
-import {TickMath} from "../vendor/uniswapV3/TickMath.sol";
+import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
+import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
 import {IOrangeDopexV2LPAutomator} from "../interfaces/IOrangeDopexV2LPAutomator.sol";
 
 /**
