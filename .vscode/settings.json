@@ -1,5 +1,6 @@
 {
   "cSpell.words": [
+    "ARBISCAN",
     "Arbitrum",
     "Automator",
     "Chainlink",
@@ -10,6 +11,7 @@
     "IERC",
     "inheritdoc",
     "keccak",
+    "liquidization",
     "mload",
     "mstore",
     "Multicall",

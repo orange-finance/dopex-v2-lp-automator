@@ -1,12 +1,16 @@
-import { HardhatUserConfig } from 'hardhat/config'
+import { HardhatUserConfig, task } from 'hardhat/config'
 import '@nomicfoundation/hardhat-toolbox'
 import '@nomicfoundation/hardhat-foundry'
 
 import { vars } from 'hardhat/config'
+import './tasks/00.deploy-quoter'
+import './tasks/01.deploy-automator'
+import './tasks/02.deploy-strategy'
+import './tasks/99.verify-deployment'
 
 const MAINNET_DEPLOYER = vars.get('MAINNET_DEPLOYER')
 const ARB_URL = vars.get('ARB_URL')
-const ETHERSCAN_API_KEY = vars.get('ETHERSCAN_API_KEY')
+const ARBISCAN_API_KEY = vars.get('ARBISCAN_API_KEY')
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -25,7 +29,7 @@ const config: HardhatUserConfig = {
     },
   },
   etherscan: {
-    apiKey: ETHERSCAN_API_KEY,
+    apiKey: ARBISCAN_API_KEY,
   },
 }
 
