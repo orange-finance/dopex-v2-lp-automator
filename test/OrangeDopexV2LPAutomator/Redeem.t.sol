@@ -3,6 +3,7 @@
 pragma solidity 0.8.19;
 
 import "./Fixture.t.sol";
+import "../helper/AutomatorHelper.t.sol";
 import {DopexV2Helper} from "../helper/DopexV2Helper.t.sol";
 import {IOrangeDopexV2LPAutomator} from "../../contracts/interfaces/IOrangeDopexV2LPAutomator.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
@@ -202,7 +203,14 @@ contract TestOrangeDopexV2LPAutomatorRedeem is Fixture {
         automator.rebalance(
             _ticksMint,
             _ticksBurn,
-            strategy.calculateRebalanceSwapParamsInRebalance(_ticksMint, _ticksBurn)
+            AutomatorHelper.calculateRebalanceSwapParamsInRebalance(
+                automator,
+                pool,
+                WETH,
+                USDCE,
+                _ticksMint,
+                _ticksBurn
+            )
         );
     }
 }
