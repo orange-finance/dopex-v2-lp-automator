@@ -6,6 +6,8 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
+import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
 
 import {IDopexV2PositionManager} from "../../contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
 import {IUniswapV3SingleTickLiquidityHandler} from "../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandler.sol";
@@ -14,12 +16,9 @@ import {OrangeDopexV2LPAutomator, IOrangeDopexV2LPAutomator} from "../../contrac
 
 import {ChainlinkQuoter} from "../../contracts/ChainlinkQuoter.sol";
 
-import {AutomatorUniswapV3PoolLib} from "../../contracts/lib/AutomatorUniswapV3PoolLib.sol";
-
 import {Vm} from "forge-std/Test.sol";
 
 library AutomatorHelper {
-    using AutomatorUniswapV3PoolLib for IUniswapV3Pool;
     ISwapRouter constant ROUTER = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
 
     /*/////////////////////////////////////////////////////////////////////
@@ -120,11 +119,11 @@ library AutomatorHelper {
         uint256 _burnCAssets;
 
         if (pool.token0() == address(asset)) {
-            (_mintAssets, _mintCAssets) = pool.estimateTotalTokensFromPositions(ticksMint);
-            (_burnAssets, _burnCAssets) = pool.estimateTotalTokensFromPositions(ticksBurn);
+            (_mintAssets, _mintCAssets) = estimateTotalTokensFromPositions(pool, ticksMint);
+            (_burnAssets, _burnCAssets) = estimateTotalTokensFromPositions(pool, ticksBurn);
         } else {
-            (_mintCAssets, _mintAssets) = pool.estimateTotalTokensFromPositions(ticksMint);
-            (_burnCAssets, _burnAssets) = pool.estimateTotalTokensFromPositions(ticksBurn);
+            (_mintCAssets, _mintAssets) = estimateTotalTokensFromPositions(pool, ticksMint);
+            (_burnCAssets, _burnAssets) = estimateTotalTokensFromPositions(pool, ticksBurn);
         }
 
         uint256 _freeAssets = _burnAssets + asset.balanceOf(address(automator));
@@ -157,5 +156,29 @@ library AutomatorHelper {
                 maxCounterAssetsUseForSwap: _maxCounterAssetsUseForSwap,
                 maxAssetsUseForSwap: _maxAssetsUseForSwap
             });
+    }
+
+    function estimateTotalTokensFromPositions(
+        IUniswapV3Pool pool,
+        IOrangeDopexV2LPAutomator.RebalanceTickInfo[] memory positions
+    ) internal view returns (uint256 totalAmount0, uint256 totalAmount1) {
+        uint256 _a0;
+        uint256 _a1;
+
+        (, int24 _ct, , , , , ) = pool.slot0();
+        int24 _spacing = pool.tickSpacing();
+
+        uint256 _pLen = positions.length;
+        for (uint256 i = 0; i < _pLen; i++) {
+            (_a0, _a1) = LiquidityAmounts.getAmountsForLiquidity(
+                TickMath.getSqrtRatioAtTick(_ct),
+                TickMath.getSqrtRatioAtTick(positions[i].tick),
+                TickMath.getSqrtRatioAtTick(positions[i].tick + _spacing),
+                positions[i].liquidity
+            );
+
+            totalAmount0 += _a0;
+            totalAmount1 += _a1;
+        }
     }
 }

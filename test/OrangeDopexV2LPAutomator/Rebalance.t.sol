@@ -5,13 +5,13 @@ pragma solidity 0.8.19;
 import "./Fixture.t.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {OrangeDopexV2LPAutomator} from "../../contracts/OrangeDopexV2LPAutomator.sol";
-import {AutomatorUniswapV3PoolLib} from "../../contracts/lib/AutomatorUniswapV3PoolLib.sol";
+import {UniswapV3PoolLib} from "../../contracts/lib/UniswapV3PoolLib.sol";
 import {IOrangeDopexV2LPAutomator} from "../../contracts/interfaces/IOrangeDopexV2LPAutomator.sol";
 import {deployAutomatorHarness, AutomatorHarness} from "../OrangeDopexV2LPAutomator/harness/AutomatorHarness.t.sol";
 import "../helper/AutomatorHelper.t.sol";
 
 contract TestOrangeDopexV2LPAutomatorRebalance is Fixture {
-    using AutomatorUniswapV3PoolLib for IUniswapV3Pool;
+    using UniswapV3PoolLib for IUniswapV3Pool;
     using FixedPointMathLib for uint256;
 
     function setUp() public override {

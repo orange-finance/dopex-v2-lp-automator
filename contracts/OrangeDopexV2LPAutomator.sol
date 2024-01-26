@@ -22,7 +22,7 @@ import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {ChainlinkQuoter} from "./ChainlinkQuoter.sol";
 import {IUniswapV3SingleTickLiquidityHandler} from "./vendor/dopexV2/IUniswapV3SingleTickLiquidityHandler.sol";
 import {UniswapV3SingleTickLiquidityLib} from "./lib/UniswapV3SingleTickLiquidityLib.sol";
-import {AutomatorUniswapV3PoolLib} from "./lib/AutomatorUniswapV3PoolLib.sol";
+import {UniswapV3PoolLib} from "./lib/UniswapV3PoolLib.sol";
 import {IDopexV2PositionManager} from "./vendor/dopexV2/IDopexV2PositionManager.sol";
 
 import {IERC20Decimals} from "./interfaces/IERC20Extended.sol";
@@ -43,7 +43,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     using SafeCast for uint256;
     using EnumerableSet for EnumerableSet.UintSet;
     using TickMath for int24;
-    using AutomatorUniswapV3PoolLib for IUniswapV3Pool;
+    using UniswapV3PoolLib for IUniswapV3Pool;
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandler;
 
     bytes32 public constant STRATEGIST_ROLE = keccak256("STRATEGIST_ROLE");
