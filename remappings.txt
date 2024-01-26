@@ -1,8 +1,7 @@
-@openzeppelin/=node_modules/@openzeppelin/
-@uniswap/=node_modules/@uniswap/
-base64-sol/=node_modules/base64-sol/
+@openzeppelin/=lib/openzeppelin-contracts
+@uniswap/v3-core=lib/v3-core
+@uniswap/v3-periphery=lib/v3-periphery
+@chainlink/=lib/chainlink
+solmate/=lib/solmate/
 ds-test/=lib/forge-std/lib/ds-test/src/
-eth-gas-reporter/=node_modules/eth-gas-reporter/
 forge-std/=lib/forge-std/src/
-hardhat/=node_modules/hardhat/
-solmate/=node_modules/solmate/
