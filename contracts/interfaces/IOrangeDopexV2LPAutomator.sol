@@ -61,6 +61,11 @@ interface IOrangeDopexV2LPAutomator {
     function handler() external view returns (IUniswapV3SingleTickLiquidityHandlerV2);
 
     /**
+     * @dev Returns the handler hook contract.
+     */
+    function handlerHook() external view returns (address);
+
+    /**
      * @dev Returns the Uniswap V3 pool contract.
      */
     function pool() external view returns (IUniswapV3Pool);
