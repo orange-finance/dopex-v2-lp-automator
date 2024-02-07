@@ -370,6 +370,8 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     function getTickAllLiquidity(int24 tick) external view returns (uint128) {
         uint256 _share = handler.balanceOf(address(this), handler.tokenId(address(pool), handlerHook,tick, tick + poolTickSpacing));
 
+        if (_share == 0) return 0;
+
         return
             handler.convertToAssets(_share.toUint128(), handler.tokenId(address(pool), handlerHook, tick, tick + poolTickSpacing));
     }

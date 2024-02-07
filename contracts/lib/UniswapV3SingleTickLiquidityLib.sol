@@ -42,6 +42,8 @@ library UniswapV3SingleTickLiquidityLib {
         uint256 tokenId_
     ) internal view returns (uint256 liquidity) {
         uint256 _shares = handler.balanceOf(owner, tokenId_);
+        if (_shares == 0) return 0;
+
         IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory _tki = handler.tokenIds(tokenId_);
 
         // NOTE: The amount of redeemable liquidity is the minimum of the amount of own shares and the amount of free liquidity.
@@ -64,6 +66,8 @@ library UniswapV3SingleTickLiquidityLib {
         uint256 tokenId_
     ) internal view returns (uint256) {
         uint256 _shares = handler.balanceOf(owner, tokenId_);
+        if (_shares == 0) return 0;
+
         IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory _tki = handler.tokenIds(tokenId_);
 
         uint256 _maxRedeem = handler.convertToAssets(uint128(_shares), tokenId_);
