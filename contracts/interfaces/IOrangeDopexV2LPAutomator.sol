@@ -7,7 +7,7 @@ import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRoute
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import {IUniswapV3SingleTickLiquidityHandler} from "../vendor/dopexV2/IUniswapV3SingleTickLiquidityHandler.sol";
+import {IUniswapV3SingleTickLiquidityHandlerV2} from "../vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 import {IDopexV2PositionManager} from "../vendor/dopexV2/IDopexV2PositionManager.sol";
 
 /**
@@ -58,7 +58,7 @@ interface IOrangeDopexV2LPAutomator {
     /**
      * @dev Returns the liquidity handler contract.
      */
-    function handler() external view returns (IUniswapV3SingleTickLiquidityHandler);
+    function handler() external view returns (IUniswapV3SingleTickLiquidityHandlerV2);
 
     /**
      * @dev Returns the Uniswap V3 pool contract.

@@ -9,7 +9,7 @@ import {deployAutomatorHarness, AutomatorHarness} from "./harness/AutomatorHarne
 import {AutomatorHelper} from "../helper/AutomatorHelper.t.sol";
 
 contract TestOrangeDopexV2LPAutomatorState is Fixture {
-    using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandler;
+    using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandlerV2;
 
     function setUp() public override {
         vm.createSelectFork("arb", 157066571);
@@ -92,6 +92,7 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
                 manager: manager,
                 router: router,
                 handler: uniV3Handler,
+                handlerHook: pseudoHook,
                 pool: pool,
                 asset: USDCE,
                 minDepositAssets: 1e6,
@@ -306,6 +307,7 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
                 manager: manager,
                 router: router,
                 handler: uniV3Handler,
+                handlerHook: pseudoHook,
                 pool: pool,
                 asset: USDCE,
                 minDepositAssets: 1e6,
@@ -482,8 +484,8 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
             IOrangeDopexV2LPAutomator.RebalanceSwapParams(0, 0, 0, 0)
         );
 
-        uint256 _belowId = uniV3Handler.tokenId(address(pool), _oor_belowLower, _oor_belowLower + pool.tickSpacing());
-        uint256 _aboveId = uniV3Handler.tokenId(address(pool), _oor_aboveLower, _oor_aboveLower + pool.tickSpacing());
+        uint256 _belowId = uniV3Handler.tokenId(address(pool), pseudoHook, _oor_belowLower, _oor_belowLower + pool.tickSpacing());
+        uint256 _aboveId = uniV3Handler.tokenId(address(pool), pseudoHook, _oor_aboveLower, _oor_aboveLower + pool.tickSpacing());
 
         assertApproxEqRel(
             automator.getTickAllLiquidity(_oor_belowLower),
@@ -531,11 +533,11 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
             IOrangeDopexV2LPAutomator.RebalanceSwapParams(0, 0, 0, 0)
         );
 
-        uint256 _belowId = uniV3Handler.tokenId(address(pool), _oor_belowLower, _oor_belowLower + pool.tickSpacing());
-        uint256 _aboveId = uniV3Handler.tokenId(address(pool), _oor_aboveLower, _oor_aboveLower + pool.tickSpacing());
+        uint256 _belowId = uniV3Handler.tokenId(address(pool), pseudoHook, _oor_belowLower, _oor_belowLower + pool.tickSpacing());
+        uint256 _aboveId = uniV3Handler.tokenId(address(pool), pseudoHook, _oor_aboveLower, _oor_aboveLower + pool.tickSpacing());
 
-        IUniswapV3SingleTickLiquidityHandler.TokenIdInfo memory _belowInfo = _tokenInfo(_oor_belowLower);
-        IUniswapV3SingleTickLiquidityHandler.TokenIdInfo memory _aboveInfo = _tokenInfo(_oor_aboveLower);
+        IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory _belowInfo = _tokenInfo(_oor_belowLower);
+        IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory _aboveInfo = _tokenInfo(_oor_aboveLower);
 
         emit log_named_uint("below total liquidity", _belowInfo.totalLiquidity);
         emit log_named_uint("below liquidity used", _belowInfo.liquidityUsed);
@@ -574,6 +576,7 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
                 admin: address(this),
                 manager: manager,
                 handler: uniV3Handler,
+                handlerHook: pseudoHook,
                 router: router,
                 pool: pool,
                 asset: USDCE,
@@ -606,6 +609,7 @@ contract TestOrangeDopexV2LPAutomatorState is Fixture {
                 strategist: address(this),
                 manager: manager,
                 handler: uniV3Handler,
+                handlerHook: pseudoHook,
                 router: router,
                 pool: pool,
                 asset: WETH,

@@ -5,7 +5,7 @@ pragma solidity 0.8.19;
 import "./Fixture.t.sol";
 
 contract TestUniswapV3SingleTickLiquidityLib is Fixture {
-    using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandler;
+    using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandlerV2;
 
     function setUp() public override {
         vm.createSelectFork("arb", 157066571);
@@ -19,10 +19,10 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture {
         (, int24 _currentTick, , , , , ) = pool.slot0();
         int24 _spacing = pool.tickSpacing();
 
-        uint256 _tokenId = uniV3Handler.tokenId(address(pool), _currentTick, _currentTick + _spacing);
+        uint256 _tokenId = uniV3Handler.tokenId(address(pool), pseudoHook, _currentTick, _currentTick + _spacing);
         assertEq(
             _tokenId,
-            uint256(keccak256(abi.encode(uniV3Handler, address(pool), _currentTick, _currentTick + _spacing)))
+            uint256(keccak256(abi.encode(uniV3Handler, address(pool), pseudoHook, _currentTick, _currentTick + _spacing)))
         );
     }
 
@@ -43,7 +43,7 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture {
         emit log_named_int("lower tick", _tickLower);
         emit log_named_int("upper tick", _tickUpper);
 
-        uint256 _tokenId = uniV3Handler.tokenId(address(pool), _tickLower, _tickUpper);
+        uint256 _tokenId = uniV3Handler.tokenId(address(pool), pseudoHook, _tickLower, _tickUpper);
         /*/////////////////////////////////////////////////////////////
                             case: shares not used
         /////////////////////////////////////////////////////////////*/
@@ -54,7 +54,7 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture {
 
         // NOTE: liquidity is rounded down when shares are converted to liquidity
         assertEq(_redeemable, _liquidity - 1, "all liquidity redeemable (rounded down)");
-        IUniswapV3SingleTickLiquidityHandler.TokenIdInfo memory _tokenIdInfo = uniV3Handler.tokenIds(_tokenId);
+        IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory _tokenIdInfo = uniV3Handler.tokenIds(_tokenId);
 
         emit log_named_uint(
             "totalLiquidity - liquidity used",
@@ -115,7 +115,7 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture {
         emit log_named_int("lower tick", _tickLower);
         emit log_named_int("upper tick", _tickUpper);
 
-        uint256 _tokenId = uniV3Handler.tokenId(address(pool), _tickLower, _tickUpper);
+        uint256 _tokenId = uniV3Handler.tokenId(address(pool), pseudoHook, _tickLower, _tickUpper);
         /*/////////////////////////////////////////////////////////////
                             case: shares not used
         /////////////////////////////////////////////////////////////*/
@@ -126,7 +126,7 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture {
 
         // NOTE: liquidity is rounded down when shares are converted to liquidity
         assertEq(_locked, 0, "no liquidity locked");
-        IUniswapV3SingleTickLiquidityHandler.TokenIdInfo memory _tokenIdInfo = uniV3Handler.tokenIds(_tokenId);
+        IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory _tokenIdInfo = uniV3Handler.tokenIds(_tokenId);
 
         emit log_named_uint(
             "totalLiquidity - liquidity used",

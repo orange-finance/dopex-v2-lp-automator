@@ -99,6 +99,7 @@ contract TestOrangeDopexV2LPAutomatorRebalance is Fixture {
                 admin: address(this),
                 manager: manager,
                 handler: uniV3Handler,
+                handlerHook: pseudoHook,
                 router: router,
                 pool: pool,
                 asset: USDCE,
@@ -126,13 +127,6 @@ contract TestOrangeDopexV2LPAutomatorRebalance is Fixture {
             _ticksMint,
             new OrangeDopexV2LPAutomator.RebalanceTickInfo[](0),
             IOrangeDopexV2LPAutomator.RebalanceSwapParams(0, 0, 0, 0)
-        );
-    }
-
-    function test_onERC1155BatchReceived() public {
-        assertEq(
-            automator.onERC1155BatchReceived(address(0), address(0), new uint256[](0), new uint256[](0), ""),
-            bytes4(keccak256("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)"))
         );
     }
 

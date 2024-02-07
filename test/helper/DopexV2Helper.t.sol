@@ -3,7 +3,7 @@
 pragma solidity 0.8.19;
 
 import {IDopexV2PositionManager} from "../../contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
-import {IUniswapV3SingleTickLiquidityHandler} from "../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandler.sol";
+import {IUniswapV3SingleTickLiquidityHandlerV2} from "../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 
@@ -15,15 +15,15 @@ library DopexV2Helper {
 
     address constant DOPEX_V2_MANAGER_OWNER = 0xEE82496D3ed1f5AFbEB9B29f3f59289fd899d9D0;
 
-    IUniswapV3SingleTickLiquidityHandler constant DOPEX_UNIV3_HANDLER =
-        IUniswapV3SingleTickLiquidityHandler(0xe11d346757d052214686bCbC860C94363AfB4a9A);
+    IUniswapV3SingleTickLiquidityHandlerV2 constant DOPEX_UNIV3_HANDLER =
+        IUniswapV3SingleTickLiquidityHandlerV2(0xe11d346757d052214686bCbC860C94363AfB4a9A);
 
     function balanceOfHandler(address account, IUniswapV3Pool pool, int24 tickLower) internal view returns (uint256) {
         return DOPEX_UNIV3_HANDLER.balanceOf(account, _tokenId(pool, tickLower));
     }
 
     function useDopexPosition(IUniswapV3Pool pool, int24 tickLower, uint128 liquidityToUse) internal {
-        IUniswapV3SingleTickLiquidityHandler.UsePositionParams memory _params = IUniswapV3SingleTickLiquidityHandler
+        IUniswapV3SingleTickLiquidityHandlerV2.UsePositionParams memory _params = IUniswapV3SingleTickLiquidityHandlerV2
             .UsePositionParams({
                 pool: address(pool),
                 tickLower: tickLower,
@@ -70,19 +70,19 @@ library DopexV2Helper {
     }
 
     function _totalLiquidityOfTick(IUniswapV3Pool pool, int24 tickLower) private view returns (uint128) {
-        IUniswapV3SingleTickLiquidityHandler.TokenIdInfo memory _ti = _tokenIdInfo(pool, tickLower);
+        IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory _ti = _tokenIdInfo(pool, tickLower);
 
         return _ti.totalLiquidity;
     }
 
     function _usedLiquidityOfTick(IUniswapV3Pool pool, int24 tickLower) private view returns (uint128) {
-        IUniswapV3SingleTickLiquidityHandler.TokenIdInfo memory _ti = _tokenIdInfo(pool, tickLower);
+        IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory _ti = _tokenIdInfo(pool, tickLower);
 
         return _ti.liquidityUsed;
     }
 
     function _freeLiquidityOfTick(IUniswapV3Pool pool, int24 tickLower) private view returns (uint128) {
-        IUniswapV3SingleTickLiquidityHandler.TokenIdInfo memory _ti = _tokenIdInfo(pool, tickLower);
+        IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory _ti = _tokenIdInfo(pool, tickLower);
 
         return _ti.totalLiquidity - _ti.liquidityUsed;
     }
@@ -90,14 +90,14 @@ library DopexV2Helper {
     function tokenIdInfo(
         IUniswapV3Pool pool,
         int24 tickLower
-    ) internal view returns (IUniswapV3SingleTickLiquidityHandler.TokenIdInfo memory) {
+    ) internal view returns (IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory) {
         return _tokenIdInfo(pool, tickLower);
     }
 
     function _tokenIdInfo(
         IUniswapV3Pool pool,
         int24 tickLower
-    ) internal view returns (IUniswapV3SingleTickLiquidityHandler.TokenIdInfo memory) {
+    ) internal view returns (IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory) {
         return DOPEX_UNIV3_HANDLER.tokenIds(_tokenId(pool, tickLower));
     }
 

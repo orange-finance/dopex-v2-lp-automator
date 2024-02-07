@@ -104,7 +104,7 @@ contract TestOrangeDopexV2LPAutomatorRedeem is Fixture {
 
         _mint(_balanceBasedWeth, _balanceBasedUsdce, _oor_belowLower, _oor_aboveLower);
 
-        IUniswapV3SingleTickLiquidityHandler.TokenIdInfo memory _tokenIdInfo = _tokenInfo(_oor_belowLower);
+        IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory _tokenIdInfo = _tokenInfo(_oor_belowLower);
         uint256 _freeLiquidity = _tokenIdInfo.totalLiquidity - _tokenIdInfo.liquidityUsed;
 
         _useDopexPosition(_oor_belowLower, _oor_belowLower + pool.tickSpacing(), uint128(_freeLiquidity - 1000));

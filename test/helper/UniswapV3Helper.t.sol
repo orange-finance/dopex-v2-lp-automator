@@ -3,7 +3,7 @@
 pragma solidity 0.8.19;
 
 import {IDopexV2PositionManager} from "../../contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
-import {IUniswapV3SingleTickLiquidityHandler} from "../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandler.sol";
+import {IUniswapV3SingleTickLiquidityHandlerV2} from "../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
 import {OracleLibrary} from "@uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol";
@@ -13,7 +13,7 @@ import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRoute
 struct Constants {
     IDopexV2PositionManager manager;
     address managerOwner;
-    IUniswapV3SingleTickLiquidityHandler uniV3Handler;
+    IUniswapV3SingleTickLiquidityHandlerV2 uniV3Handler;
 }
 
 library UniswapV3Helper {
