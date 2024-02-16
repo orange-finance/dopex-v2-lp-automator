@@ -7,7 +7,7 @@ import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Po
 import {UniswapV3PoolLib} from "../../contracts/lib/UniswapV3PoolLib.sol";
 
 contract TestUniswapV3PoolLib is Test {
-    IUniswapV3Pool wethUsdce = IUniswapV3Pool(0xC31E54c7a869B9FcBEcc14363CF510d1c41fa443);
+    IUniswapV3Pool wethUsdce = IUniswapV3Pool(0xC6962004f452bE9203591991D15f6b388e09E8D0);
 
     function setUp() public {
         vm.createSelectFork("arb", 157066571);

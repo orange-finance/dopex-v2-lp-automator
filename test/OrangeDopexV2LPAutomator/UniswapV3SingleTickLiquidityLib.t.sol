@@ -8,7 +8,7 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture {
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandlerV2;
 
     function setUp() public override {
-        vm.createSelectFork("arb", 157066571);
+        vm.createSelectFork("arb", 180874377);
         super.setUp();
 
         vm.prank(managerOwner);
@@ -19,19 +19,21 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture {
         (, int24 _currentTick, , , , , ) = pool.slot0();
         int24 _spacing = pool.tickSpacing();
 
-        uint256 _tokenId = uniV3Handler.tokenId(address(pool), pseudoHook, _currentTick, _currentTick + _spacing);
+        uint256 _tokenId = uniV3Handler.tokenId(address(pool), emptyHook, _currentTick, _currentTick + _spacing);
         assertEq(
             _tokenId,
-            uint256(keccak256(abi.encode(uniV3Handler, address(pool), pseudoHook, _currentTick, _currentTick + _spacing)))
+            uint256(
+                keccak256(abi.encode(uniV3Handler, address(pool), emptyHook, _currentTick, _currentTick + _spacing))
+            )
         );
     }
 
     function test_redeemableLiquidity() public {
         deal(address(WETH), address(this), 10000 ether);
-        deal(address(USDCE), address(this), 1000_000e6);
+        deal(address(USDC), address(this), 1000_000e6);
 
         WETH.approve(address(manager), type(uint256).max);
-        USDCE.approve(address(manager), type(uint256).max);
+        USDC.approve(address(manager), type(uint256).max);
 
         (, int24 _currentTick, , , , , ) = pool.slot0();
         int24 _spacing = pool.tickSpacing();
@@ -43,7 +45,7 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture {
         emit log_named_int("lower tick", _tickLower);
         emit log_named_int("upper tick", _tickUpper);
 
-        uint256 _tokenId = uniV3Handler.tokenId(address(pool), pseudoHook, _tickLower, _tickUpper);
+        uint256 _tokenId = uniV3Handler.tokenId(address(pool), emptyHook, _tickLower, _tickUpper);
         /*/////////////////////////////////////////////////////////////
                             case: shares not used
         /////////////////////////////////////////////////////////////*/
@@ -100,10 +102,10 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture {
 
     function test_myLockedLiquidity() public {
         deal(address(WETH), address(this), 10000 ether);
-        deal(address(USDCE), address(this), 1000_000e6);
+        deal(address(USDC), address(this), 1000_000e6);
 
         WETH.approve(address(manager), type(uint256).max);
-        USDCE.approve(address(manager), type(uint256).max);
+        USDC.approve(address(manager), type(uint256).max);
 
         (, int24 _currentTick, , , , , ) = pool.slot0();
         int24 _spacing = pool.tickSpacing();
@@ -115,7 +117,7 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture {
         emit log_named_int("lower tick", _tickLower);
         emit log_named_int("upper tick", _tickUpper);
 
-        uint256 _tokenId = uniV3Handler.tokenId(address(pool), pseudoHook, _tickLower, _tickUpper);
+        uint256 _tokenId = uniV3Handler.tokenId(address(pool), emptyHook, _tickLower, _tickUpper);
         /*/////////////////////////////////////////////////////////////
                             case: shares not used
         /////////////////////////////////////////////////////////////*/

@@ -24,10 +24,10 @@ contract TestOrangeDopexV2LPAutomatorRebalance is Fixture {
 
     // ? currently test getting stacked in this case
     // function test_rebalance_fromInitialState() public {
-    //     deal(address(USDCE), address(automator), 10000e6);
+    //     deal(address(USDC), address(automator), 10000e6);
 
-    //     uint256 _balanceBasedUsdce = USDCE.balanceOf(address(automator));
-    //     uint256 _balanceBasedWeth = _getQuote(address(USDCE), address(WETH), uint128(_balanceBasedUsdce));
+    //     uint256 _balanceBasedUsdce = USDC.balanceOf(address(automator));
+    //     uint256 _balanceBasedWeth = _getQuote(address(USDC), address(WETH), uint128(_balanceBasedUsdce));
 
     //     (int24 _oor_belowLower, ) = _outOfRangeBelow(1);
     //     (int24 _oor_aboveLower, ) = _outOfRangeAbove(1);
@@ -68,7 +68,7 @@ contract TestOrangeDopexV2LPAutomatorRebalance is Fixture {
 
     function test_rebalance_currentTickShouldBeSkipped() public {
         deal(address(WETH), address(automator), 10 ether);
-        deal(address(USDCE), address(automator), 10_000e6);
+        deal(address(USDC), address(automator), 10_000e6);
 
         // 5 WETH = 11009961214 USDC.e (currentTick: -199349)
         // liquidity(-199330, -199320) = 469840801795273610 (currentTick: -199349)
@@ -99,10 +99,10 @@ contract TestOrangeDopexV2LPAutomatorRebalance is Fixture {
                 admin: address(this),
                 manager: manager,
                 handler: uniV3Handler,
-                handlerHook: pseudoHook,
+                handlerHook: emptyHook,
                 router: router,
                 pool: pool,
-                asset: USDCE,
+                asset: USDC,
                 minDepositAssets: 1e6,
                 assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
                 counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
@@ -134,7 +134,7 @@ contract TestOrangeDopexV2LPAutomatorRebalance is Fixture {
         IOrangeDopexV2LPAutomator.RebalanceTickInfo[]
             memory _ticksMint = new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](2);
 
-        // token0: WETH, token1: USDCE
+        // token0: WETH, token1: USDC
         _ticksMint[0] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({
             tick: _oor_belowLower,
             liquidity: _toSingleTickLiquidity(
@@ -173,14 +173,7 @@ contract TestOrangeDopexV2LPAutomatorRebalance is Fixture {
         automator.rebalance(
             _ticksMint,
             _ticksBurn,
-            AutomatorHelper.calculateRebalanceSwapParamsInRebalance(
-                automator,
-                pool,
-                USDCE,
-                WETH,
-                _ticksMint,
-                _ticksBurn
-            )
+            AutomatorHelper.calculateRebalanceSwapParamsInRebalance(automator, pool, USDC, WETH, _ticksMint, _ticksBurn)
         );
     }
 
@@ -206,14 +199,7 @@ contract TestOrangeDopexV2LPAutomatorRebalance is Fixture {
         automator.rebalance(
             _ticksMint,
             _ticksBurn,
-            AutomatorHelper.calculateRebalanceSwapParamsInRebalance(
-                automator,
-                pool,
-                USDCE,
-                WETH,
-                _ticksMint,
-                _ticksBurn
-            )
+            AutomatorHelper.calculateRebalanceSwapParamsInRebalance(automator, pool, USDC, WETH, _ticksMint, _ticksBurn)
         );
     }
 }

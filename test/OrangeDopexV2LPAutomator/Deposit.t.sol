@@ -30,9 +30,9 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
                 manager: manager,
                 router: router,
                 handler: uniV3Handler,
-                handlerHook: pseudoHook,
+                handlerHook: emptyHook,
                 pool: pool,
-                asset: USDCE,
+                asset: USDC,
                 minDepositAssets: 1e6,
                 depositCap: 10_000e6
             })
@@ -72,15 +72,15 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
                 manager: manager,
                 router: router,
                 handler: uniV3Handler,
-                handlerHook: pseudoHook,
+                handlerHook: emptyHook,
                 pool: pool,
-                asset: USDCE,
+                asset: USDC,
                 minDepositAssets: 1e6,
                 depositCap: 10_000e6
             })
         );
 
-        deal(address(USDCE), alice, 10_001e6);
+        deal(address(USDC), alice, 10_001e6);
 
         _depositFrom(alice, 5_000e6);
 
@@ -103,9 +103,9 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
                 manager: manager,
                 router: router,
                 handler: uniV3Handler,
-                handlerHook: pseudoHook,
+                handlerHook: emptyHook,
                 pool: pool,
-                asset: USDCE,
+                asset: USDC,
                 minDepositAssets: 1e6,
                 depositCap: 10_000e6
             })
@@ -130,9 +130,9 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
                 manager: manager,
                 router: router,
                 handler: uniV3Handler,
-                handlerHook: pseudoHook,
+                handlerHook: emptyHook,
                 pool: pool,
-                asset: USDCE,
+                asset: USDC,
                 minDepositAssets: 1e6,
                 depositCap: 10_000e6
             })
@@ -165,9 +165,9 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
                 manager: manager,
                 router: router,
                 handler: uniV3Handler,
-                handlerHook: pseudoHook,
+                handlerHook: emptyHook,
                 pool: pool,
-                asset: USDCE,
+                asset: USDC,
                 minDepositAssets: 1e6,
                 depositCap: 20000e6
             })
@@ -198,7 +198,7 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
                 assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
                 counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
                 handler: uniV3Handler,
-                handlerHook: pseudoHook,
+                handlerHook: emptyHook,
                 router: router,
                 pool: pool,
                 asset: WETH,
@@ -218,10 +218,10 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
                 assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
                 counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
                 handler: uniV3Handler,
-                handlerHook: pseudoHook,
+                handlerHook: emptyHook,
                 router: router,
                 pool: pool,
-                asset: USDCE,
+                asset: USDC,
                 minDepositAssets: 999999 // 1e6 - 1
             })
         );
@@ -241,10 +241,10 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
                 counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
                 manager: manager,
                 handler: uniV3Handler,
-                handlerHook: pseudoHook,
+                handlerHook: emptyHook,
                 router: router,
                 pool: pool,
-                asset: USDCE,
+                asset: USDC,
                 minDepositAssets: 1e6,
                 depositCap: 20_000_000_001e6
             })
@@ -254,13 +254,13 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
         _depositFrom(alice, 10_000e6);
 
         // assume that vault earned 10 billion and one
-        deal(address(USDCE), address(automator), 10_000_000_001e6);
+        deal(address(USDC), address(automator), 10_000_000_001e6);
 
         // 1 * 10_000e6 / 10_000_000_001e6 = 0
         // this is the quite rare case because the vault has to earn huge amount of profit
-        deal(address(USDCE), bob, 1e6);
+        deal(address(USDC), bob, 1e6);
         vm.startPrank(bob);
-        USDCE.approve(address(automator), 1e6);
+        USDC.approve(address(automator), 1e6);
         vm.expectRevert(OrangeDopexV2LPAutomator.DepositTooSmall.selector);
         automator.deposit(1e6);
         vm.stopPrank();
