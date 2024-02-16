@@ -42,9 +42,9 @@ interface IUniswapV3SingleTickLiquidityHandlerV2 is IERC6909, IHandler {
         uint64 lastReserve;
     }
 
-
     struct UsePositionParams {
         address pool;
+        address hook;
         int24 tickLower;
         int24 tickUpper;
         uint128 liquidityToUse;
