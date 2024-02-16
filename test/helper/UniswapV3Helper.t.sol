@@ -41,6 +41,24 @@ library UniswapV3Helper {
             );
     }
 
+    function getLiquidityForAmounts(
+        IUniswapV3Pool,
+        int24 tickCurrent,
+        int24 tickLower,
+        int24 tickUpper,
+        uint256 amount0,
+        uint256 amount1
+    ) internal pure returns (uint128) {
+        return
+            LiquidityAmounts.getLiquidityForAmounts(
+                tickCurrent.getSqrtRatioAtTick(),
+                tickLower.getSqrtRatioAtTick(),
+                tickUpper.getSqrtRatioAtTick(),
+                amount0,
+                amount1
+            );
+    }
+
     function getQuote(
         IUniswapV3Pool pool,
         address base,
