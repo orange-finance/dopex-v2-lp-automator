@@ -3,12 +3,13 @@
 pragma solidity 0.8.19;
 
 import "./Fixture.t.sol";
+import {DealExtension} from "../helper/DealExtension.t.sol";
 
-contract TestUniswapV3SingleTickLiquidityLib is Fixture {
+contract TestUniswapV3SingleTickLiquidityLib is Fixture, DealExtension {
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandlerV2;
 
     function setUp() public override {
-        vm.createSelectFork("arb", 180874377);
+        vm.createSelectFork("arb", 181171193);
         super.setUp();
 
         vm.prank(managerOwner);
@@ -30,7 +31,7 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture {
 
     function test_redeemableLiquidity() public {
         deal(address(WETH), address(this), 10000 ether);
-        deal(address(USDC), address(this), 1000_000e6);
+        dealUsdc(address(this), 1000_000e6);
 
         WETH.approve(address(manager), type(uint256).max);
         USDC.approve(address(manager), type(uint256).max);
@@ -69,7 +70,7 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture {
                             case: shares partially used
         /////////////////////////////////////////////////////////////*/
 
-        _useDopexPosition(_tickLower, _tickUpper, 774636314000000);
+        _useDopexPosition(_tickLower, _tickUpper, 599999999);
         _redeemable = uniV3Handler.redeemableLiquidity(address(this), _tokenId);
         _tokenIdInfo = uniV3Handler.tokenIds(_tokenId);
 
@@ -86,7 +87,7 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture {
                             case: shares fully used
         /////////////////////////////////////////////////////////////*/
 
-        _useDopexPosition(_tickLower, _tickUpper, 278352);
+        _useDopexPosition(_tickLower, _tickUpper, 400000000);
         _redeemable = uniV3Handler.redeemableLiquidity(address(this), _tokenId);
         _tokenIdInfo = uniV3Handler.tokenIds(_tokenId);
 
@@ -102,7 +103,7 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture {
 
     function test_myLockedLiquidity() public {
         deal(address(WETH), address(this), 10000 ether);
-        deal(address(USDC), address(this), 1000_000e6);
+        dealUsdc(address(this), 1000_000e6);
 
         WETH.approve(address(manager), type(uint256).max);
         USDC.approve(address(manager), type(uint256).max);
@@ -127,6 +128,7 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture {
         uint256 _locked = uniV3Handler.lockedLiquidity(address(this), _tokenId);
 
         // NOTE: liquidity is rounded down when shares are converted to liquidity
+        // FIXME: in some cases the locked liquidity is 1 even though the liquidity is 0
         assertEq(_locked, 0, "no liquidity locked");
         IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory _tokenIdInfo = uniV3Handler.tokenIds(_tokenId);
 
@@ -141,7 +143,7 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture {
                             case: shares partially used
         /////////////////////////////////////////////////////////////*/
 
-        _useDopexPosition(_tickLower, _tickUpper, 774636314000000);
+        _useDopexPosition(_tickLower, _tickUpper, 599999999);
         _locked = uniV3Handler.lockedLiquidity(address(this), _tokenId);
         _tokenIdInfo = uniV3Handler.tokenIds(_tokenId);
 
@@ -154,7 +156,7 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture {
 
         assertEq(
             _locked,
-            _liquidity - (_tokenIdInfo.totalLiquidity - _tokenIdInfo.liquidityUsed) - 1,
+            _liquidity - (_tokenIdInfo.totalLiquidity - _tokenIdInfo.liquidityUsed),
             "partial liquidity locked (rounded down)"
         );
 
@@ -162,7 +164,7 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture {
                             case: shares fully used
         /////////////////////////////////////////////////////////////*/
 
-        _useDopexPosition(_tickLower, _tickUpper, 278352);
+        _useDopexPosition(_tickLower, _tickUpper, 400000000);
         _locked = uniV3Handler.lockedLiquidity(address(this), _tokenId);
         _tokenIdInfo = uniV3Handler.tokenIds(_tokenId);
 
@@ -173,7 +175,7 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture {
         emit log_named_uint("total liquidity", _tokenIdInfo.totalLiquidity);
         emit log_named_uint("liquidity used", _tokenIdInfo.liquidityUsed);
 
-        assertEq(_locked, _liquidity - 1, "all liquidity locked (rounded down)");
+        assertEq(_locked, _liquidity, "all liquidity locked (rounded down)");
     }
 
     function onERC1155Received(address, address, uint256, uint256, bytes calldata) external pure returns (bytes4) {
