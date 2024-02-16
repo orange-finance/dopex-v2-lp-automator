@@ -128,7 +128,9 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture, DealExtension {
         uint256 _locked = uniV3Handler.lockedLiquidity(address(this), _tokenId);
 
         // NOTE: liquidity is rounded down when shares are converted to liquidity
-        // FIXME: in some cases the locked liquidity is 1 even though the liquidity is 0
+        // FIXME: if we are the only liquidity provider, the locked liquidity will be 1 even if we have 0 locked liquidity.
+        // this is caused by the lockedLiquidity function in UniswapV3SingleTickLiquidityLib.sol
+        // convertToAssets will return rounded down value, and the tokenIdInfo.totalLiquidity is not rounded down. so the result will be 1
         assertEq(_locked, 0, "no liquidity locked");
         IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory _tokenIdInfo = uniV3Handler.tokenIds(_tokenId);
 
