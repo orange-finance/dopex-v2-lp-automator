@@ -18,6 +18,7 @@ contract AutomatorHarness is OrangeDopexV2LPAutomator {
                 quoter: args.quoter,
                 manager: args.manager,
                 handler: args.handler,
+                handlerHook: args.handlerHook,
                 router: args.router,
                 pool: args.pool,
                 asset: args.asset,

@@ -1,11 +1,11 @@
-// SPDX-License-Identifier: Unlicense
+// SPDX-License-Identifier: UNLICENSED
 
 pragma solidity 0.8.19;
 
-import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import {IERC6909} from "./IERC6909.sol";
 import {IHandler} from "./IHandler.sol";
 
-interface IUniswapV3SingleTickLiquidityHandler is IHandler, IERC1155 {
+interface IUniswapV3SingleTickLiquidityHandlerV2 is IERC6909, IHandler {
     struct TokenIdInfo {
         uint128 totalLiquidity;
         uint128 totalSupply;
@@ -23,6 +23,7 @@ interface IUniswapV3SingleTickLiquidityHandler is IHandler, IERC1155 {
 
     struct MintPositionParams {
         address pool;
+        address hook;
         int24 tickLower;
         int24 tickUpper;
         uint128 liquidity;
@@ -30,13 +31,20 @@ interface IUniswapV3SingleTickLiquidityHandler is IHandler, IERC1155 {
 
     struct BurnPositionParams {
         address pool;
+        address hook;
         int24 tickLower;
         int24 tickUpper;
         uint128 shares;
     }
 
+    struct ReserveLiquidityData {
+        uint128 liquidity;
+        uint64 lastReserve;
+    }
+
     struct UsePositionParams {
         address pool;
+        address hook;
         int24 tickLower;
         int24 tickUpper;
         uint128 liquidityToUse;

@@ -10,7 +10,7 @@ import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
 
 import {IDopexV2PositionManager} from "../../contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
-import {IUniswapV3SingleTickLiquidityHandler} from "../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandler.sol";
+import {IUniswapV3SingleTickLiquidityHandlerV2} from "../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 
 import {OrangeDopexV2LPAutomator, IOrangeDopexV2LPAutomator} from "../../contracts/OrangeDopexV2LPAutomator.sol";
 
@@ -36,7 +36,8 @@ library AutomatorHelper {
         address counterAssetUsdFeed;
         IDopexV2PositionManager manager;
         ISwapRouter router;
-        IUniswapV3SingleTickLiquidityHandler handler;
+        IUniswapV3SingleTickLiquidityHandlerV2 handler;
+        address handlerHook;
         IUniswapV3Pool pool;
         IERC20 asset;
         uint256 minDepositAssets;
@@ -54,6 +55,7 @@ library AutomatorHelper {
                 admin: args.admin,
                 manager: args.manager,
                 handler: args.handler,
+                handlerHook: args.handlerHook,
                 router: args.router,
                 pool: args.pool,
                 asset: args.asset,

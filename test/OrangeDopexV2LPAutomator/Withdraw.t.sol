@@ -30,12 +30,12 @@ contract TestOrangeDopexV2LPAutomatorWithdraw is Fixture {
 
     function test_withdraw_revertWhenTryingToWithdrawFunds() public {
         deal(address(WETH), address(automator), 1000e18);
-        deal(address(USDCE), address(automator), 1000e6);
+        deal(address(USDC), address(automator), 1000e6);
 
         vm.expectRevert(OrangeDopexV2LPAutomator.TokenNotPermitted.selector);
         automator.withdraw(WETH);
 
         vm.expectRevert(OrangeDopexV2LPAutomator.TokenNotPermitted.selector);
-        automator.withdraw(USDCE);
+        automator.withdraw(USDC);
     }
 }

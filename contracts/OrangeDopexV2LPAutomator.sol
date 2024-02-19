@@ -11,7 +11,6 @@ import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRoute
 import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Receiver.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
@@ -20,7 +19,7 @@ import {ERC20} from "solmate/src/tokens/ERC20.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 
 import {ChainlinkQuoter} from "./ChainlinkQuoter.sol";
-import {IUniswapV3SingleTickLiquidityHandler} from "./vendor/dopexV2/IUniswapV3SingleTickLiquidityHandler.sol";
+import {IUniswapV3SingleTickLiquidityHandlerV2} from "./vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 import {UniswapV3SingleTickLiquidityLib} from "./lib/UniswapV3SingleTickLiquidityLib.sol";
 import {UniswapV3PoolLib} from "./lib/UniswapV3PoolLib.sol";
 import {IDopexV2PositionManager} from "./vendor/dopexV2/IDopexV2PositionManager.sol";
@@ -36,7 +35,7 @@ interface IMulticallProvider {
  * @dev Automate liquidity provision for Dopex V2 contract
  * @author Orange Finance
  */
-contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessControlEnumerable, IERC1155Receiver {
+contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessControlEnumerable {
     using FixedPointMathLib for uint256;
     using FullMath for uint256;
     using SafeERC20 for IERC20;
@@ -44,7 +43,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     using EnumerableSet for EnumerableSet.UintSet;
     using TickMath for int24;
     using UniswapV3PoolLib for IUniswapV3Pool;
-    using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandler;
+    using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandlerV2;
 
     bytes32 public constant STRATEGIST_ROLE = keccak256("STRATEGIST_ROLE");
     uint24 constant MAX_TICKS = 120;
@@ -52,7 +51,8 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     uint24 constant MAX_PERF_FEE_PIPS = 10_000;
 
     IDopexV2PositionManager public immutable manager;
-    IUniswapV3SingleTickLiquidityHandler public immutable handler;
+    IUniswapV3SingleTickLiquidityHandlerV2 public immutable handler;
+    address public immutable handlerHook;
 
     ChainlinkQuoter public immutable quoter;
     address public immutable assetUsdFeed;
@@ -114,7 +114,8 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         string symbol;
         address admin;
         IDopexV2PositionManager manager;
-        IUniswapV3SingleTickLiquidityHandler handler;
+        IUniswapV3SingleTickLiquidityHandlerV2 handler;
+        address handlerHook;
         ISwapRouter router;
         IUniswapV3Pool pool;
         IERC20 asset;
@@ -135,6 +136,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
 
         manager = args.manager;
         handler = args.handler;
+        handlerHook = args.handlerHook;
         router = args.router;
         pool = args.pool;
         asset = args.asset;
@@ -161,24 +163,6 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         counterAsset.safeIncreaseAllowance(address(args.router), type(uint256).max);
 
         _grantRole(DEFAULT_ADMIN_ROLE, args.admin);
-    }
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                                                    ERC1155 RECEIVER INTERFACE
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
-
-    function onERC1155Received(address, address, uint256, uint256, bytes calldata) external pure returns (bytes4) {
-        return this.onERC1155Received.selector;
-    }
-
-    function onERC1155BatchReceived(
-        address,
-        address,
-        uint256[] calldata,
-        uint256[] calldata,
-        bytes calldata
-    ) external pure returns (bytes4) {
-        return this.onERC1155BatchReceived.selector;
     }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -239,7 +223,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         for (uint256 i = 0; i < _length; ) {
             _lt = int24(uint24(activeTicks.at(i)));
             _ut = _lt + _spacing;
-            _tid = handler.tokenId(address(pool), _lt, _ut);
+            _tid = handler.tokenId(address(pool), handlerHook, _lt, _ut);
 
             _liquidity = handler.convertToAssets((handler.balanceOf(address(this), _tid)).toUint128(), _tid);
 
@@ -268,7 +252,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         for (uint256 i = 0; i < _length; ) {
             _lt = int24(uint24(activeTicks.at(i)));
             _ut = _lt + poolTickSpacing;
-            _tid = handler.tokenId(address(pool), _lt, _ut);
+            _tid = handler.tokenId(address(pool), handlerHook, _lt, _ut);
 
             _liquidity = handler.convertToAssets((handler.balanceOf(address(this), _tid)).toUint128(), _tid);
 
@@ -326,7 +310,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         for (uint256 i = 0; i < _length; ) {
             _lt = int24(uint24(activeTicks.at(i)));
             _ut = _lt + poolTickSpacing;
-            _tid = handler.tokenId(address(pool), _lt, _ut);
+            _tid = handler.tokenId(address(pool), handlerHook, _lt, _ut);
 
             _liquidity = handler.redeemableLiquidity(address(this), _tid).toUint128();
 
@@ -384,17 +368,19 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
 
     /// @inheritdoc IOrangeDopexV2LPAutomator
     function getTickAllLiquidity(int24 tick) external view returns (uint128) {
-        uint256 _share = handler.balanceOf(address(this), handler.tokenId(address(pool), tick, tick + poolTickSpacing));
+        uint256 _share = handler.balanceOf(address(this), handler.tokenId(address(pool), handlerHook,tick, tick + poolTickSpacing));
+
+        if (_share == 0) return 0;
 
         return
-            handler.convertToAssets(_share.toUint128(), handler.tokenId(address(pool), tick, tick + poolTickSpacing));
+            handler.convertToAssets(_share.toUint128(), handler.tokenId(address(pool), handlerHook, tick, tick + poolTickSpacing));
     }
 
     /// @inheritdoc IOrangeDopexV2LPAutomator
     function getTickFreeLiquidity(int24 tick) external view returns (uint128) {
         return
             handler
-                .redeemableLiquidity(address(this), handler.tokenId(address(pool), tick, tick + poolTickSpacing))
+                .redeemableLiquidity(address(this), handler.tokenId(address(pool), handlerHook, tick, tick + poolTickSpacing))
                 .toUint128();
     }
 
@@ -494,7 +480,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         for (uint256 i = 0; i < _length; ) {
             c.lowerTick = int24(uint24(activeTicks.at(i)));
 
-            c.tokenId = handler.tokenId(address(pool), c.lowerTick, c.lowerTick + poolTickSpacing);
+            c.tokenId = handler.tokenId(address(pool), handlerHook, c.lowerTick, c.lowerTick + poolTickSpacing);
 
             // total supply before burn is used to calculate the precise share
             c.shareRedeemable = uint256(
@@ -510,13 +496,13 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
                     _tempShares[c.lockedShareIndex++] = LockedDopexShares({tokenId: c.tokenId, shares: c.shareLocked});
                 }
 
-                handler.safeTransferFrom(address(this), msg.sender, c.tokenId, c.shareLocked, "");
+                handler.transfer(msg.sender, c.tokenId, c.shareLocked);
             }
 
             // redeemable share is burned
             if (c.shareRedeemable > 0)
                 if (handler.paused()) {
-                    handler.safeTransferFrom(address(this), msg.sender, c.tokenId, c.shareRedeemable, "");
+                    handler.transfer(msg.sender, c.tokenId, c.shareRedeemable);
                 } else {
                     _burnPosition(c.lowerTick, c.lowerTick + poolTickSpacing, c.shareRedeemable.toUint128());
                 }
@@ -559,8 +545,9 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         manager.burnPosition(
             handler,
             abi.encode(
-                IUniswapV3SingleTickLiquidityHandler.BurnPositionParams({
+                IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams({
                     pool: address(pool),
+                    hook: handlerHook,
                     tickLower: lowerTick,
                     tickUpper: upperTick,
                     shares: shares
@@ -661,7 +648,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
 
         int24 _lt;
         int24 _ut;
-        uint256 _posId;
+        uint256 _tid;
         uint256 j;
         for (uint256 i = 0; i < ticksMint.length; ) {
             if (i == ignoreIndex) {
@@ -677,8 +664,8 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
             mintCalldataBatch[j] = _createMintCalldata(_lt, _ut, ticksMint[i].liquidity);
 
             // If the position is not active, push it to the active ticks
-            _posId = uint256(keccak256(abi.encode(handler, pool, _lt, _ut)));
-            if (handler.balanceOf(address(this), _posId) == 0) activeTicks.add(uint256(uint24(_lt)));
+            _tid = handler.tokenId(address(pool), handlerHook, _lt, _ut);
+            if (handler.balanceOf(address(this), _tid) == 0) activeTicks.add(uint256(uint24(_lt)));
 
             unchecked {
                 i++;
@@ -731,7 +718,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     ) internal returns (bytes[] memory burnCalldataBatch) {
         int24 _lt;
         int24 _ut;
-        uint256 _posId;
+        uint256 _tid;
         uint256 _shares;
         uint256 _burnLength = ticksBurn.length;
         burnCalldataBatch = new bytes[](_burnLength);
@@ -739,12 +726,12 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
             _lt = ticksBurn[i].tick;
             _ut = _lt + poolTickSpacing;
 
-            _posId = uint256(keccak256(abi.encode(handler, pool, _lt, _ut)));
-            _shares = handler.convertToShares(ticksBurn[i].liquidity, _posId);
+            _tid = _tid = handler.tokenId(address(pool), handlerHook, _lt, _ut);
+            _shares = handler.convertToShares(ticksBurn[i].liquidity, _tid);
             burnCalldataBatch[i] = _createBurnCalldata(_lt, _ut, _shares.toUint128());
 
             // if all shares will be burned, pop the active tick
-            if (handler.balanceOf(address(this), _posId) - _shares == 0) activeTicks.remove(uint256(uint24(_lt)));
+            if (handler.balanceOf(address(this), _tid) - _shares == 0) activeTicks.remove(uint256(uint24(_lt)));
 
             unchecked {
                 i++;
@@ -758,8 +745,9 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
                 IDopexV2PositionManager.mintPosition.selector,
                 handler,
                 abi.encode(
-                    IUniswapV3SingleTickLiquidityHandler.MintPositionParams({
+                    IUniswapV3SingleTickLiquidityHandlerV2.MintPositionParams({
                         pool: address(pool),
+                        hook: handlerHook,
                         tickLower: lt,
                         tickUpper: ut,
                         liquidity: liq
@@ -774,8 +762,9 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
                 IDopexV2PositionManager.burnPosition.selector,
                 handler,
                 abi.encode(
-                    IUniswapV3SingleTickLiquidityHandler.BurnPositionParams({
+                    IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams({
                         pool: address(pool),
+                        hook: handlerHook,
                         tickLower: lt,
                         tickUpper: ut,
                         shares: shares

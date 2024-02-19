@@ -7,7 +7,7 @@ import {OrangeDopexV2LPAutomator, IOrangeDopexV2LPAutomator} from "../../contrac
 
 import {ChainlinkQuoter} from "../../contracts/ChainlinkQuoter.sol";
 import {IDopexV2PositionManager} from "../../contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
-import {IUniswapV3SingleTickLiquidityHandler} from "../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandler.sol";
+import {IUniswapV3SingleTickLiquidityHandlerV2} from "../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 import {UniswapV3SingleTickLiquidityLib} from "../../contracts/lib/UniswapV3SingleTickLiquidityLib.sol";
 
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
@@ -21,7 +21,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 abstract contract Fixture is Test {
-    using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandler;
+    using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandlerV2;
     using TickMath for int24;
     using stdStorage for StdStorage;
 
@@ -30,16 +30,17 @@ abstract contract Fixture is Test {
     IDopexV2PositionManager manager = IDopexV2PositionManager(0xE4bA6740aF4c666325D49B3112E4758371386aDc);
     address managerOwner = 0xEE82496D3ed1f5AFbEB9B29f3f59289fd899d9D0;
 
-    IUniswapV3SingleTickLiquidityHandler uniV3Handler =
-        IUniswapV3SingleTickLiquidityHandler(0xe11d346757d052214686bCbC860C94363AfB4a9A);
+    IUniswapV3SingleTickLiquidityHandlerV2 uniV3Handler =
+        IUniswapV3SingleTickLiquidityHandlerV2(0x29BbF7EbB9C5146c98851e76A5529985E4052116);
+    address emptyHook = address(0);
     address dopexV2OptionMarket = 0x764fA09d0B3de61EeD242099BD9352C1C61D3d27;
 
-    IUniswapV3Pool pool = IUniswapV3Pool(0xC31E54c7a869B9FcBEcc14363CF510d1c41fa443);
+    IUniswapV3Pool pool = IUniswapV3Pool(0xC6962004f452bE9203591991D15f6b388e09E8D0);
     ISwapRouter router = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
     IQuoter quoter = IQuoter(0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6);
 
     IERC20 constant WETH = IERC20(0x82aF49447D8a07e3bd95BD0d56f35241523fBab1);
-    IERC20 constant USDCE = IERC20(0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8);
+    IERC20 constant USDC = IERC20(0xaf88d065e77c8cC2239327C5EDb3A432268e5831);
 
     int24 public liquidizeTickBoundary = 20;
     int24 public burnOuterTickBoundary = 25;
@@ -59,6 +60,7 @@ abstract contract Fixture is Test {
                 admin: address(this),
                 manager: manager,
                 handler: uniV3Handler,
+                handlerHook: emptyHook,
                 router: router,
                 pool: pool,
                 asset: WETH,
@@ -76,11 +78,11 @@ abstract contract Fixture is Test {
         automator.quoter().setStalenessThreshold(0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3, 86400);
 
         vm.label(address(uniV3Handler), "dopexUniV3Handler");
-        vm.label(address(pool), "weth_usdc.e");
+        vm.label(address(pool), "weth_usdc");
         vm.label(address(router), "router");
         vm.label(address(manager), "dopexManager");
         vm.label(address(WETH), "weth");
-        vm.label(address(USDCE), "usdc");
+        vm.label(address(USDC), "usdc");
         vm.label(address(automator), "automator");
     }
 
@@ -100,9 +102,10 @@ abstract contract Fixture is Test {
     }
 
     function _mintDopexPosition(int24 lowerTick, int24 upperTick, uint128 liquidity) internal {
-        IUniswapV3SingleTickLiquidityHandler.MintPositionParams memory _params = IUniswapV3SingleTickLiquidityHandler
-            .MintPositionParams({
+        IUniswapV3SingleTickLiquidityHandlerV2.MintPositionParams
+            memory _params = IUniswapV3SingleTickLiquidityHandlerV2.MintPositionParams({
                 pool: address(pool),
+                hook: emptyHook,
                 tickLower: lowerTick,
                 tickUpper: upperTick,
                 liquidity: liquidity
@@ -112,19 +115,20 @@ abstract contract Fixture is Test {
     }
 
     function _useDopexPosition(int24 lowerTick, int24 upperTick, uint128 liquidityToUse) internal {
-        IUniswapV3SingleTickLiquidityHandler.UsePositionParams memory _params = IUniswapV3SingleTickLiquidityHandler
+        IUniswapV3SingleTickLiquidityHandlerV2.UsePositionParams memory _params = IUniswapV3SingleTickLiquidityHandlerV2
             .UsePositionParams({
                 pool: address(pool),
+                hook: emptyHook,
                 tickLower: lowerTick,
                 tickUpper: upperTick,
                 liquidityToUse: liquidityToUse
             });
 
-        manager.usePosition(uniV3Handler, abi.encode(_params));
+        manager.usePosition(uniV3Handler, abi.encode(_params, ""));
     }
 
-    function _tokenInfo(int24 lower) internal view returns (IUniswapV3SingleTickLiquidityHandler.TokenIdInfo memory) {
-        uint256 _tokenId = uniV3Handler.tokenId(address(pool), lower, lower + pool.tickSpacing());
+    function _tokenInfo(int24 lower) internal view returns (IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory) {
+        uint256 _tokenId = uniV3Handler.tokenId(address(pool), emptyHook, lower, lower + pool.tickSpacing());
         return uniV3Handler.tokenIds(_tokenId);
     }
 
@@ -141,7 +145,7 @@ abstract contract Fixture is Test {
     }
 
     function _positionToAssets(int24 lowerTick, address account) internal view returns (uint256) {
-        uint256 _tokenId = uniV3Handler.tokenId(address(pool), lowerTick, lowerTick + pool.tickSpacing());
+        uint256 _tokenId = uniV3Handler.tokenId(address(pool), emptyHook, lowerTick, lowerTick + pool.tickSpacing());
         uint128 _liquidity = uniV3Handler.convertToAssets(uint128(uniV3Handler.balanceOf(account, _tokenId)), _tokenId);
 
         (uint160 _sqrtPriceX96, , , , , , ) = pool.slot0();
@@ -165,7 +169,7 @@ abstract contract Fixture is Test {
     }
 
     function _positionToFreeAssets(int24 lowerTick, address account) internal view returns (uint256) {
-        uint256 _tokenId = uniV3Handler.tokenId(address(pool), lowerTick, lowerTick + pool.tickSpacing());
+        uint256 _tokenId = uniV3Handler.tokenId(address(pool), emptyHook, lowerTick, lowerTick + pool.tickSpacing());
 
         uint256 _liquidity = uniV3Handler.redeemableLiquidity(account, _tokenId);
         (, int24 _currentTick, , , , , ) = pool.slot0();
@@ -193,7 +197,7 @@ abstract contract Fixture is Test {
         int24 _spacing = pool.tickSpacing();
 
         tick = _currentTick - (_currentTick % _spacing) - _spacing * (mulOffset + 1);
-        tokenId = uniV3Handler.tokenId(address(pool), tick, tick + _spacing);
+        tokenId = uniV3Handler.tokenId(address(pool), emptyHook, tick, tick + _spacing);
     }
 
     function _outOfRangeAbove(int24 mulOffset) internal view returns (int24 tick, uint256 tokenId) {
@@ -201,7 +205,7 @@ abstract contract Fixture is Test {
         int24 _spacing = pool.tickSpacing();
 
         tick = _currentTick - (_currentTick % _spacing) + _spacing * mulOffset;
-        tokenId = uniV3Handler.tokenId(address(pool), tick, tick + _spacing);
+        tokenId = uniV3Handler.tokenId(address(pool), emptyHook, tick, tick + _spacing);
     }
 
     // function _deployOrangeDopexV2LPAutomator(

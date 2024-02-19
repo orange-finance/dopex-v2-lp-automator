@@ -28,7 +28,7 @@
     "TWAP",
     "Unburnable",
     "unuse",
-    "USDCE"
+    "USDC"
   ],
   "solidity.compileUsingRemoteVersion": "0.8.19",
   "[solidity]": {
