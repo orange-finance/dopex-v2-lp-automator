@@ -10,7 +10,6 @@
   },
   "lint-staged": {
     "*.{sol,js,ts,json,yml,yaml,md}": "prettier --write",
-    "*.{ts,js}": "eslint --ext .ts",
     "*.sol": "solhint"
   },
   "devDependencies": {
