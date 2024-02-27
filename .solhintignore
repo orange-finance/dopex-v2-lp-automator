@@ -1,0 +1,3 @@
+# ignore existing files
+contracts/ChainlinkQuoter.sol
+contracts/OrangeDopexV2LPAutomator.sol

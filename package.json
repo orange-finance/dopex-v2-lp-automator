@@ -1,0 +1,24 @@
+{
+  "name": "dopex-v2-lp-automator",
+  "description": "The contract to automate Dopex V2 position management. Deposited funds are automatically allocated to the best performing ticks.",
+  "scripts": {
+    "compile": "forge build",
+    "test": "forge test",
+    "fmt": "prettier --write 'contracts/**/*.sol'",
+    "lint:sol": "solhint 'contracts/**/*.sol'",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{sol,js,ts,json,yml,yaml,md}": "prettier --write",
+    "*.sol": "solhint"
+  },
+  "devDependencies": {
+    "husky": "^9.0.10",
+    "lint-staged": "^15.2.2",
+    "prettier": "^3.2.5",
+    "prettier-plugin-solidity": "^1.3.1",
+    "solhint": "^4.1.1",
+    "solhint-plugin-prettier": "^0.1.0"
+  },
+  "license": "GPL-3.0-only"
+}

@@ -5,8 +5,6 @@ pragma solidity 0.8.19;
 import {IUniswapV3SingleTickLiquidityHandlerV2} from "../vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
-import {console} from "forge-std/console.sol";
-
 /**
  * @title UniswapV3SingleTickLiquidityLib
  * @dev Library for managing liquidity in a single Uniswap V3 tick.
@@ -74,10 +72,6 @@ library UniswapV3SingleTickLiquidityLib {
 
         uint256 _maxRedeem = handler.convertToAssets(uint128(_shares), tokenId_) - 1;
         uint256 _freeLiquidity = _tki.totalLiquidity - _tki.liquidityUsed;
-
-        console.log("shares", _shares);
-        console.log("maxRedeem", _maxRedeem);
-        console.log("freeLiquidity", _freeLiquidity);
 
         if (_freeLiquidity >= _maxRedeem) return 0;
 
