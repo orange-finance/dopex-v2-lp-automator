@@ -3,7 +3,6 @@
 pragma solidity 0.8.19;
 
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -36,6 +35,18 @@ interface IOrangeStrykeLPAutomatorV2 {
         uint128 liquidity;
     }
 
+    struct RebalanceShortage {
+        IERC20 token;
+        uint256 shortage;
+    }
+
+    struct FlashLoanUserData {
+        address router;
+        bytes swapCalldata;
+        bytes[] mintCalldata;
+        bytes[] burnCalldata;
+    }
+
     /**
      * @dev Returns the position manager contract.
      */
@@ -55,11 +66,6 @@ interface IOrangeStrykeLPAutomatorV2 {
      * @dev Returns the Uniswap V3 pool contract.
      */
     function pool() external view returns (IUniswapV3Pool);
-
-    /**
-     * @dev Returns the swap router contract.
-     */
-    function router() external view returns (ISwapRouter);
 
     /**
      * @dev Returns the deposit asset token contract.
@@ -165,13 +171,15 @@ interface IOrangeStrykeLPAutomatorV2 {
     /**
      * @dev Redeems a specified number of shares and returns the redeemed assets along with the locked Dopex shares.
      * @param shares The number of shares to redeem.
-     * @param minAssets The minimum required assets to be redeemed.
+     * @param router The address of the swap router contract.
+     * @param swapCalldata The calldata for the swap function.
      * @return assets The redeemed assets.
      * @return lockedDopexShares An array of locked Dopex shares.
      */
     function redeem(
         uint256 shares,
-        uint256 minAssets
+        address router,
+        bytes calldata swapCalldata
     ) external returns (uint256 assets, LockedDopexShares[] memory lockedDopexShares);
 
     /**
@@ -182,11 +190,13 @@ interface IOrangeStrykeLPAutomatorV2 {
      * @param ticksBurn An array of RebalanceTickInfo structs representing the ticks to be burned.
      * @param swapRouter The address of the swap router contract.
      * @param swapCalldata The calldata for the swap function.
+     * @param shortage The struct representing the shortage of assets.
      */
     function rebalance(
         RebalanceTickInfo[] calldata ticksMint,
         RebalanceTickInfo[] calldata ticksBurn,
         address swapRouter,
-        bytes calldata swapCalldata
+        bytes calldata swapCalldata,
+        RebalanceShortage calldata shortage
     ) external;
 }

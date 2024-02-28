@@ -15,10 +15,6 @@ abstract contract BalancerFlashLoanRecipient is IBalancerFlashLoanRecipient {
         VAULT = IBalancerVault(vault);
     }
 
-    function makeFlashLoan(IERC20[] memory tokens, uint256[] memory amounts, bytes memory userData) external {
-        VAULT.flashLoan(this, tokens, amounts, userData);
-    }
-
     function receiveFlashLoan(
         IERC20[] memory tokens,
         uint256[] memory amounts,
@@ -28,6 +24,10 @@ abstract contract BalancerFlashLoanRecipient is IBalancerFlashLoanRecipient {
         if (msg.sender != address(VAULT)) revert FlashLoan_Unauthorized();
 
         _onFlashLoanReceived(tokens, amounts, feeAmounts, userData);
+    }
+
+    function _makeFlashLoan(IERC20[] memory tokens, uint256[] memory amounts, bytes memory userData) internal {
+        VAULT.flashLoan(this, tokens, amounts, userData);
     }
 
     function _onFlashLoanReceived(
