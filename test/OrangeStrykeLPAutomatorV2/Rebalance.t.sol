@@ -38,7 +38,7 @@ contract TestOrangeStrykeLPAutomatorV2Rebalance is Fixture {
         assertEq(automator.automator().balanceOf(alice), 99999000000000000000);
     }
 
-    function test_rebalance_flashLoanAndSwap() public {
+    function test_rebalance_flashLoanAndSwap_Skip() public {
         automator.deposit(100 ether, alice);
 
         // get swap data

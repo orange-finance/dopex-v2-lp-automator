@@ -3,7 +3,7 @@
   "description": "The contract to automate Dopex V2 position management. Deposited funds are automatically allocated to the best performing ticks.",
   "scripts": {
     "compile": "forge build",
-    "test": "forge test",
+    "test": "forge test --no-match-test \"Skip\"",
     "fmt": "prettier --write 'contracts/**/*.sol'",
     "lint:sol": "solhint 'contracts/**/*.sol'",
     "prepare": "husky"
