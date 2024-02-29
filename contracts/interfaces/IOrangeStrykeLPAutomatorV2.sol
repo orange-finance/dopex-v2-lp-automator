@@ -30,7 +30,7 @@ interface IOrangeStrykeLPAutomatorV2 {
      * @param tick The tick value.
      * @param liquidity The liquidity at the tick.
      */
-    struct RebalanceTickInfo {
+    struct RebalanceTick {
         int24 tick;
         uint128 liquidity;
     }
@@ -107,7 +107,7 @@ interface IOrangeStrykeLPAutomatorV2 {
     function getAutomatorPositions()
         external
         view
-        returns (uint256 balanceDepositAsset, uint256 balanceCounterAsset, RebalanceTickInfo[] memory ticks);
+        returns (uint256 balanceDepositAsset, uint256 balanceCounterAsset, RebalanceTick[] memory ticks);
 
     /**
      * @dev Calculates the total assets in the automator contract.
@@ -186,15 +186,15 @@ interface IOrangeStrykeLPAutomatorV2 {
      * @dev Rebalance the liquidity positions in the OrangeDopexV2LPAutomator contract.
      * Only the address with the STRATEGIST_ROLE can call this function.
      *
-     * @param ticksMint An array of RebalanceTickInfo structs representing the ticks to be minted.
-     * @param ticksBurn An array of RebalanceTickInfo structs representing the ticks to be burned.
+     * @param ticksMint An array of RebalanceTick structs representing the ticks to be minted.
+     * @param ticksBurn An array of RebalanceTick structs representing the ticks to be burned.
      * @param swapRouter The address of the swap router contract.
      * @param swapCalldata The calldata for the swap function.
      * @param shortage The struct representing the shortage of assets.
      */
     function rebalance(
-        RebalanceTickInfo[] calldata ticksMint,
-        RebalanceTickInfo[] calldata ticksBurn,
+        RebalanceTick[] calldata ticksMint,
+        RebalanceTick[] calldata ticksBurn,
         address swapRouter,
         bytes calldata swapCalldata,
         RebalanceShortage calldata shortage

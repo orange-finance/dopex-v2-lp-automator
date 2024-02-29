@@ -102,7 +102,7 @@ contract OrangeStrykeLPAutomatorV2 is
 
     event Deposit(address indexed sender, uint256 assets, uint256 sharesMinted);
     event Redeem(address indexed sender, uint256 shares, uint256 assetsWithdrawn);
-    event Rebalance(address indexed sender, RebalanceTickInfo[] ticksMint, RebalanceTickInfo[] ticksBurn);
+    event Rebalance(address indexed sender, RebalanceTick[] ticksMint, RebalanceTick[] ticksBurn);
 
     event DepositCapSet(uint256 depositCap);
     event DepositFeePipsSet(uint24 depositFeePips);
@@ -119,6 +119,7 @@ contract OrangeStrykeLPAutomatorV2 is
     error FeePipsTooHigh();
     error UnsupportedDecimals();
     error MinDepositAssetsTooSmall();
+    error RouterAlreadyWhitelisted();
 
     /**
      * @dev Constructor arguments for OrangeDopexV2LPAutomator contract.
@@ -183,8 +184,9 @@ contract OrangeStrykeLPAutomatorV2 is
         minDepositAssets = args.minDepositAssets;
 
         args.asset.safeIncreaseAllowance(address(args.manager), type(uint256).max);
-
+        args.asset.safeIncreaseAllowance(address(args.balancer), type(uint256).max);
         counterAsset.safeIncreaseAllowance(address(args.manager), type(uint256).max);
+        counterAsset.safeIncreaseAllowance(address(args.balancer), type(uint256).max);
 
         _grantRole(DEFAULT_ADMIN_ROLE, args.admin);
     }
@@ -224,15 +226,15 @@ contract OrangeStrykeLPAutomatorV2 is
         emit DepositFeePipsSet(pips);
     }
 
-    function setRouterWhitelist(address router, bool status) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        asset.approve(router, 0);
-        counterAsset.approve(router, 0);
-
-        if (status) {
-            asset.approve(router, type(uint256).max);
-            counterAsset.approve(router, type(uint256).max);
+    function setRouterWhitelist(address router, bool approve) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (approve) {
+            // check if already approved to avoid reusing allowance by the router
+            if (asset.allowance(address(this), router) > 0) revert RouterAlreadyWhitelisted();
+            asset.forceApprove(router, type(uint256).max);
+            counterAsset.forceApprove(router, type(uint256).max);
         } else {
-            counterAsset.safeApprove(router, 0);
+            asset.forceApprove(router, 0);
+            counterAsset.forceApprove(router, 0);
         }
     }
 
@@ -244,7 +246,7 @@ contract OrangeStrykeLPAutomatorV2 is
     function getAutomatorPositions()
         external
         view
-        returns (uint256 balanceDepositAsset, uint256 balanceCounterAsset, RebalanceTickInfo[] memory ticks)
+        returns (uint256 balanceDepositAsset, uint256 balanceCounterAsset, RebalanceTick[] memory ticks)
     {
         int24 _spacing = poolTickSpacing;
 
@@ -254,7 +256,7 @@ contract OrangeStrykeLPAutomatorV2 is
         uint128 _liquidity;
         (int24 _lt, int24 _ut) = (0, 0);
 
-        ticks = new RebalanceTickInfo[](_length);
+        ticks = new RebalanceTick[](_length);
 
         for (uint256 i = 0; i < _length; ) {
             _lt = int24(uint24(activeTicks.at(i)));
@@ -263,7 +265,7 @@ contract OrangeStrykeLPAutomatorV2 is
 
             _liquidity = handler.convertToAssets((handler.balanceOf(address(this), _tid)).toUint128(), _tid);
 
-            ticks[i] = RebalanceTickInfo({tick: _lt, liquidity: _liquidity});
+            ticks[i] = RebalanceTick({tick: _lt, liquidity: _liquidity});
 
             unchecked {
                 i++;
@@ -608,8 +610,8 @@ contract OrangeStrykeLPAutomatorV2 is
 
     /// @inheritdoc IOrangeStrykeLPAutomatorV2
     function rebalance(
-        RebalanceTickInfo[] calldata ticksMint,
-        RebalanceTickInfo[] calldata ticksBurn,
+        RebalanceTick[] calldata ticksMint,
+        RebalanceTick[] calldata ticksBurn,
         address swapRouter,
         bytes calldata swapCalldata,
         RebalanceShortage calldata shortage
@@ -664,7 +666,7 @@ contract OrangeStrykeLPAutomatorV2 is
     }
 
     function _createMintCalldataBatch(
-        RebalanceTickInfo[] calldata ticksMint
+        RebalanceTick[] calldata ticksMint
     ) internal returns (bytes[] memory mintCalldataBatch) {
         (uint256 _actualMintLen, uint256 ignoreIndex) = _getSafeMintParams(ticksMint);
         mintCalldataBatch = new bytes[](_actualMintLen);
@@ -703,10 +705,10 @@ contract OrangeStrykeLPAutomatorV2 is
      *      Also returns the index of the current tick in the ticksMint array if it is included.
      *      We need to avoid revert when mint Dopex position in the current tick.
      *      This should be done on automator because current tick got on caller (this must be off-chain) is different from the current tick got on automator.
-     * @param ticksMint An array of RebalanceTickInfo structs representing the ticks to mint.
+     * @param ticksMint An array of RebalanceTick structs representing the ticks to mint.
      */
     function _getSafeMintParams(
-        RebalanceTickInfo[] calldata ticksMint
+        RebalanceTick[] calldata ticksMint
     ) internal view returns (uint256 mintLength, uint256 ignoreIndex) {
         uint256 _providedLength = ticksMint.length;
         mintLength = _providedLength;
@@ -737,7 +739,7 @@ contract OrangeStrykeLPAutomatorV2 is
     }
 
     function _createBurnCalldataBatch(
-        RebalanceTickInfo[] calldata ticksBurn
+        RebalanceTick[] calldata ticksBurn
     ) internal returns (bytes[] memory burnCalldataBatch) {
         int24 _lt;
         int24 _ut;

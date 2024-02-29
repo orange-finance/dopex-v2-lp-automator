@@ -13,12 +13,21 @@
     "*.sol": "solhint"
   },
   "devDependencies": {
+    "@nomicfoundation/hardhat-foundry": "^1.1.1",
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@nomicfoundation/hardhat-toolbox-viem": "^2.0.0",
+    "@tenderly/hardhat-tenderly": "^2.2.2",
+    "axios": "^1.6.7",
+    "commander": "^12.0.0",
+    "dotenv": "^16.4.5",
+    "hardhat": "^2.20.1",
     "husky": "^9.0.10",
     "lint-staged": "^15.2.2",
     "prettier": "^3.2.5",
     "prettier-plugin-solidity": "^1.3.1",
     "solhint": "^4.1.1",
-    "solhint-plugin-prettier": "^0.1.0"
+    "solhint-plugin-prettier": "^0.1.0",
+    "viem": "^2.7.16"
   },
   "license": "GPL-3.0-only"
 }
