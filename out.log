@@ -1,10 +1,14 @@
+tick length: 44
+usdcTotal: 16083819131
+tokenIdInfo:
 {
   "tokenId": "0x1d38af3481902997ef64a5f567494a47864f53bfb0acc643cca148d52225d652",
   "tickLower": "-195650",
   "totalSupply": "1",
   "totalLiquidity": "0",
   "liquidityUsed": "0",
-  "reservedLiquidity": "0"
+  "reservedLiquidity": "0",
+  "usdcValue": "0"
 }
 {
   "tokenId": "0x8e93da9d24af89eb471f9bca22014198661c83e7e9a6f907dd62805bdf68cf66",
@@ -12,23 +16,26 @@
   "totalSupply": "1",
   "totalLiquidity": "0",
   "liquidityUsed": "0",
-  "reservedLiquidity": "0"
+  "reservedLiquidity": "0",
+  "usdcValue": "0"
 }
 {
   "tokenId": "0x4f5ed566df0744beecbef14afa2335378af2dd1ec028bffbb2b37af4448e17e9",
   "tickLower": "-194880",
   "totalSupply": "591461908779103369",
   "totalLiquidity": "607817010174987267",
-  "liquidityUsed": "607198911515272609",
-  "reservedLiquidity": "16672628995350325"
+  "liquidityUsed": "607198803414157749",
+  "reservedLiquidity": "16672628995350325",
+  "usdcValue": "489223253"
 }
 {
   "tokenId": "0x778fdbc33fbe387a30bf8e54d0bc22182e88df2fc92d14147fcd78b7710d7f95",
   "tickLower": "-194870",
   "totalSupply": "593123862995380263",
   "totalLiquidity": "609372366496717526",
-  "liquidityUsed": "608625496332387049",
-  "reservedLiquidity": "16656838331658247"
+  "liquidityUsed": "608625153252249929",
+  "reservedLiquidity": "16656838331658247",
+  "usdcValue": "489004338"
 }
 {
   "tokenId": "0x8878e92e035afecda77a84622919794f74dd2aea755344fd550b9ef15f47a1fb",
@@ -36,7 +43,8 @@
   "totalSupply": "593448221242275797",
   "totalLiquidity": "609656135628258579",
   "liquidityUsed": "608624904563485992",
-  "reservedLiquidity": "16681872328692461"
+  "reservedLiquidity": "16681872328692461",
+  "usdcValue": "489984194"
 }
 {
   "tokenId": "0x4a9c659cd8fbcb83eef7e8c11437561dcae5988bb2a550ac2dfa961c1d485514",
@@ -44,15 +52,17 @@
   "totalSupply": "596303176275997648",
   "totalLiquidity": "610239485573612170",
   "liquidityUsed": "610236074841199154",
-  "reservedLiquidity": "16671320666420019"
+  "reservedLiquidity": "16671320666420019",
+  "usdcValue": "489919154"
 }
 {
   "tokenId": "0x9f78e2acd98445e0a0cf798e6969e2e116400301c71bd9977000122bf4663203",
   "tickLower": "-194840",
   "totalSupply": "593468758270149315",
   "totalLiquidity": "609566651833867301",
-  "liquidityUsed": "608486718220542523",
-  "reservedLiquidity": "16676165410697329"
+  "liquidityUsed": "604326805125772482",
+  "reservedLiquidity": "16676165410697329",
+  "usdcValue": "490306606"
 }
 {
   "tokenId": "0x8f256947247ce4de043de48fd8e55a0669a9a1662bb4bfc247ad69f1bb80255a",
@@ -60,31 +70,35 @@
   "totalSupply": "594355499304189781",
   "totalLiquidity": "609615081117145791",
   "liquidityUsed": "609596021780259241",
-  "reservedLiquidity": "16672164663996139"
+  "reservedLiquidity": "16672164663996139",
+  "usdcValue": "490434121"
 }
 {
   "tokenId": "0xb4610ec331a10499dea7dd3f9783f42a05b43d836329b5bacaca479e3a8336a1",
   "tickLower": "-194820",
   "totalSupply": "594574471051163666",
   "totalLiquidity": "609914650842964705",
-  "liquidityUsed": "608491309661177917",
-  "reservedLiquidity": "16671761242865356"
+  "liquidityUsed": "604672325169351154",
+  "reservedLiquidity": "16671761242865356",
+  "usdcValue": "490667514"
 }
 {
   "tokenId": "0x118d6921c1b6e90406e019d260ce33cab1d0c97dfc533c8d789edc6412c70383",
   "tickLower": "-194810",
   "totalSupply": "594676618770488267",
   "totalLiquidity": "609961851815749012",
-  "liquidityUsed": "608491562890651381",
-  "reservedLiquidity": "16669521572368130"
+  "liquidityUsed": "604762480457337108",
+  "reservedLiquidity": "16669521572368130",
+  "usdcValue": "490846948"
 }
 {
   "tokenId": "0xc0c34ffd282b6015b6b74537417f045ca0ad49d24c6a4e5b7f24a0540ccfabfb",
   "tickLower": "-194800",
   "totalSupply": "594764123622132151",
   "totalLiquidity": "609497008652733323",
-  "liquidityUsed": "608492339307649380",
-  "reservedLiquidity": "16667525219069802"
+  "liquidityUsed": "604849192548735374",
+  "reservedLiquidity": "16667525219069802",
+  "usdcValue": "490968398"
 }
 {
   "tokenId": "0x30b30ef1cd022702cbe186c6a9488186132c3995a65e72595a983a10e763b210",
@@ -92,7 +106,8 @@
   "totalSupply": "593688301584116038",
   "totalLiquidity": "611232324465748631",
   "liquidityUsed": "626689320426111037",
-  "reservedLiquidity": "15456995960362407"
+  "reservedLiquidity": "15456995960362407",
+  "usdcValue": "453099753"
 }
 {
   "tokenId": "0xd3d413850f518279fd7f1db9a68696a2847c398652d4bba673eceaa20d05c0c4",
@@ -100,7 +115,8 @@
   "totalSupply": "593354248568377338",
   "totalLiquidity": "609779564774745996",
   "liquidityUsed": "589827118928024988",
-  "reservedLiquidity": "16680119140153475"
+  "reservedLiquidity": "16680119140153475",
+  "usdcValue": "488709458"
 }
 {
   "tokenId": "0x5fc57076e2943168d95335271445b541371ca4e52ea5688965f754a4fc162233",
@@ -108,7 +124,8 @@
   "totalSupply": "593334665265596532",
   "totalLiquidity": "610323028547252970",
   "liquidityUsed": "578058856033537628",
-  "reservedLiquidity": "0"
+  "reservedLiquidity": "0",
+  "usdcValue": "0"
 }
 {
   "tokenId": "0x11254dd16673b5a8232cc959ffc1f58dc9c95dc6c8db1658f0e64faa18fe9569",
@@ -116,7 +133,8 @@
   "totalSupply": "592388306806326172",
   "totalLiquidity": "609839058504743660",
   "liquidityUsed": "625162529051247833",
-  "reservedLiquidity": "15323470546504174"
+  "reservedLiquidity": "15323470546504174",
+  "usdcValue": "449410284"
 }
 {
   "tokenId": "0xa2b7e628da8b433323719612870b44a85aa2432d97f2a987fc1cb4e683a00f6a",
@@ -124,7 +142,8 @@
   "totalSupply": "593042188695408902",
   "totalLiquidity": "608375932076868374",
   "liquidityUsed": "624804222045482096",
-  "reservedLiquidity": "16428289968613723"
+  "reservedLiquidity": "16428289968613723",
+  "usdcValue": "480850069"
 }
 {
   "tokenId": "0x5eabade1577441f1a864329ee6de55321f78548aeb2adde41e182e37543140b3",
@@ -132,7 +151,8 @@
   "totalSupply": "604861348662653200",
   "totalLiquidity": "608587093051103703",
   "liquidityUsed": "585158612897849199",
-  "reservedLiquidity": "14814216721787277"
+  "reservedLiquidity": "14814216721787277",
+  "usdcValue": "433389994"
 }
 {
   "tokenId": "0x93323806c83f2bfb79e3b311df51d0a1743a43d02ffc378282bbf3a2ed84bcb3",
@@ -140,7 +160,8 @@
   "totalSupply": "594579916191480943",
   "totalLiquidity": "608449937191505410",
   "liquidityUsed": "624373249660703483",
-  "reservedLiquidity": "15923312469198074"
+  "reservedLiquidity": "15923312469198074",
+  "usdcValue": "465603748"
 }
 {
   "tokenId": "0x6f6042482417c37cf4bd2312bd47f51d65421f6b27db96276fcee8c504feb9ad",
@@ -148,7 +169,8 @@
   "totalSupply": "595898215490277055",
   "totalLiquidity": "608734071443179440",
   "liquidityUsed": "608113490537004883",
-  "reservedLiquidity": "15611991653347625"
+  "reservedLiquidity": "15611991653347625",
+  "usdcValue": "455360839"
 }
 {
   "tokenId": "0x2d685799385b552119bd104273fd0945fa9a576a6ad67aaa554a261a006a0648",
@@ -156,7 +178,8 @@
   "totalSupply": "600560878085711251",
   "totalLiquidity": "608623660992407792",
   "liquidityUsed": "608002739065106534",
-  "reservedLiquidity": "14601197014378802"
+  "reservedLiquidity": "14601197014378802",
+  "usdcValue": "426091593"
 }
 {
   "tokenId": "0x17add02030ab8211a2b79f70b1d4ffb0504968bd846558085a26f06abd8ea145",
@@ -164,7 +187,8 @@
   "totalSupply": "597263259370064936",
   "totalLiquidity": "608731016479057734",
   "liquidityUsed": "625103962861217257",
-  "reservedLiquidity": "16372946382159524"
+  "reservedLiquidity": "16372946382159524",
+  "usdcValue": "478033663"
 }
 {
   "tokenId": "0xe6fe1e77d0869ab967d0e4de23c5d7b68c477db0c000b4dd22fb825f625305b7",
@@ -172,7 +196,8 @@
   "totalSupply": "562230499960668683",
   "totalLiquidity": "572844319082859890",
   "liquidityUsed": "572841637434572769",
-  "reservedLiquidity": "0"
+  "reservedLiquidity": "0",
+  "usdcValue": "0"
 }
 {
   "tokenId": "0x6b2999276e23419b13f6a7eb4fedd22e242e30171a2201bf925fb8428a041a58",
@@ -180,7 +205,8 @@
   "totalSupply": "592865768700442806",
   "totalLiquidity": "608728424163314339",
   "liquidityUsed": "624368453220115103",
-  "reservedLiquidity": "15640029056800765"
+  "reservedLiquidity": "15640029056800765",
+  "usdcValue": "457091841"
 }
 {
   "tokenId": "0x580451b5872c8cc056fcfc7a1b81e5b621ad6a4a5c1c4d1a0eb0cf933a7dd26a",
@@ -188,7 +214,8 @@
   "totalSupply": "602244488613516003",
   "totalLiquidity": "604240258699652942",
   "liquidityUsed": "620891223299413234",
-  "reservedLiquidity": "16650964599760292"
+  "reservedLiquidity": "16650964599760292",
+  "usdcValue": "483001262"
 }
 {
   "tokenId": "0x5a517b6cd3d6a65f8fa453d58c863d480def4c3afdbaf658f8f46928ae9cf288",
@@ -196,7 +223,8 @@
   "totalSupply": "603399266734474862",
   "totalLiquidity": "605441263822210492",
   "liquidityUsed": "622092229905799451",
-  "reservedLiquidity": "16650966083588959"
+  "reservedLiquidity": "16650966083588959",
+  "usdcValue": "483242854"
 }
 {
   "tokenId": "0x5cc49396016977cdcb2c25c4bf7b7bf9c306022fe89c60a66ea5ab427a83f49e",
@@ -204,95 +232,107 @@
   "totalSupply": "604200863540630758",
   "totalLiquidity": "605441261646128601",
   "liquidityUsed": "622092227772539011",
-  "reservedLiquidity": "16650966126410410"
+  "reservedLiquidity": "16650966126410410",
+  "usdcValue": "483484525"
 }
 {
   "tokenId": "0x366d00a7ded260ab2fcf971f0be6ce621681dd2cb0ea8bea16ad0b5cacb9e80b",
   "tickLower": "-195080",
   "totalSupply": "604202003928615731",
   "totalLiquidity": "605441187433476291",
-  "liquidityUsed": "622092151507757733",
-  "reservedLiquidity": "16650964074281442"
+  "liquidityUsed": "621626755680967841",
+  "reservedLiquidity": "16650964074281442",
+  "usdcValue": "483726256"
 }
 {
   "tokenId": "0xb7f20f1be8327561a768f2e34ba84b737ad04eb4e14cd6966ff98f55840659d2",
   "tickLower": "-195070",
   "totalSupply": "604099612380708747",
   "totalLiquidity": "605441543191036833",
-  "liquidityUsed": "622092516158826568",
-  "reservedLiquidity": "16650972967789735"
+  "liquidityUsed": "621627661229683398",
+  "reservedLiquidity": "16650972967789735",
+  "usdcValue": "483968426"
 }
 {
   "tokenId": "0x4a7740a38394598c34003ebd0d063a36ab436f33a52cfde2ec0e41284cdfc2eb",
   "tickLower": "-195060",
   "totalSupply": "604079036208862663",
   "totalLiquidity": "605441266000133158",
-  "liquidityUsed": "622092231140718466",
-  "reservedLiquidity": "16650965140585308"
+  "liquidityUsed": "621632360149544947",
+  "reservedLiquidity": "16650965140585308",
+  "usdcValue": "484210231"
 }
 {
   "tokenId": "0x6825c2d3d71208394dc7944efb1c74fedec90df604c4a49e7b88ef52412abb2d",
   "tickLower": "-195050",
   "totalSupply": "603912858184015581",
   "totalLiquidity": "605441598656713635",
-  "liquidityUsed": "622092572268236290",
-  "reservedLiquidity": "16650973611522655"
+  "liquidityUsed": "621546940820539910",
+  "reservedLiquidity": "16650973611522655",
+  "usdcValue": "484452631"
 }
 {
   "tokenId": "0x2dab1e821765374409d87d7bf464d64089c09f067761c57602477fc2a74599",
   "tickLower": "-195040",
   "totalSupply": "604041085726552426",
   "totalLiquidity": "606967395342175829",
-  "liquidityUsed": "623629368991498522",
-  "reservedLiquidity": "16661973649322693"
+  "liquidityUsed": "623627296272188237",
+  "reservedLiquidity": "16661973649322693",
+  "usdcValue": "485015107"
 }
 {
   "tokenId": "0x013fb2866e8b69a6d79b659395d5e7564fbe8cdb72131e0eb1810113223cf23a",
   "tickLower": "-195030",
   "totalSupply": "603998490516182640",
   "totalLiquidity": "607618907967547187",
-  "liquidityUsed": "623845658748708907",
-  "reservedLiquidity": "16226750781161720"
+  "liquidityUsed": "623843408104427159",
+  "reservedLiquidity": "16226750781161720",
+  "usdcValue": "472582380"
 }
 {
   "tokenId": "0xc7368d3865bc99ceacf326858f77091adcc4fb66377730ab73d99ddb17b0fe28",
   "tickLower": "-195020",
   "totalSupply": "602893669365058764",
   "totalLiquidity": "607245746509406387",
-  "liquidityUsed": "607245746509406387",
-  "reservedLiquidity": "0"
+  "liquidityUsed": "607242164719538306",
+  "reservedLiquidity": "0",
+  "usdcValue": "0"
 }
 {
   "tokenId": "0xa519c91c44b30ba6c8499abb5513d64dbb47b7953faf60a454799b745eff5eee",
   "tickLower": "-195010",
   "totalSupply": "603291087232326042",
   "totalLiquidity": "607731675134126717",
-  "liquidityUsed": "623490813083249380",
-  "reservedLiquidity": "15759137949122663"
+  "liquidityUsed": "623486501798854406",
+  "reservedLiquidity": "15759137949122663",
+  "usdcValue": "459422953"
 }
 {
   "tokenId": "0x445c7a6cfbe92d91fa958b6e6c1aea5b5cb633804fb2282649b1e16c52498803",
   "tickLower": "-194790",
   "totalSupply": "602031616859852238",
-  "totalLiquidity": "608644397314104557",
-  "liquidityUsed": "607098278011384050",
-  "reservedLiquidity": "16650966268454419"
+  "totalLiquidity": "608652385697309170",
+  "liquidityUsed": "608644397314104555",
+  "reservedLiquidity": "16650966268454419",
+  "usdcValue": "490293033"
 }
 {
   "tokenId": "0x704a0509652f193f8facb38d039c7ef46cd9f283aa6f65c90f9a094c2545f70b",
   "tickLower": "-194780",
   "totalSupply": "595862916996946608",
-  "totalLiquidity": "610495807225913405",
-  "liquidityUsed": "608510941905043839",
-  "reservedLiquidity": "16650928776676069"
+  "totalLiquidity": "610506485053558190",
+  "liquidityUsed": "610506434887875471",
+  "reservedLiquidity": "16650928776676069",
+  "usdcValue": "490046857"
 }
 {
   "tokenId": "0x89ff984542bfadd686543ec0da5bb4cd0f0e24834b9fa683b9a0080e74959e9f",
   "tickLower": "-194770",
   "totalSupply": "595198707183854637",
-  "totalLiquidity": "610586467436486278",
-  "liquidityUsed": "610576629266147880",
-  "reservedLiquidity": "16650928850377699"
+  "totalLiquidity": "610586515793682197",
+  "liquidityUsed": "610586515591911968",
+  "reservedLiquidity": "16650928850377699",
+  "usdcValue": "489801909"
 }
 {
   "tokenId": "0xd4ff239aa9ad32b69adf548a54bea7f52ed2ec8388a5838681d3bc12c0871266",
@@ -300,7 +340,8 @@
   "totalSupply": "3281426448556306",
   "totalLiquidity": "3349313226414509",
   "liquidityUsed": "3397363503648556",
-  "reservedLiquidity": "48050277234047"
+  "reservedLiquidity": "48050277234047",
+  "usdcValue": "1412736"
 }
 {
   "tokenId": "0xc958510454c312f878390e7cb6ff4bcf45864876207c98587c6b2a34a20db69b",
@@ -308,7 +349,8 @@
   "totalSupply": "3111731296350515",
   "totalLiquidity": "3173470315993441",
   "liquidityUsed": "3216673156548209",
-  "reservedLiquidity": "43202840554768"
+  "reservedLiquidity": "43202840554768",
+  "usdcValue": "1269580"
 }
 {
   "tokenId": "0xc8a9cf32d344b9f413e0c7b092f8fb78612c626244f3d20f5d7f0d9b9e5636cd",
@@ -316,7 +358,8 @@
   "totalSupply": "1",
   "totalLiquidity": "0",
   "liquidityUsed": "0",
-  "reservedLiquidity": "0"
+  "reservedLiquidity": "0",
+  "usdcValue": "0"
 }
 {
   "tokenId": "0xb9c52385357e5513acef436f677c496fdd5cd5fb714192732515e428bb06b26c",
@@ -324,7 +367,8 @@
   "totalSupply": "1",
   "totalLiquidity": "0",
   "liquidityUsed": "0",
-  "reservedLiquidity": "0"
+  "reservedLiquidity": "0",
+  "usdcValue": "0"
 }
 {
   "tokenId": "0xaa0bfbdcb063cfd7da37df92674caa6b9b0eb26ef4cca4ef01d38e260fb2324f",
@@ -332,7 +376,8 @@
   "totalSupply": "604629639183845955",
   "totalLiquidity": "605253283677632165",
   "liquidityUsed": "621904254975521265",
-  "reservedLiquidity": "16650971297889100"
+  "reservedLiquidity": "16650971297889100",
+  "usdcValue": "482760028"
 }
 {
   "tokenId": "0x8c2a02cb154a48262aefc423ecd36e7deb971234743e6aced80fce6854d80d7b",
@@ -340,7 +385,8 @@
   "totalSupply": "409338964944364352",
   "totalLiquidity": "409702490323139676",
   "liquidityUsed": "420973712755460233",
-  "reservedLiquidity": "11271222432320557"
+  "reservedLiquidity": "11271222432320557",
+  "usdcValue": "326132595"
 }
 {
   "tokenId": "0x8043098b1fe127afdc863693cd3b8d29efd61169e9e418a30fae15e968e20083",
@@ -348,5 +394,6 @@
   "totalSupply": "1",
   "totalLiquidity": "0",
   "liquidityUsed": "0",
-  "reservedLiquidity": "0"
+  "reservedLiquidity": "0",
+  "usdcValue": "0"
 }
