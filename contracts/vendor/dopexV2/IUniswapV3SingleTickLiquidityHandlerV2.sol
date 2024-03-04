@@ -19,6 +19,7 @@ interface IUniswapV3SingleTickLiquidityHandlerV2 is IERC6909, IHandler {
         address token0;
         address token1;
         uint24 fee;
+        uint128 reservedLiquidity;
     }
 
     struct MintPositionParams {
