@@ -11,11 +11,11 @@ import {IUniswapV3SingleTickLiquidityHandlerV2} from "../vendor/dopexV2/IUniswap
 import {IDopexV2PositionManager} from "../vendor/dopexV2/IDopexV2PositionManager.sol";
 
 /**
- * @title IOrangeDopexV2LPAutomator
+ * @title IOrangeDopexV2LPAutomatorV1
  * @dev Interface for the Orange Dopex V2 LP Automator contract.
  * @author Orange Finance
  */
-interface IOrangeDopexV2LPAutomator {
+interface IOrangeDopexV2LPAutomatorV1 {
     /**
      * @dev Struct representing locked Dopex shares.
      * @param tokenId The ID of the token.
@@ -189,7 +189,7 @@ interface IOrangeDopexV2LPAutomator {
     ) external returns (uint256 assets, LockedDopexShares[] memory lockedDopexShares);
 
     /**
-     * @dev Rebalance the liquidity positions in the OrangeDopexV2LPAutomator contract.
+     * @dev Rebalance the liquidity positions in the OrangeDopexV2LPAutomatorV1 contract.
      * Only the address with the STRATEGIST_ROLE can call this function.
      *
      * @param ticksMint An array of RebalanceTickInfo structs representing the ticks to be minted.

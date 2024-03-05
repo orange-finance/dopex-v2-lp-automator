@@ -12,17 +12,17 @@ import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/Liquid
 import {IDopexV2PositionManager} from "../../contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
 import {IUniswapV3SingleTickLiquidityHandlerV2} from "../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 
-import {OrangeDopexV2LPAutomator, IOrangeDopexV2LPAutomator} from "../../contracts/OrangeDopexV2LPAutomator.sol";
+import {OrangeDopexV2LPAutomatorV1, IOrangeDopexV2LPAutomatorV1} from "../../contracts/OrangeDopexV2LPAutomatorV1.sol";
 
 import {ChainlinkQuoter} from "../../contracts/ChainlinkQuoter.sol";
 
 import {Vm} from "forge-std/Test.sol";
 
 library AutomatorHelper {
-    ISwapRouter constant ROUTER = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
+    ISwapRouter public constant ROUTER = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
 
     /*/////////////////////////////////////////////////////////////////////
-                                OrangeDopexV2LPAutomator utilities
+                                OrangeDopexV2LPAutomatorV1 utilities
     /////////////////////////////////////////////////////////////////////*/
 
     struct DeployArgs {
@@ -44,12 +44,12 @@ library AutomatorHelper {
         uint256 depositCap;
     }
 
-    function deployOrangeDopexV2LPAutomator(
+    function deployOrangeDopexV2LPAutomatorV1(
         Vm vm,
         DeployArgs memory args
-    ) external returns (OrangeDopexV2LPAutomator automator) {
-        automator = new OrangeDopexV2LPAutomator(
-            OrangeDopexV2LPAutomator.InitArgs({
+    ) external returns (OrangeDopexV2LPAutomatorV1 automator) {
+        automator = new OrangeDopexV2LPAutomatorV1(
+            OrangeDopexV2LPAutomatorV1.InitArgs({
                 name: args.name,
                 symbol: args.symbol,
                 admin: args.admin,
@@ -77,44 +77,44 @@ library AutomatorHelper {
         args.manager.updateWhitelistHandlerWithApp(address(args.handler), address(args.admin), true);
     }
 
-    function rebalanceMintSingle(IOrangeDopexV2LPAutomator automator, int24 lowerTick, uint128 liquidity) internal {
-        IOrangeDopexV2LPAutomator.RebalanceTickInfo[]
-            memory _ticksMint = new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](1);
-        _ticksMint[0] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({tick: lowerTick, liquidity: liquidity});
+    function rebalanceMintSingle(IOrangeDopexV2LPAutomatorV1 automator, int24 lowerTick, uint128 liquidity) internal {
+        IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[]
+            memory _ticksMint = new IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[](1);
+        _ticksMint[0] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({tick: lowerTick, liquidity: liquidity});
         automator.rebalance(
             _ticksMint,
-            new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](0),
-            IOrangeDopexV2LPAutomator.RebalanceSwapParams(0, 0, 0, 0)
+            new IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[](0),
+            IOrangeDopexV2LPAutomatorV1.RebalanceSwapParams(0, 0, 0, 0)
         );
     }
 
     function rebalanceMint(
-        IOrangeDopexV2LPAutomator automator,
-        IOrangeDopexV2LPAutomator.RebalanceTickInfo[] memory ticksMint
+        IOrangeDopexV2LPAutomatorV1 automator,
+        IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[] memory ticksMint
     ) internal {
         automator.rebalance(
             ticksMint,
-            new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](0),
-            IOrangeDopexV2LPAutomator.RebalanceSwapParams(0, 0, 0, 0)
+            new IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[](0),
+            IOrangeDopexV2LPAutomatorV1.RebalanceSwapParams(0, 0, 0, 0)
         );
     }
 
     function rebalanceMintWithSwap(
-        IOrangeDopexV2LPAutomator automator,
-        IOrangeDopexV2LPAutomator.RebalanceTickInfo[] memory ticksMint,
-        IOrangeDopexV2LPAutomator.RebalanceSwapParams memory swapParams
+        IOrangeDopexV2LPAutomatorV1 automator,
+        IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[] memory ticksMint,
+        IOrangeDopexV2LPAutomatorV1.RebalanceSwapParams memory swapParams
     ) internal {
-        automator.rebalance(ticksMint, new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](0), swapParams);
+        automator.rebalance(ticksMint, new IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[](0), swapParams);
     }
 
     function calculateRebalanceSwapParamsInRebalance(
-        IOrangeDopexV2LPAutomator automator,
+        IOrangeDopexV2LPAutomatorV1 automator,
         IUniswapV3Pool pool,
         IERC20 asset,
         IERC20 counterAsset,
-        IOrangeDopexV2LPAutomator.RebalanceTickInfo[] memory ticksMint,
-        IOrangeDopexV2LPAutomator.RebalanceTickInfo[] memory ticksBurn
-    ) public view returns (IOrangeDopexV2LPAutomator.RebalanceSwapParams memory) {
+        IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[] memory ticksMint,
+        IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[] memory ticksBurn
+    ) public view returns (IOrangeDopexV2LPAutomatorV1.RebalanceSwapParams memory) {
         uint256 _mintAssets;
         uint256 _mintCAssets;
         uint256 _burnAssets;
@@ -152,7 +152,7 @@ library AutomatorHelper {
         if (_assetsShortage != 0 && _counterAssetsShortage != 0) revert("LiquidityTooLarge");
 
         return
-            IOrangeDopexV2LPAutomator.RebalanceSwapParams({
+            IOrangeDopexV2LPAutomatorV1.RebalanceSwapParams({
                 assetsShortage: _assetsShortage,
                 counterAssetsShortage: _counterAssetsShortage,
                 maxCounterAssetsUseForSwap: _maxCounterAssetsUseForSwap,
@@ -162,7 +162,7 @@ library AutomatorHelper {
 
     function estimateTotalTokensFromPositions(
         IUniswapV3Pool pool,
-        IOrangeDopexV2LPAutomator.RebalanceTickInfo[] memory positions
+        IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[] memory positions
     ) internal view returns (uint256 totalAmount0, uint256 totalAmount1) {
         uint256 _a0;
         uint256 _a1;

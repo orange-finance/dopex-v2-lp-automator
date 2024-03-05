@@ -2,14 +2,14 @@
 
 pragma solidity 0.8.19;
 
-import {OrangeDopexV2LPAutomator, EnumerableSet} from "../../../contracts/OrangeDopexV2LPAutomator.sol";
+import {OrangeDopexV2LPAutomatorV1, EnumerableSet} from "../../../../contracts/OrangeDopexV2LPAutomatorV1.sol";
 
-contract AutomatorHarness is OrangeDopexV2LPAutomator {
+contract AutomatorHarness is OrangeDopexV2LPAutomatorV1 {
     constructor(
         InitArgs memory args
     )
-        OrangeDopexV2LPAutomator(
-            OrangeDopexV2LPAutomator.InitArgs({
+        OrangeDopexV2LPAutomatorV1(
+            OrangeDopexV2LPAutomatorV1.InitArgs({
                 name: args.name,
                 symbol: args.symbol,
                 admin: args.admin,
@@ -33,7 +33,7 @@ contract AutomatorHarness is OrangeDopexV2LPAutomator {
 }
 
 function deployAutomatorHarness(
-    OrangeDopexV2LPAutomator.InitArgs memory args,
+    OrangeDopexV2LPAutomatorV1.InitArgs memory args,
     address strategist,
     uint256 depositCap
 ) returns (AutomatorHarness harness) {

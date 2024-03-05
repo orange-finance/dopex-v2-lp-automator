@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.19;
 
-import {IOrangeDopexV2LPAutomator} from "./interfaces/IOrangeDopexV2LPAutomator.sol";
+import {IOrangeDopexV2LPAutomatorV1} from "./interfaces/IOrangeDopexV2LPAutomatorV1.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import {FullMath} from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
@@ -31,11 +31,11 @@ interface IMulticallProvider {
 }
 
 /**
- * @title OrangeDopexV2LPAutomator
+ * @title OrangeDopexV2LPAutomatorV1
  * @dev Automate liquidity provision for Dopex V2 contract
  * @author Orange Finance
  */
-contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessControlEnumerable {
+contract OrangeDopexV2LPAutomatorV1 is IOrangeDopexV2LPAutomatorV1, ERC20, AccessControlEnumerable {
     using FixedPointMathLib for uint256;
     using FullMath for uint256;
     using SafeERC20 for IERC20;
@@ -98,7 +98,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
     error MinDepositAssetsTooSmall();
 
     /**
-     * @dev Constructor arguments for OrangeDopexV2LPAutomator contract.
+     * @dev Constructor arguments for OrangeDopexV2LPAutomatorV1 contract.
      * @param name The name of the ERC20 token.
      * @param symbol The symbol of the ERC20 token.
      * @param admin The address of the admin role.
@@ -204,7 +204,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
                                                     VAULT STATE DERIVATION FUNCTIONS
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
-    /// @inheritdoc IOrangeDopexV2LPAutomator
+    /// @inheritdoc IOrangeDopexV2LPAutomatorV1
     function getAutomatorPositions()
         external
         view
@@ -237,7 +237,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         return (asset.balanceOf(address(this)), counterAsset.balanceOf(address(this)), ticks);
     }
 
-    /// @inheritdoc IOrangeDopexV2LPAutomator
+    /// @inheritdoc IOrangeDopexV2LPAutomatorV1
     function totalAssets() public view returns (uint256) {
         // 1. calculate the total assets in Dopex pools
         uint256 _length = activeTicks.length();
@@ -295,7 +295,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
             );
     }
 
-    /// @inheritdoc IOrangeDopexV2LPAutomator
+    /// @inheritdoc IOrangeDopexV2LPAutomatorV1
     function freeAssets() public view returns (uint256) {
         // 1. calculate the free assets in Dopex pools
         uint256 _length = activeTicks.length();
@@ -353,38 +353,47 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
             );
     }
 
-    /// @inheritdoc IOrangeDopexV2LPAutomator
+    /// @inheritdoc IOrangeDopexV2LPAutomatorV1
     function convertToShares(uint256 assets) external view returns (uint256) {
         // NOTE: no need to check total supply as it is checked in deposit function.
         return assets.mulDivDown(totalSupply, totalAssets());
     }
 
-    /// @inheritdoc IOrangeDopexV2LPAutomator
+    /// @inheritdoc IOrangeDopexV2LPAutomatorV1
     function convertToAssets(uint256 shares) public view returns (uint256) {
         uint256 _supply = totalSupply;
 
         return _supply == 0 ? shares : shares.mulDivDown(totalAssets(), _supply);
     }
 
-    /// @inheritdoc IOrangeDopexV2LPAutomator
+    /// @inheritdoc IOrangeDopexV2LPAutomatorV1
     function getTickAllLiquidity(int24 tick) external view returns (uint128) {
-        uint256 _share = handler.balanceOf(address(this), handler.tokenId(address(pool), handlerHook,tick, tick + poolTickSpacing));
+        uint256 _share = handler.balanceOf(
+            address(this),
+            handler.tokenId(address(pool), handlerHook, tick, tick + poolTickSpacing)
+        );
 
         if (_share == 0) return 0;
 
         return
-            handler.convertToAssets(_share.toUint128(), handler.tokenId(address(pool), handlerHook, tick, tick + poolTickSpacing));
+            handler.convertToAssets(
+                _share.toUint128(),
+                handler.tokenId(address(pool), handlerHook, tick, tick + poolTickSpacing)
+            );
     }
 
-    /// @inheritdoc IOrangeDopexV2LPAutomator
+    /// @inheritdoc IOrangeDopexV2LPAutomatorV1
     function getTickFreeLiquidity(int24 tick) external view returns (uint128) {
         return
             handler
-                .redeemableLiquidity(address(this), handler.tokenId(address(pool), handlerHook, tick, tick + poolTickSpacing))
+                .redeemableLiquidity(
+                    address(this),
+                    handler.tokenId(address(pool), handlerHook, tick, tick + poolTickSpacing)
+                )
                 .toUint128();
     }
 
-    /// @inheritdoc IOrangeDopexV2LPAutomator
+    /// @inheritdoc IOrangeDopexV2LPAutomatorV1
     function getActiveTicks() external view returns (int24[] memory) {
         uint256[] memory _tempTicks = activeTicks.values();
         int24[] memory _activeTicks = new int24[](_tempTicks.length);
@@ -400,7 +409,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
                                                     USER ACTIONS
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
-    /// @inheritdoc IOrangeDopexV2LPAutomator
+    /// @inheritdoc IOrangeDopexV2LPAutomatorV1
     function deposit(uint256 assets) external returns (uint256 shares) {
         if (assets == 0) revert AmountZero();
         if (assets < minDepositAssets) revert DepositTooSmall();
@@ -456,7 +465,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
         uint256 lockedShareIndex;
     }
 
-    /// @inheritdoc IOrangeDopexV2LPAutomator
+    /// @inheritdoc IOrangeDopexV2LPAutomatorV1
     function redeem(
         uint256 shares,
         uint256 minAssets
@@ -585,7 +594,7 @@ contract OrangeDopexV2LPAutomator is IOrangeDopexV2LPAutomator, ERC20, AccessCon
                                                     STRATEGIST ACTIONS
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
-    /// @inheritdoc IOrangeDopexV2LPAutomator
+    /// @inheritdoc IOrangeDopexV2LPAutomatorV1
     function rebalance(
         RebalanceTickInfo[] calldata ticksMint,
         RebalanceTickInfo[] calldata ticksBurn,

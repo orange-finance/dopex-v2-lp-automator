@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 
 import "./Fixture.t.sol";
 
-contract TestOrangeDopexV2LPAutomatorWithdraw is Fixture {
+contract TestOrangeDopexV2LPAutomatorV1Withdraw is Fixture {
     IERC20 constant ARB = IERC20(0x912CE59144191C1204E64559FE8253a0e49E6548);
 
     function setUp() public override {
@@ -32,10 +32,10 @@ contract TestOrangeDopexV2LPAutomatorWithdraw is Fixture {
         deal(address(WETH), address(automator), 1000e18);
         deal(address(USDC), address(automator), 1000e6);
 
-        vm.expectRevert(OrangeDopexV2LPAutomator.TokenNotPermitted.selector);
+        vm.expectRevert(OrangeDopexV2LPAutomatorV1.TokenNotPermitted.selector);
         automator.withdraw(WETH);
 
-        vm.expectRevert(OrangeDopexV2LPAutomator.TokenNotPermitted.selector);
+        vm.expectRevert(OrangeDopexV2LPAutomatorV1.TokenNotPermitted.selector);
         automator.withdraw(USDC);
     }
 }
