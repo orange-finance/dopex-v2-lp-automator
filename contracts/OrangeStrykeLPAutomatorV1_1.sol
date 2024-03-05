@@ -2,6 +2,8 @@
 
 pragma solidity 0.8.19;
 
+/* solhint-disable contract-name-camelcase */
+
 import {IOrangeStrykeLPAutomatorV1_1} from "./interfaces/IOrangeStrykeLPAutomatorV1_1.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
@@ -46,9 +48,9 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, ERC20, Acc
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandlerV2;
 
     bytes32 public constant STRATEGIST_ROLE = keccak256("STRATEGIST_ROLE");
-    uint24 constant MAX_TICKS = 120;
+    uint24 private constant MAX_TICKS = 120;
     /// @notice max deposit fee percentage is 1% (hundredth of 1e6)
-    uint24 constant MAX_PERF_FEE_PIPS = 10_000;
+    uint24 private constant MAX_PERF_FEE_PIPS = 10_000;
 
     IDopexV2PositionManager public immutable manager;
     IUniswapV3SingleTickLiquidityHandlerV2 public immutable handler;
@@ -74,7 +76,7 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, ERC20, Acc
     uint24 public depositFeePips;
     address public depositFeeRecipient;
 
-    EnumerableSet.UintSet activeTicks;
+    EnumerableSet.UintSet private activeTicks;
 
     event Deposit(address indexed sender, uint256 assets, uint256 sharesMinted);
     event Redeem(address indexed sender, uint256 shares, uint256 assetsWithdrawn);
@@ -541,6 +543,7 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, ERC20, Acc
 
         if (_payBase > 0) _swapToRedeemAssets(_payBase);
 
+        // solhint-disable-next-line reentrancy
         assets = shares.mulDivDown(_preQuote, _tsBeforeBurn) + asset.balanceOf(address(this)) - _preQuote;
 
         if (assets < minAssets) revert MinAssetsRequired(minAssets, assets);

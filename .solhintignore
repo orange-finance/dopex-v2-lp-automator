@@ -2,4 +2,3 @@
 
 contracts/ChainlinkQuoter.sol
 contracts/OrangeDopexV2LPAutomatorV1.sol
-contracts/OrangeStrykeLPAutomatorV1_1.sol
