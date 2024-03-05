@@ -11,6 +11,7 @@
     "Gelato",
     "IERC",
     "inheritdoc",
+    "Initializable",
     "keccak",
     "liquidization",
     "mixedcase",
@@ -33,7 +34,8 @@
     "TWAP",
     "Unburnable",
     "unuse",
-    "USDC"
+    "USDC",
+    "UUPS"
   ],
   "solidity.compileUsingRemoteVersion": "0.8.19",
   "[solidity]": {
