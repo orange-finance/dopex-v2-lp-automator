@@ -14,7 +14,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import {AccessControlEnumerable} from "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
@@ -39,12 +38,7 @@ interface IMulticallProvider {
  * @dev Automate liquidity provision for Dopex V2 contract
  * @author Orange Finance
  */
-contract OrangeStrykeLPAutomatorV1_1 is
-    IOrangeStrykeLPAutomatorV1_1,
-    UUPSUpgradeable,
-    OrangeERC20Upgradeable,
-    AccessControlEnumerable
-{
+contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgradeable, OrangeERC20Upgradeable {
     using FixedPointMathLib for uint256;
     using FullMath for uint256;
     using SafeERC20 for IERC20;
@@ -85,10 +79,15 @@ contract OrangeStrykeLPAutomatorV1_1 is
 
     EnumerableSet.UintSet private _activeTicks;
 
+    mapping(address => bool) public isOwner;
+    mapping(address => bool) public isStrategist;
+
     event Deposit(address indexed sender, uint256 assets, uint256 sharesMinted);
     event Redeem(address indexed sender, uint256 shares, uint256 assetsWithdrawn);
     event Rebalance(address indexed sender, RebalanceTickInfo[] ticksMint, RebalanceTickInfo[] ticksBurn);
 
+    event SetOwner(address user, bool approved);
+    event SetStrategist(address user, bool approved);
     event DepositCapSet(uint256 depositCap);
     event DepositFeePipsSet(uint24 depositFeePips);
 
@@ -105,6 +104,24 @@ contract OrangeStrykeLPAutomatorV1_1 is
     error FeePipsTooHigh();
     error UnsupportedDecimals();
     error MinDepositAssetsTooSmall();
+    error OnlyOwner();
+
+    modifier onlyOwner() {
+        if (!isOwner[msg.sender]) revert OnlyOwner();
+        _;
+    }
+
+    modifier onlyStrategist() {
+        if (!isStrategist[msg.sender]) revert OnlyOwner();
+        _;
+    }
+
+    constructor() {
+        _disableInitializers();
+    }
+
+    // solhint-disable-next-line no-empty-blocks
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 
     /**
      * @dev Constructor arguments for OrangeDopexV2LPAutomatorV1 contract.
@@ -133,13 +150,6 @@ contract OrangeStrykeLPAutomatorV1_1 is
         address counterAssetUsdFeed;
         uint256 minDepositAssets;
     }
-
-    constructor() {
-        _disableInitializers();
-    }
-
-    // solhint-disable-next-line no-empty-blocks
-    function _authorizeUpgrade(address) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
 
     function initialize(InitArgs memory args) public initializer {
         if (args.asset != IERC20(args.pool.token0()) && args.asset != IERC20(args.pool.token1()))
@@ -180,12 +190,20 @@ contract OrangeStrykeLPAutomatorV1_1 is
         counterAsset.safeIncreaseAllowance(address(args.manager), type(uint256).max);
         counterAsset.safeIncreaseAllowance(address(args.router), type(uint256).max);
 
-        _grantRole(DEFAULT_ADMIN_ROLE, args.admin);
+        isOwner[args.admin] = true;
     }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                     ADMIN FUNCTIONS
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
+
+    function setOwner(address user, bool approved) external onlyOwner {
+        isOwner[user] = approved;
+    }
+
+    function setStrategist(address user, bool approved) external onlyOwner {
+        isStrategist[user] = approved;
+    }
 
     /**
      * @dev Sets the deposit cap for the automator.
@@ -193,7 +211,7 @@ contract OrangeStrykeLPAutomatorV1_1 is
      * Requirements:
      * - Caller must have the DEFAULT_ADMIN_ROLE.
      */
-    function setDepositCap(uint256 _depositCap) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setDepositCap(uint256 _depositCap) external onlyOwner {
         depositCap = _depositCap;
 
         emit DepositCapSet(_depositCap);
@@ -208,7 +226,7 @@ contract OrangeStrykeLPAutomatorV1_1 is
      * - Recipient address must not be zero.
      * - deposit fee pips must not exceed MAX_PERF_FEE_PIPS.
      */
-    function setDepositFeePips(address recipient, uint24 pips) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setDepositFeePips(address recipient, uint24 pips) external onlyOwner {
         if (recipient == address(0)) revert AddressZero();
         if (pips > _MAX_PERF_FEE_PIPS) revert FeePipsTooHigh();
 
@@ -603,7 +621,7 @@ contract OrangeStrykeLPAutomatorV1_1 is
      * @dev withdraw pooled assets from the automator. This is used when the automator is rewarded by protocols with another token to prevent lock up.
      * @param token The address of the ERC20 token to withdraw.
      */
-    function withdraw(IERC20 token) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function withdraw(IERC20 token) external onlyOwner {
         if (token == asset) revert TokenNotPermitted();
         if (token == counterAsset) revert TokenNotPermitted();
         token.safeTransfer(msg.sender, token.balanceOf(address(this)));
@@ -618,7 +636,7 @@ contract OrangeStrykeLPAutomatorV1_1 is
         RebalanceTickInfo[] calldata ticksMint,
         RebalanceTickInfo[] calldata ticksBurn,
         RebalanceSwapParams calldata swapParams
-    ) external onlyRole(STRATEGIST_ROLE) {
+    ) external onlyStrategist {
         if (ticksMint.length + _activeTicks.length() > _MAX_TICKS) revert MaxTicksReached();
 
         bytes[] memory _burnCalldataBatch = _createBurnCalldataBatch(ticksBurn);
