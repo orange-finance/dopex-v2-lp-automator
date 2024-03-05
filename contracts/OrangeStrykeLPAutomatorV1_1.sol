@@ -710,7 +710,7 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
         uint256 _providedLength = ticksMint.length;
         mintLength = _providedLength;
 
-        int24 _ct = pool.currentTick();
+        (, int24 _ct, , , , , ) = pool.slot0();
         int24 _spacing = poolTickSpacing;
 
         // current lower tick is calculated by rounding down the current tick to the nearest tick spacing
