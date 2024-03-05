@@ -17,14 +17,11 @@ import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
-
 import {IUniswapV3SingleTickLiquidityHandlerV2} from "./vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 import {IDopexV2PositionManager} from "./vendor/dopexV2/IDopexV2PositionManager.sol";
 
 import {ChainlinkQuoter} from "./ChainlinkQuoter.sol";
 import {UniswapV3SingleTickLiquidityLib} from "./lib/UniswapV3SingleTickLiquidityLib.sol";
-import {UniswapV3PoolLib} from "./lib/UniswapV3PoolLib.sol";
 import {OrangeERC20Upgradeable} from "./OrangeERC20Upgradeable.sol";
 import {IERC20Decimals} from "./interfaces/IERC20Extended.sol";
 import {IOrangeStrykeLPAutomatorV1_1} from "./interfaces/IOrangeStrykeLPAutomatorV1_1.sol";
@@ -39,13 +36,11 @@ interface IMulticallProvider {
  * @author Orange Finance
  */
 contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgradeable, OrangeERC20Upgradeable {
-    using FixedPointMathLib for uint256;
     using FullMath for uint256;
     using SafeERC20 for IERC20;
     using SafeCast for uint256;
     using EnumerableSet for EnumerableSet.UintSet;
     using TickMath for int24;
-    using UniswapV3PoolLib for IUniswapV3Pool;
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandlerV2;
 
     bytes32 public constant STRATEGIST_ROLE = keccak256("STRATEGIST_ROLE");
@@ -368,14 +363,14 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
     /// @inheritdoc IOrangeStrykeLPAutomatorV1_1
     function convertToShares(uint256 assets) external view returns (uint256) {
         // NOTE: no need to check total supply as it is checked in deposit function.
-        return assets.mulDivDown(totalSupply(), totalAssets());
+        return assets.mulDiv(totalSupply(), totalAssets());
     }
 
     /// @inheritdoc IOrangeStrykeLPAutomatorV1_1
     function convertToAssets(uint256 shares) public view returns (uint256) {
         uint256 _supply = totalSupply();
 
-        return _supply == 0 ? shares : shares.mulDivDown(totalAssets(), _supply);
+        return _supply == 0 ? shares : shares.mulDiv(totalAssets(), _supply);
     }
 
     /// @inheritdoc IOrangeStrykeLPAutomatorV1_1
@@ -452,10 +447,10 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
             }
         } else {
             // NOTE: Assets are already transferred before calculation, so we can use the total assets before deposit
-            shares = assets.mulDivDown(totalSupply(), _beforeTotalAssets);
+            shares = assets.mulDiv(totalSupply(), _beforeTotalAssets);
         }
 
-        uint256 _fee = shares.mulDivDown(depositFeePips, 1e6);
+        uint256 _fee = shares.mulDiv(depositFeePips, 1e6);
         // NOTE: no possibility of minting to the zero address as we can't set zero address with fee pips
         if (_fee > 0) {
             _mint(depositFeeRecipient, _fee);
@@ -506,10 +501,10 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
             // total supply before burn is used to calculate the precise share
             c.shareRedeemable = uint256(
                 handler.convertToShares(handler.redeemableLiquidity(address(this), c.tokenId).toUint128(), c.tokenId)
-            ).mulDivDown(shares, _tsBeforeBurn);
+            ).mulDiv(shares, _tsBeforeBurn);
             c.shareLocked = uint256(
                 handler.convertToShares(handler.lockedLiquidity(address(this), c.tokenId).toUint128(), c.tokenId)
-            ).mulDivDown(shares, _tsBeforeBurn);
+            ).mulDiv(shares, _tsBeforeBurn);
 
             // locked share is transferred to the user
             if (c.shareLocked > 0) {
@@ -544,17 +539,15 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
         }
 
         /**
-         * 1. shares.mulDivDown(_preBase, _totalSupply()) means the portion of idle base asset
+         * 1. shares.mulDiv(_preBase, _totalSupply()) means the portion of idle base asset
          * 2. counterAsset.balanceOf(address(this)) - _preBase means the base asset from redeemed positions
          */
-        uint256 _payBase = shares.mulDivDown(_preBase, _tsBeforeBurn) +
-            counterAsset.balanceOf(address(this)) -
-            _preBase;
+        uint256 _payBase = shares.mulDiv(_preBase, _tsBeforeBurn) + counterAsset.balanceOf(address(this)) - _preBase;
 
         if (_payBase > 0) _swapToRedeemAssets(_payBase);
 
         // solhint-disable-next-line reentrancy
-        assets = shares.mulDivDown(_preQuote, _tsBeforeBurn) + asset.balanceOf(address(this)) - _preQuote;
+        assets = shares.mulDiv(_preQuote, _tsBeforeBurn) + asset.balanceOf(address(this)) - _preQuote;
 
         if (assets < minAssets) revert MinAssetsRequired(minAssets, assets);
 
