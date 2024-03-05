@@ -50,6 +50,30 @@ interface IOrangeStrykeLPAutomatorV1_1 {
         uint128 liquidity;
     }
 
+    event Deposit(address indexed sender, uint256 assets, uint256 sharesMinted);
+    event Redeem(address indexed sender, uint256 shares, uint256 assetsWithdrawn);
+    event Rebalance(address indexed sender, RebalanceTickInfo[] ticksMint, RebalanceTickInfo[] ticksBurn);
+
+    event SetOwner(address user, bool approved);
+    event SetStrategist(address user, bool approved);
+    event DepositCapSet(uint256 depositCap);
+    event DepositFeePipsSet(uint24 depositFeePips);
+
+    error AddressZero();
+    error AmountZero();
+    error MaxTicksReached();
+    error InvalidRebalanceParams();
+    error MinAssetsRequired(uint256 minAssets, uint256 actualAssets);
+    error TokenAddressMismatch();
+    error TokenNotPermitted();
+    error DepositTooSmall();
+    error DepositCapExceeded();
+    error SharesTooSmall();
+    error FeePipsTooHigh();
+    error UnsupportedDecimals();
+    error MinDepositAssetsTooSmall();
+    error OnlyOwner();
+
     /**
      * @dev Returns the position manager contract.
      */
