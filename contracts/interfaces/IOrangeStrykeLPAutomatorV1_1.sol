@@ -2,6 +2,8 @@
 
 pragma solidity 0.8.19;
 
+/* solhint-disable contract-name-camelcase */
+
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
