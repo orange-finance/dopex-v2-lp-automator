@@ -9,7 +9,7 @@
 
 // storage layout is not changed from original, so it's compatible with future upgrades
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.19;
 
 /* solhint-disable func-name-mixedcase, reason-string, custom-errors */
 
