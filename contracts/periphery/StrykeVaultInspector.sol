@@ -53,7 +53,7 @@ contract StrykeVaultInspector {
             _cache.upperTick = _cache.lowerTick + _spacing;
             _cache.liquidity = _handler
                 .redeemableLiquidity(
-                    address(this),
+                    address(automator),
                     _handler.tokenId(address(_pool), _handlerHook, _cache.lowerTick, _cache.upperTick)
                 )
                 .toUint128();
@@ -86,7 +86,7 @@ contract StrykeVaultInspector {
         int24 _spacing = automator.poolTickSpacing();
 
         uint256 _share = _handler.balanceOf(
-            address(this),
+            address(automator),
             _handler.tokenId(address(_pool), _handlerHook, tick, tick + _spacing)
         );
 
@@ -113,7 +113,7 @@ contract StrykeVaultInspector {
         return
             _handler
                 .redeemableLiquidity(
-                    address(this),
+                    address(automator),
                     _handler.tokenId(address(_pool), _handlerHook, tick, tick + _spacing)
                 )
                 .toUint128();
@@ -138,7 +138,10 @@ contract StrykeVaultInspector {
         // 2. merge into the total assets in the automator
         IERC20 _asset = automator.asset();
         IERC20 _counterAsset = automator.counterAsset();
-        (uint256 _base, uint256 _quote) = (_counterAsset.balanceOf(address(this)), _asset.balanceOf(address(this)));
+        (uint256 _base, uint256 _quote) = (
+            _counterAsset.balanceOf(address(automator)),
+            _asset.balanceOf(address(automator))
+        );
 
         if (address(_asset) == _pool.token0()) {
             _base += _sum1;
@@ -178,6 +181,17 @@ contract StrykeVaultInspector {
             IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[] memory rebalanceTicks
         )
     {
+        rebalanceTicks = _rebalanceTicks(automator);
+
+        IERC20 _asset = automator.asset();
+        IERC20 _counterAsset = automator.counterAsset();
+
+        return (_asset.balanceOf(address(automator)), _counterAsset.balanceOf(address(automator)), rebalanceTicks);
+    }
+
+    function _rebalanceTicks(
+        IOrangeStrykeLPAutomatorV1_1 automator
+    ) private view returns (IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[] memory rebalanceTicks) {
         IUniswapV3Pool _pool = automator.pool();
         IUniswapV3SingleTickLiquidityHandlerV2 _handler = automator.handler();
         address _handlerHook = automator.handlerHook();
@@ -185,28 +199,28 @@ contract StrykeVaultInspector {
         int24[] memory _ticks = automator.getActiveTicks();
         uint256 _tLen = _ticks.length;
         uint256 _tid;
-        uint128 _liquidity;
-        (int24 _lt, int24 _ut) = (0, 0);
 
+        PositionCalcCache memory _cache;
         rebalanceTicks = new IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[](_tLen);
 
         for (uint256 i = 0; i < _tLen; ) {
-            _lt = _ticks[i];
-            _ut = _lt + _spacing;
-            _tid = _handler.tokenId(address(_pool), _handlerHook, _lt, _ut);
+            _cache.lowerTick = _ticks[i];
+            _cache.upperTick = _cache.lowerTick + _spacing;
+            _tid = _handler.tokenId(address(_pool), _handlerHook, _cache.lowerTick, _cache.upperTick);
 
-            _liquidity = _handler.convertToAssets((_handler.balanceOf(address(this), _tid)).toUint128(), _tid);
+            _cache.liquidity = _handler.convertToAssets(
+                (_handler.balanceOf(address(automator), _tid)).toUint128(),
+                _tid
+            );
 
-            rebalanceTicks[i] = IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo({tick: _lt, liquidity: _liquidity});
+            rebalanceTicks[i] = IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo({
+                tick: _cache.lowerTick,
+                liquidity: _cache.liquidity
+            });
 
             unchecked {
                 i++;
             }
         }
-
-        IERC20 _asset = automator.asset();
-        IERC20 _counterAsset = automator.counterAsset();
-
-        return (_asset.balanceOf(address(this)), _counterAsset.balanceOf(address(this)), rebalanceTicks);
     }
 }

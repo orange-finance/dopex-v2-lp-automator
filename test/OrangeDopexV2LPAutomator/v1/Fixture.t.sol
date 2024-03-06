@@ -77,6 +77,10 @@ abstract contract Fixture is Test {
         automator.quoter().setStalenessThreshold(0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612, 86400);
         automator.quoter().setStalenessThreshold(0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3, 86400);
 
+        vm.startPrank(managerOwner);
+        manager.updateWhitelistHandlerWithApp(address(uniV3Handler), address(this), true);
+        vm.stopPrank();
+
         vm.label(address(uniV3Handler), "dopexUniV3Handler");
         vm.label(address(pool), "weth_usdc");
         vm.label(address(router), "router");
