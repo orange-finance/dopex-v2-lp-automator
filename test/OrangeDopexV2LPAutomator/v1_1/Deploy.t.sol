@@ -9,8 +9,9 @@ import {ChainlinkQuoter} from "../../../contracts/ChainlinkQuoter.sol";
 import {WETH_USDC_Fixture} from "./fixture/WETH_USDC_Fixture.t.sol";
 
 contract TestOrangeDopexV2LPAutomatorV1Deploy is WETH_USDC_Fixture {
-    function setUp() public {
+    function setUp() public override {
         vm.createSelectFork("arb", 157066571);
+        super.setUp();
     }
 
     function test_deploy_revertUnsupportedAssetsDecimals() public {
