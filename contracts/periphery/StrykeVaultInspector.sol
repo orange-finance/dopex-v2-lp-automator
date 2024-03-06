@@ -17,6 +17,63 @@ contract StrykeVaultInspector {
     using SafeCast for uint256;
     using TickMath for int24;
 
+    /// @dev Cache position calculation data to avoid stack too deep error. Used in "freeAssets".
+    struct PositionCalcCache {
+        uint128 liquidity;
+        int24 lowerTick;
+        int24 upperTick;
+        uint256 amount0;
+        uint256 amount1;
+        uint160 sqrtRatioX96;
+    }
+
+    /**
+     * @dev Retrieves the total free liquidity in token0 and token1 in the pool.
+     * @param automator The automator contract.
+     * @param _pool The pool for which to retrieve the free liquidity.
+     * @return sumAmount0 The total free liquidity in token0.
+     * @return sumAmount1 The total free liquidity in token1.
+     */
+    function freePoolPositionInToken01(
+        IOrangeStrykeLPAutomatorV1_1 automator,
+        IUniswapV3Pool _pool
+    ) public view returns (uint256 sumAmount0, uint256 sumAmount1) {
+        IUniswapV3SingleTickLiquidityHandlerV2 _handler = automator.handler();
+        address _handlerHook = automator.handlerHook();
+        int24[] memory _ticks = automator.getActiveTicks();
+        int24 _spacing = automator.poolTickSpacing();
+        uint256 _tLen = _ticks.length;
+
+        PositionCalcCache memory _cache;
+
+        (uint160 _sqrtRatioX96, , , , , , ) = _pool.slot0();
+
+        for (uint256 i = 0; i < _tLen; ) {
+            _cache.lowerTick = _ticks[i];
+            _cache.upperTick = _cache.lowerTick + _spacing;
+            _cache.liquidity = _handler
+                .redeemableLiquidity(
+                    address(this),
+                    _handler.tokenId(address(_pool), _handlerHook, _cache.lowerTick, _cache.upperTick)
+                )
+                .toUint128();
+
+            (_cache.amount0, _cache.amount1) = LiquidityAmounts.getAmountsForLiquidity(
+                _sqrtRatioX96,
+                _cache.lowerTick.getSqrtRatioAtTick(),
+                _cache.upperTick.getSqrtRatioAtTick(),
+                _cache.liquidity
+            );
+
+            sumAmount0 += _cache.amount0;
+            sumAmount1 += _cache.amount1;
+
+            unchecked {
+                i++;
+            }
+        }
+    }
+
     /**
      * @dev Retrieves the total liquidity of a given tick range.
      * @param tick The tick value representing the range.
@@ -72,45 +129,11 @@ contract StrykeVaultInspector {
      * current tick and the base value, and returned as the result.
      * @return The total free assets in Dopex pools.
      */
-    // TODO: fix stack too deep
     function freeAssets(IOrangeStrykeLPAutomatorV1_1 automator) public view returns (uint256) {
-        // 1. calculate the free assets in Dopex pools
         IUniswapV3Pool _pool = automator.pool();
-        IUniswapV3SingleTickLiquidityHandlerV2 _handler = automator.handler();
-        address _handlerHook = automator.handlerHook();
-        int24[] memory _ticks = automator.getActiveTicks();
-        int24 _spacing = automator.poolTickSpacing();
-        uint256 _tLen = _ticks.length;
 
-        uint256 _tid;
-        uint128 _liquidity;
-        (int24 _lt, int24 _ut) = (0, 0);
-        (uint256 _sum0, uint256 _sum1) = (0, 0);
-        (uint256 _a0, uint256 _a1) = (0, 0);
-
-        (uint160 _sqrtRatioX96, , , , , , ) = _pool.slot0();
-
-        for (uint256 i = 0; i < _tLen; ) {
-            _lt = _ticks[i];
-            _ut = _lt + _spacing;
-            _tid = _handler.tokenId(address(_pool), _handlerHook, _lt, _ut);
-
-            _liquidity = _handler.redeemableLiquidity(address(this), _tid).toUint128();
-
-            (_a0, _a1) = LiquidityAmounts.getAmountsForLiquidity(
-                _sqrtRatioX96,
-                _lt.getSqrtRatioAtTick(),
-                _ut.getSqrtRatioAtTick(),
-                _liquidity
-            );
-
-            _sum0 += _a0;
-            _sum1 += _a1;
-
-            unchecked {
-                i++;
-            }
-        }
+        // 1. calculate the free token0 & token1 in Dopex pools
+        (uint256 _sum0, uint256 _sum1) = freePoolPositionInToken01(automator, _pool);
 
         // 2. merge into the total assets in the automator
         IERC20 _asset = automator.asset();
