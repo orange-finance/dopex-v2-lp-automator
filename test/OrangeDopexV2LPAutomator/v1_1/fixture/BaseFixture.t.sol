@@ -2,14 +2,25 @@
 
 pragma solidity 0.8.19;
 
-import {Test} from "forge-std/Test.sol";
+import {Test, StdStorage, stdStorage} from "forge-std/Test.sol";
 
 import {IDopexV2PositionManager} from "./../../../../contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
 import {IUniswapV3SingleTickLiquidityHandlerV2} from "./../../../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
+import {UniswapV3SingleTickLiquidityLib} from "./../../../../contracts/lib/UniswapV3SingleTickLiquidityLib.sol";
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import {IQuoter} from "@uniswap/v3-periphery/contracts/interfaces/IQuoter.sol";
+import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import {FullMath} from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
+import {UniswapV3Helper} from "../../../helper/UniswapV3Helper.t.sol";
+import {DopexV2Helper} from "../../../helper/DopexV2Helper.t.sol";
 
 contract BaseFixture is Test {
+    using stdStorage for StdStorage;
+    using FullMath for uint256;
+    using UniswapV3Helper for IUniswapV3Pool;
+    using DopexV2Helper for IUniswapV3Pool;
+    using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandlerV2;
+
     address public alice = makeAddr("alice");
     address public bob = makeAddr("bob");
     address public carol = makeAddr("carol");

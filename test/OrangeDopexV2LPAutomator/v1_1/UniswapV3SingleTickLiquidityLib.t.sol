@@ -3,12 +3,12 @@
 pragma solidity 0.8.19;
 
 /* solhint-disable func-name-mixedcase */
-import {Fixture} from "./Fixture.t.sol";
+import {WETH_USDC_Fixture} from "./fixture/WETH_USDC_Fixture.t.sol";
 import {DealExtension} from "../../helper/DealExtension.t.sol";
 import {UniswapV3SingleTickLiquidityLib} from "./../../../contracts/lib/UniswapV3SingleTickLiquidityLib.sol";
 import {IUniswapV3SingleTickLiquidityHandlerV2} from "./../../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 
-contract TestUniswapV3SingleTickLiquidityLib is Fixture, DealExtension {
+contract TestUniswapV3SingleTickLiquidityLib is WETH_USDC_Fixture, DealExtension {
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandlerV2;
 
     function setUp() public override {
@@ -16,19 +16,17 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture, DealExtension {
         super.setUp();
 
         vm.prank(managerOwner);
-        manager.updateWhitelistHandlerWithApp(address(uniV3Handler), address(this), true);
+        manager.updateWhitelistHandlerWithApp(address(handlerV2), address(this), true);
     }
 
     function test_tokenId() public {
         (, int24 _currentTick, , , , , ) = pool.slot0();
         int24 _spacing = pool.tickSpacing();
 
-        uint256 _tokenId = uniV3Handler.tokenId(address(pool), emptyHook, _currentTick, _currentTick + _spacing);
+        uint256 _tokenId = handlerV2.tokenId(address(pool), address(0), _currentTick, _currentTick + _spacing);
         assertEq(
             _tokenId,
-            uint256(
-                keccak256(abi.encode(uniV3Handler, address(pool), emptyHook, _currentTick, _currentTick + _spacing))
-            )
+            uint256(keccak256(abi.encode(handlerV2, address(pool), address(0), _currentTick, _currentTick + _spacing)))
         );
     }
 
@@ -49,18 +47,18 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture, DealExtension {
         emit log_named_int("lower tick", _tickLower);
         emit log_named_int("upper tick", _tickUpper);
 
-        uint256 _tokenId = uniV3Handler.tokenId(address(pool), emptyHook, _tickLower, _tickUpper);
+        uint256 _tokenId = handlerV2.tokenId(address(pool), address(0), _tickLower, _tickUpper);
         /*/////////////////////////////////////////////////////////////
                             case: shares not used
         /////////////////////////////////////////////////////////////*/
 
         uint256 _liquidity = 1000e6;
         _mintDopexPosition(_tickLower, _tickUpper, uint128(_liquidity));
-        uint256 _redeemable = uniV3Handler.redeemableLiquidity(address(this), _tokenId);
+        uint256 _redeemable = handlerV2.redeemableLiquidity(address(this), _tokenId);
 
         // NOTE: liquidity is rounded down when shares are converted to liquidity
         assertEq(_redeemable, _liquidity - 1, "all liquidity redeemable (rounded down)");
-        IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory _tokenIdInfo = uniV3Handler.tokenIds(_tokenId);
+        IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory _tokenIdInfo = handlerV2.tokenIds(_tokenId);
 
         emit log_named_uint(
             "totalLiquidity - liquidity used",
@@ -74,8 +72,8 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture, DealExtension {
         /////////////////////////////////////////////////////////////*/
 
         _useDopexPosition(_tickLower, _tickUpper, 599999999);
-        _redeemable = uniV3Handler.redeemableLiquidity(address(this), _tokenId);
-        _tokenIdInfo = uniV3Handler.tokenIds(_tokenId);
+        _redeemable = handlerV2.redeemableLiquidity(address(this), _tokenId);
+        _tokenIdInfo = handlerV2.tokenIds(_tokenId);
 
         emit log_named_uint(
             "totalLiquidity - liquidity used",
@@ -91,8 +89,8 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture, DealExtension {
         /////////////////////////////////////////////////////////////*/
 
         _useDopexPosition(_tickLower, _tickUpper, 400000000);
-        _redeemable = uniV3Handler.redeemableLiquidity(address(this), _tokenId);
-        _tokenIdInfo = uniV3Handler.tokenIds(_tokenId);
+        _redeemable = handlerV2.redeemableLiquidity(address(this), _tokenId);
+        _tokenIdInfo = handlerV2.tokenIds(_tokenId);
 
         emit log_named_uint(
             "totalLiquidity - liquidity used",
@@ -121,14 +119,14 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture, DealExtension {
         emit log_named_int("lower tick", _tickLower);
         emit log_named_int("upper tick", _tickUpper);
 
-        uint256 _tokenId = uniV3Handler.tokenId(address(pool), emptyHook, _tickLower, _tickUpper);
+        uint256 _tokenId = handlerV2.tokenId(address(pool), address(0), _tickLower, _tickUpper);
         /*/////////////////////////////////////////////////////////////
                             case: shares not used
         /////////////////////////////////////////////////////////////*/
 
         // ! actual liquidity minted to the contract is 999999999
         _mintDopexPosition(_tickLower, _tickUpper, 1000e6);
-        uint256 _locked = uniV3Handler.lockedLiquidity(address(this), _tokenId);
+        uint256 _locked = handlerV2.lockedLiquidity(address(this), _tokenId);
         //
         assertEq(_locked, 0, "no liquidity locked");
 
@@ -136,11 +134,11 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture, DealExtension {
                             case: shares partially used
         /////////////////////////////////////////////////////////////*/
 
-        IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory _tokenIdInfo = uniV3Handler.tokenIds(_tokenId);
+        IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory _tokenIdInfo = handlerV2.tokenIds(_tokenId);
 
         _useDopexPosition(_tickLower, _tickUpper, 599999999);
-        _locked = uniV3Handler.lockedLiquidity(address(this), _tokenId);
-        _tokenIdInfo = uniV3Handler.tokenIds(_tokenId);
+        _locked = handlerV2.lockedLiquidity(address(this), _tokenId);
+        _tokenIdInfo = handlerV2.tokenIds(_tokenId);
 
         emit log_named_uint(
             "totalLiquidity - liquidity used",
@@ -160,8 +158,8 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture, DealExtension {
         /////////////////////////////////////////////////////////////*/
 
         _useDopexPosition(_tickLower, _tickUpper, 400000000);
-        _locked = uniV3Handler.lockedLiquidity(address(this), _tokenId);
-        _tokenIdInfo = uniV3Handler.tokenIds(_tokenId);
+        _locked = handlerV2.lockedLiquidity(address(this), _tokenId);
+        _tokenIdInfo = handlerV2.tokenIds(_tokenId);
 
         emit log_named_uint(
             "totalLiquidity - liquidity used",
@@ -192,41 +190,53 @@ contract TestUniswapV3SingleTickLiquidityLib is Fixture, DealExtension {
         int24 _tickLower = _currentTick - (_currentTick % _spacing) + _spacing;
         int24 _tickUpper = _tickLower + _spacing;
 
-        uint256 _tokenId = uniV3Handler.tokenId(address(pool), emptyHook, _tickLower, _tickUpper);
+        uint256 _tokenId = handlerV2.tokenId(address(pool), address(0), _tickLower, _tickUpper);
         /*/////////////////////////////////////////////////////////////
                             case: shares not used
         /////////////////////////////////////////////////////////////*/
 
         uint256 _liquidity = 1000e6;
         _mintDopexPosition(_tickLower, _tickUpper, uint128(_liquidity));
-        uint256 _locked = uniV3Handler.lockedLiquidity(address(this), _tokenId);
+        uint256 _locked = handlerV2.lockedLiquidity(address(this), _tokenId);
 
         assertEq(_locked, 0, "no liquidity locked");
 
-        IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory _tokenIdInfo = uniV3Handler.tokenIds(_tokenId);
+        IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory _tokenIdInfo = handlerV2.tokenIds(_tokenId);
 
         vm.prank(managerOwner);
         manager.updateWhitelistHandlerWithApp(alice, address(this), true);
         vm.prank(alice);
         _mintDopexPosition(_tickLower, _tickUpper, uint128(_liquidity));
 
-        _tokenIdInfo = uniV3Handler.tokenIds(_tokenId);
-        _locked = uniV3Handler.lockedLiquidity(address(this), _tokenId);
+        _tokenIdInfo = handlerV2.tokenIds(_tokenId);
+        _locked = handlerV2.lockedLiquidity(address(this), _tokenId);
 
         assertEq(_locked, 0, "no liquidity locked");
     }
 
-    function onERC1155Received(address, address, uint256, uint256, bytes calldata) external pure returns (bytes4) {
-        return this.onERC1155Received.selector;
+    function _mintDopexPosition(int24 lowerTick, int24 upperTick, uint128 liquidity) internal {
+        IUniswapV3SingleTickLiquidityHandlerV2.MintPositionParams
+            memory _params = IUniswapV3SingleTickLiquidityHandlerV2.MintPositionParams({
+                pool: address(pool),
+                hook: address(0),
+                tickLower: lowerTick,
+                tickUpper: upperTick,
+                liquidity: liquidity
+            });
+
+        manager.mintPosition(handlerV2, abi.encode(_params));
     }
 
-    function onERC1155BatchReceived(
-        address,
-        address,
-        uint256[] calldata,
-        uint256[] calldata,
-        bytes calldata
-    ) external pure returns (bytes4) {
-        return this.onERC1155BatchReceived.selector;
+    function _useDopexPosition(int24 lowerTick, int24 upperTick, uint128 liquidityToUse) internal {
+        IUniswapV3SingleTickLiquidityHandlerV2.UsePositionParams memory _params = IUniswapV3SingleTickLiquidityHandlerV2
+            .UsePositionParams({
+                pool: address(pool),
+                hook: address(0),
+                tickLower: lowerTick,
+                tickUpper: upperTick,
+                liquidityToUse: liquidityToUse
+            });
+
+        manager.usePosition(handlerV2, abi.encode(_params, ""));
     }
 }

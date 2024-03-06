@@ -3,19 +3,19 @@
 pragma solidity 0.8.19;
 
 /* solhint-disable func-name-mixedcase */
-import {Fixture} from "./Fixture.t.sol";
-// TODO: migrate all utility to this helper functions
+import {WETH_USDC_Fixture} from "./fixture/WETH_USDC_Fixture.t.sol";
 import {AutomatorHelper} from "../../helper/AutomatorHelper.t.sol";
 import {ChainlinkQuoter} from "./../../../contracts/ChainlinkQuoter.sol";
 import {OrangeDopexV2LPAutomatorV1} from "./../../../contracts/OrangeDopexV2LPAutomatorV1.sol";
+import {IERC20} from "@openzeppelin/contracts//interfaces/IERC20.sol";
 
-contract TestOrangeDopexV2LPAutomatorV1Deposit is Fixture {
+contract TestOrangeDopexV2LPAutomatorV1Deposit is WETH_USDC_Fixture {
     function setUp() public override {
         vm.createSelectFork("arb", 157066571);
         super.setUp();
 
         vm.prank(managerOwner);
-        manager.updateWhitelistHandlerWithApp(address(uniV3Handler), address(this), true);
+        manager.updateWhitelistHandlerWithApp(address(handlerV2), address(this), true);
     }
 
     function test_deposit_firstTime() public {
@@ -32,8 +32,8 @@ contract TestOrangeDopexV2LPAutomatorV1Deposit is Fixture {
                 counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
                 manager: manager,
                 router: router,
-                handler: uniV3Handler,
-                handlerHook: emptyHook,
+                handler: handlerV2,
+                handlerHook: address(0),
                 pool: pool,
                 asset: USDC,
                 minDepositAssets: 1e6,
@@ -48,6 +48,28 @@ contract TestOrangeDopexV2LPAutomatorV1Deposit is Fixture {
     }
 
     function test_deposit_secondTime() public {
+        automator = AutomatorHelper.deployOrangeDopexV2LPAutomatorV1(
+            vm,
+            AutomatorHelper.DeployArgs({
+                name: "OrangeDopexV2LPAutomatorV1",
+                symbol: "ODV2LP",
+                dopexV2ManagerOwner: managerOwner,
+                admin: address(this),
+                strategist: address(this),
+                quoter: new ChainlinkQuoter(address(0xFdB631F5EE196F0ed6FAa767959853A9F217697D)),
+                assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
+                counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
+                manager: manager,
+                router: router,
+                handler: handlerV2,
+                handlerHook: address(0),
+                pool: pool,
+                asset: USDC,
+                minDepositAssets: 1e6,
+                depositCap: 20 ether
+            })
+        );
+
         _depositFrom(alice, 10 ether);
         uint256 _shares = _depositFrom(bob, 10 ether);
 
@@ -56,6 +78,27 @@ contract TestOrangeDopexV2LPAutomatorV1Deposit is Fixture {
     }
 
     function test_deposit_revertWhenDepositIsZero() public {
+        automator = AutomatorHelper.deployOrangeDopexV2LPAutomatorV1(
+            vm,
+            AutomatorHelper.DeployArgs({
+                name: "OrangeDopexV2LPAutomatorV1",
+                symbol: "ODV2LP",
+                dopexV2ManagerOwner: managerOwner,
+                admin: address(this),
+                strategist: address(this),
+                quoter: new ChainlinkQuoter(address(0xFdB631F5EE196F0ed6FAa767959853A9F217697D)),
+                assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
+                counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
+                manager: manager,
+                router: router,
+                handler: handlerV2,
+                handlerHook: address(0),
+                pool: pool,
+                asset: USDC,
+                minDepositAssets: 1e6,
+                depositCap: 10_000e6
+            })
+        );
         vm.expectRevert(OrangeDopexV2LPAutomatorV1.AmountZero.selector);
         automator.deposit(0);
     }
@@ -74,8 +117,8 @@ contract TestOrangeDopexV2LPAutomatorV1Deposit is Fixture {
                 counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
                 manager: manager,
                 router: router,
-                handler: uniV3Handler,
-                handlerHook: emptyHook,
+                handler: handlerV2,
+                handlerHook: address(0),
                 pool: pool,
                 asset: USDC,
                 minDepositAssets: 1e6,
@@ -105,8 +148,8 @@ contract TestOrangeDopexV2LPAutomatorV1Deposit is Fixture {
                 counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
                 manager: manager,
                 router: router,
-                handler: uniV3Handler,
-                handlerHook: emptyHook,
+                handler: handlerV2,
+                handlerHook: address(0),
                 pool: pool,
                 asset: USDC,
                 minDepositAssets: 1e6,
@@ -132,8 +175,8 @@ contract TestOrangeDopexV2LPAutomatorV1Deposit is Fixture {
                 counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
                 manager: manager,
                 router: router,
-                handler: uniV3Handler,
-                handlerHook: emptyHook,
+                handler: handlerV2,
+                handlerHook: address(0),
                 pool: pool,
                 asset: USDC,
                 minDepositAssets: 1e6,
@@ -167,8 +210,8 @@ contract TestOrangeDopexV2LPAutomatorV1Deposit is Fixture {
                 counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
                 manager: manager,
                 router: router,
-                handler: uniV3Handler,
-                handlerHook: emptyHook,
+                handler: handlerV2,
+                handlerHook: address(0),
                 pool: pool,
                 asset: USDC,
                 minDepositAssets: 1e6,
@@ -200,8 +243,8 @@ contract TestOrangeDopexV2LPAutomatorV1Deposit is Fixture {
                 quoter: ChainlinkQuoter(address(1)),
                 assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
                 counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
-                handler: uniV3Handler,
-                handlerHook: emptyHook,
+                handler: handlerV2,
+                handlerHook: address(0),
                 router: router,
                 pool: pool,
                 asset: WETH,
@@ -220,8 +263,8 @@ contract TestOrangeDopexV2LPAutomatorV1Deposit is Fixture {
                 quoter: ChainlinkQuoter(address(1)),
                 assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
                 counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
-                handler: uniV3Handler,
-                handlerHook: emptyHook,
+                handler: handlerV2,
+                handlerHook: address(0),
                 router: router,
                 pool: pool,
                 asset: USDC,
@@ -243,8 +286,8 @@ contract TestOrangeDopexV2LPAutomatorV1Deposit is Fixture {
                 assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
                 counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
                 manager: manager,
-                handler: uniV3Handler,
-                handlerHook: emptyHook,
+                handler: handlerV2,
+                handlerHook: address(0),
                 router: router,
                 pool: pool,
                 asset: USDC,
@@ -266,6 +309,16 @@ contract TestOrangeDopexV2LPAutomatorV1Deposit is Fixture {
         USDC.approve(address(automator), 1e6);
         vm.expectRevert(OrangeDopexV2LPAutomatorV1.DepositTooSmall.selector);
         automator.deposit(1e6);
+        vm.stopPrank();
+    }
+
+    function _depositFrom(address account, uint256 amount) internal returns (uint256 shares) {
+        IERC20 _asset = automator.asset();
+        deal(address(_asset), account, amount);
+
+        vm.startPrank(account);
+        _asset.approve(address(automator), amount);
+        shares = automator.deposit(amount);
         vm.stopPrank();
     }
 }

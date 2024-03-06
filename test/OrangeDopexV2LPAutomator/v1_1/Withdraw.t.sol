@@ -2,10 +2,13 @@
 
 pragma solidity 0.8.19;
 
-import "./Fixture.t.sol";
+/* solhint-disable func-name-mixedcase */
+import {WETH_USDC_Fixture} from "./fixture/WETH_USDC_Fixture.t.sol";
+import {IERC20} from "@openzeppelin/contracts//interfaces/IERC20.sol";
+import {OrangeDopexV2LPAutomatorV1} from "./../../../contracts/OrangeDopexV2LPAutomatorV1.sol";
 
-contract TestOrangeDopexV2LPAutomatorV1Withdraw is Fixture {
-    IERC20 constant ARB = IERC20(0x912CE59144191C1204E64559FE8253a0e49E6548);
+contract TestOrangeDopexV2LPAutomatorV1Withdraw is WETH_USDC_Fixture {
+    IERC20 public constant ARB = IERC20(0x912CE59144191C1204E64559FE8253a0e49E6548);
 
     function setUp() public override {
         vm.createSelectFork("arb", 157066571);

@@ -3,28 +3,34 @@
 pragma solidity 0.8.19;
 
 /* solhint-disable func-name-mixedcase, var-name-mixedcase */
-import {Fixture, stdStorage, StdStorage} from "./Fixture.t.sol";
+import {StdStorage, stdStorage} from "forge-std/StdStorage.sol";
+import {WETH_USDC_Fixture} from "./fixture/WETH_USDC_Fixture.t.sol";
 import {AutomatorHelper} from "../../helper/AutomatorHelper.t.sol";
-import {DopexV2Helper} from "../../helper/DopexV2Helper.t.sol";
-import {UniswapV3Helper} from "../../helper/UniswapV3Helper.t.sol";
 import {IERC6909} from "../../../contracts/vendor/dopexV2/IERC6909.sol";
 import {IOrangeDopexV2LPAutomatorV1} from "../../../contracts/interfaces/IOrangeDopexV2LPAutomatorV1.sol";
+import {IUniswapV3SingleTickLiquidityHandlerV2} from "./../../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 import {OrangeDopexV2LPAutomatorV1} from "./../../../contracts/OrangeDopexV2LPAutomatorV1.sol";
+import {UniswapV3SingleTickLiquidityLib} from "./../../../contracts/lib/UniswapV3SingleTickLiquidityLib.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
+import {FullMath} from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
+import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
+import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
+import {OracleLibrary} from "@uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol";
+import {UniswapV3Helper} from "../../helper/UniswapV3Helper.t.sol";
+import {DopexV2Helper} from "../../helper/DopexV2Helper.t.sol";
+import {IERC20} from "@openzeppelin/contracts//interfaces/IERC20.sol";
 
-contract TestOrangeDopexV2LPAutomatorV1Redeem is Fixture {
+contract TestOrangeDopexV2LPAutomatorV1Redeem is WETH_USDC_Fixture {
     using stdStorage for StdStorage;
-    using FixedPointMathLib for uint256;
+    using FullMath for uint256;
     using UniswapV3Helper for IUniswapV3Pool;
     using DopexV2Helper for IUniswapV3Pool;
+    using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandlerV2;
+    using TickMath for int24;
 
     function setUp() public override {
         vm.createSelectFork("arb", 181171193);
         super.setUp();
-
-        vm.prank(managerOwner);
-        manager.updateWhitelistHandlerWithApp(address(uniV3Handler), address(this), true);
     }
 
     function test_redeem_noDopexPosition() public {
@@ -76,7 +82,7 @@ contract TestOrangeDopexV2LPAutomatorV1Redeem is Fixture {
 
         // use all liquidity in dopex (can be calculated from TokenIdInfo.totalLiquidity - TokenIdInfo.liquidityUsed)
         // _useDopexPosition(-196780, -196770, 138769446144582645);
-        pool.useDopexPosition(emptyHook, -196780, 138769446144582645);
+        pool.useDopexPosition(address(0), -196780, 138769446144582645);
 
         // now the balance of WETH in automator ≈ 1 ether
         vm.prank(alice);
@@ -87,13 +93,13 @@ contract TestOrangeDopexV2LPAutomatorV1Redeem is Fixture {
         assertApproxEqRel(_assets, 565217391304347826, 0.0001e18); // allow 0.01% diff
         assertEq(_locked.length, 1);
 
-        // keccak256(abi.encode(uniV3Handler, pool, hook, -199330, -199320))
+        // keccak256(abi.encode(handlerV2, pool, hook, -199330, -199320))
         assertEq(_locked[0].tokenId, 51731724170277633442520037625677593345052024787730572352688588083216565283241);
 
         // 138769446144582645 (automator's locked shares) * 1.3 ether (redeemable WETH in automator) / 2.3 ether (automator total supply)
         assertEq(_locked[0].shares, 78434904342590190);
         assertEq(
-            IERC6909(address(uniV3Handler)).balanceOf(alice, 51731724170277633442520037625677593345052024787730572352688588083216565283241), // prettier-ignore
+            IERC6909(address(handlerV2)).balanceOf(alice, 51731724170277633442520037625677593345052024787730572352688588083216565283241), // prettier-ignore
             78434904342590190
         );
     }
@@ -109,7 +115,7 @@ contract TestOrangeDopexV2LPAutomatorV1Redeem is Fixture {
 
         // use half of liquidity in dopex
         // now the redeemable WETH in automator = 1.65 WETH (2.3 WETH - 1.3 / 2 WETH)
-        pool.useDopexPosition(emptyHook, -196780, 69384723072291323);
+        pool.useDopexPosition(address(0), -196780, 69384723072291323);
 
         // redeem alice's all shares
         vm.prank(alice);
@@ -122,7 +128,7 @@ contract TestOrangeDopexV2LPAutomatorV1Redeem is Fixture {
 
         // alice locked shares = 69384723072291323 (automator's locked shares) * 1.3e18 (share of alice) / 2.3e18(automator total supply)
         assertEq(
-            IERC6909(address(uniV3Handler)).balanceOf(alice, 51731724170277633442520037625677593345052024787730572352688588083216565283241), // prettier-ignore
+            IERC6909(address(handlerV2)).balanceOf(alice, 51731724170277633442520037625677593345052024787730572352688588083216565283241), // prettier-ignore
             39217452171295095
         );
     }
@@ -137,7 +143,7 @@ contract TestOrangeDopexV2LPAutomatorV1Redeem is Fixture {
         _rebalanceMintSingle(-196780, 138769446144582646);
 
         // set handler paused
-        stdstore.target(address(uniV3Handler)).sig("paused()").checked_write(true);
+        stdstore.target(address(handlerV2)).sig("paused()").checked_write(true);
 
         // now the balance of WETH in automator ≈ 1 ether
         vm.prank(alice);
@@ -149,7 +155,7 @@ contract TestOrangeDopexV2LPAutomatorV1Redeem is Fixture {
 
         // 1.3 ether * 138769446144582646 (automator total handler shares) / 2.3 ether (automator total supply) = 78434904342590191
         assertApproxEqRel(
-            DopexV2Helper.balanceOfHandler(alice, pool, emptyHook, -196780),
+            DopexV2Helper.balanceOfHandler(alice, pool, address(0), -196780),
             78434904342590191,
             0.0001e18 // allow 0.01% diff
         );
@@ -196,14 +202,14 @@ contract TestOrangeDopexV2LPAutomatorV1Redeem is Fixture {
             liquidity: _toSingleTickLiquidity(
                 _oor_belowLower,
                 0,
-                (_amountUsdc / 2) - (_amountUsdc / 2).mulDivDown(pool.fee(), 1e6 - pool.fee())
+                (_amountUsdc / 2) - (_amountUsdc / 2).mulDiv(pool.fee(), 1e6 - pool.fee())
             )
         });
         _ticksMint[1] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({
             tick: _oor_aboveLower,
             liquidity: _toSingleTickLiquidity(
                 _oor_aboveLower,
-                (_amountWeth / 2) - (_amountWeth / 2).mulDivDown(pool.fee(), 1e6 - pool.fee()),
+                (_amountWeth / 2) - (_amountWeth / 2).mulDiv(pool.fee(), 1e6 - pool.fee()),
                 0
             )
         });
@@ -216,5 +222,59 @@ contract TestOrangeDopexV2LPAutomatorV1Redeem is Fixture {
             _ticksBurn,
             AutomatorHelper.calculateRebalanceSwapParamsInRebalance(automator, pool, WETH, USDC, _ticksMint, _ticksBurn)
         );
+    }
+
+    function _depositFrom(address account, uint256 amount) internal returns (uint256 shares) {
+        IERC20 _asset = automator.asset();
+        deal(address(_asset), account, amount);
+
+        vm.startPrank(account);
+        _asset.approve(address(automator), amount);
+        shares = automator.deposit(amount);
+        vm.stopPrank();
+    }
+
+    function _outOfRangeBelow(int24 mulOffset) internal view returns (int24 tick, uint256 tokenId) {
+        (, int24 _currentTick, , , , , ) = pool.slot0();
+        int24 _spacing = pool.tickSpacing();
+
+        tick = _currentTick - (_currentTick % _spacing) - _spacing * (mulOffset + 1);
+        tokenId = handlerV2.tokenId(address(pool), address(0), tick, tick + _spacing);
+    }
+
+    function _outOfRangeAbove(int24 mulOffset) internal view returns (int24 tick, uint256 tokenId) {
+        (, int24 _currentTick, , , , , ) = pool.slot0();
+        int24 _spacing = pool.tickSpacing();
+
+        tick = _currentTick - (_currentTick % _spacing) + _spacing * mulOffset;
+        tokenId = handlerV2.tokenId(address(pool), address(0), tick, tick + _spacing);
+    }
+
+    function _toSingleTickLiquidity(int24 lower, uint256 amount0, uint256 amount1) internal view returns (uint128) {
+        (, int24 _currentTick, , , , , ) = pool.slot0();
+        return
+            LiquidityAmounts.getLiquidityForAmounts(
+                _currentTick.getSqrtRatioAtTick(),
+                lower.getSqrtRatioAtTick(),
+                (lower + pool.tickSpacing()).getSqrtRatioAtTick(),
+                amount0,
+                amount1
+            );
+    }
+
+    function _rebalanceMintSingle(int24 lowerTick, uint128 liquidity) internal {
+        IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[]
+            memory _ticksMint = new OrangeDopexV2LPAutomatorV1.RebalanceTickInfo[](1);
+        _ticksMint[0] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({tick: lowerTick, liquidity: liquidity});
+        automator.rebalance(
+            _ticksMint,
+            new OrangeDopexV2LPAutomatorV1.RebalanceTickInfo[](0),
+            IOrangeDopexV2LPAutomatorV1.RebalanceSwapParams(0, 0, 0, 0)
+        );
+    }
+
+    function _getQuote(address base, address quote, uint128 baseAmount) internal view returns (uint256) {
+        (, int24 _currentTick, , , , , ) = pool.slot0();
+        return OracleLibrary.getQuoteAtTick(_currentTick, baseAmount, base, quote);
     }
 }
