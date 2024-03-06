@@ -212,39 +212,6 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /// @inheritdoc IOrangeStrykeLPAutomatorV1_1
-    function getAutomatorPositions()
-        external
-        view
-        returns (uint256 balanceDepositAsset, uint256 balanceCounterAsset, RebalanceTickInfo[] memory ticks)
-    {
-        int24 _spacing = poolTickSpacing;
-
-        // 1. calculate the total assets in Dopex pools
-        uint256 _length = _activeTicks.length();
-        uint256 _tid;
-        uint128 _liquidity;
-        (int24 _lt, int24 _ut) = (0, 0);
-
-        ticks = new RebalanceTickInfo[](_length);
-
-        for (uint256 i = 0; i < _length; ) {
-            _lt = int24(uint24(_activeTicks.at(i)));
-            _ut = _lt + _spacing;
-            _tid = handler.tokenId(address(pool), handlerHook, _lt, _ut);
-
-            _liquidity = handler.convertToAssets((handler.balanceOf(address(this), _tid)).toUint128(), _tid);
-
-            ticks[i] = RebalanceTickInfo({tick: _lt, liquidity: _liquidity});
-
-            unchecked {
-                i++;
-            }
-        }
-
-        return (asset.balanceOf(address(this)), counterAsset.balanceOf(address(this)), ticks);
-    }
-
-    /// @inheritdoc IOrangeStrykeLPAutomatorV1_1
     function totalAssets() public view returns (uint256) {
         // 1. calculate the total assets in Dopex pools
         uint256 _length = _activeTicks.length();
@@ -303,64 +270,6 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
     }
 
     /// @inheritdoc IOrangeStrykeLPAutomatorV1_1
-    function freeAssets() public view returns (uint256) {
-        // 1. calculate the free assets in Dopex pools
-        uint256 _length = _activeTicks.length();
-        uint256 _tid;
-        uint128 _liquidity;
-        (int24 _lt, int24 _ut) = (0, 0);
-        (uint256 _sum0, uint256 _sum1) = (0, 0);
-        (uint256 _a0, uint256 _a1) = (0, 0);
-
-        (uint160 _sqrtRatioX96, , , , , , ) = pool.slot0();
-
-        for (uint256 i = 0; i < _length; ) {
-            _lt = int24(uint24(_activeTicks.at(i)));
-            _ut = _lt + poolTickSpacing;
-            _tid = handler.tokenId(address(pool), handlerHook, _lt, _ut);
-
-            _liquidity = handler.redeemableLiquidity(address(this), _tid).toUint128();
-
-            (_a0, _a1) = LiquidityAmounts.getAmountsForLiquidity(
-                _sqrtRatioX96,
-                _lt.getSqrtRatioAtTick(),
-                _ut.getSqrtRatioAtTick(),
-                _liquidity
-            );
-
-            _sum0 += _a0;
-            _sum1 += _a1;
-
-            unchecked {
-                i++;
-            }
-        }
-
-        // 2. merge into the total assets in the automator
-        (uint256 _base, uint256 _quote) = (counterAsset.balanceOf(address(this)), asset.balanceOf(address(this)));
-
-        if (address(asset) == pool.token0()) {
-            _base += _sum1;
-            _quote += _sum0;
-        } else {
-            _base += _sum0;
-            _quote += _sum1;
-        }
-
-        return
-            _quote +
-            quoter.getQuote(
-                ChainlinkQuoter.QuoteRequest({
-                    baseToken: address(counterAsset),
-                    quoteToken: address(asset),
-                    baseAmount: _base,
-                    baseUsdFeed: counterAssetUsdFeed,
-                    quoteUsdFeed: assetUsdFeed
-                })
-            );
-    }
-
-    /// @inheritdoc IOrangeStrykeLPAutomatorV1_1
     function convertToShares(uint256 assets) external view returns (uint256) {
         // NOTE: no need to check total supply as it is checked in deposit function.
         return assets.mulDiv(totalSupply(), totalAssets());
@@ -371,33 +280,6 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
         uint256 _supply = totalSupply();
 
         return _supply == 0 ? shares : shares.mulDiv(totalAssets(), _supply);
-    }
-
-    /// @inheritdoc IOrangeStrykeLPAutomatorV1_1
-    function getTickAllLiquidity(int24 tick) external view returns (uint128) {
-        uint256 _share = handler.balanceOf(
-            address(this),
-            handler.tokenId(address(pool), handlerHook, tick, tick + poolTickSpacing)
-        );
-
-        if (_share == 0) return 0;
-
-        return
-            handler.convertToAssets(
-                _share.toUint128(),
-                handler.tokenId(address(pool), handlerHook, tick, tick + poolTickSpacing)
-            );
-    }
-
-    /// @inheritdoc IOrangeStrykeLPAutomatorV1_1
-    function getTickFreeLiquidity(int24 tick) external view returns (uint128) {
-        return
-            handler
-                .redeemableLiquidity(
-                    address(this),
-                    handler.tokenId(address(pool), handlerHook, tick, tick + poolTickSpacing)
-                )
-                .toUint128();
     }
 
     /// @inheritdoc IOrangeStrykeLPAutomatorV1_1

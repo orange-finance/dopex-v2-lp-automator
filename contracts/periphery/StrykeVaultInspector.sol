@@ -1,0 +1,189 @@
+// SPDX-License-Identifier: GPL-3.0
+
+pragma solidity 0.8.19;
+
+import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
+import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
+import {IERC20} from "@openzeppelin/contracts//interfaces/IERC20.sol";
+import {SafeCast} from "@openzeppelin/contracts//utils/math/SafeCast.sol";
+import {IOrangeStrykeLPAutomatorV1_1} from "./../interfaces/IOrangeStrykeLPAutomatorV1_1.sol";
+import {IUniswapV3SingleTickLiquidityHandlerV2} from "./../vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
+import {ChainlinkQuoter} from "./../ChainlinkQuoter.sol";
+import {UniswapV3SingleTickLiquidityLib} from "./../lib/UniswapV3SingleTickLiquidityLib.sol";
+
+contract StrykeVaultInspector {
+    using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandlerV2;
+    using SafeCast for uint256;
+    using TickMath for int24;
+
+    /**
+     * @dev Retrieves the total liquidity of a given tick range.
+     * @param tick The tick value representing the range.
+     * @return The total liquidity of the tick range.
+     */
+    function getTickAllLiquidity(IOrangeStrykeLPAutomatorV1_1 automator, int24 tick) external view returns (uint128) {
+        IUniswapV3SingleTickLiquidityHandlerV2 _handler = automator.handler();
+        IUniswapV3Pool _pool = automator.pool();
+        address _handlerHook = automator.handlerHook();
+        int24 _spacing = automator.poolTickSpacing();
+
+        uint256 _share = _handler.balanceOf(
+            address(this),
+            _handler.tokenId(address(_pool), _handlerHook, tick, tick + _spacing)
+        );
+
+        if (_share == 0) return 0;
+
+        return
+            _handler.convertToAssets(
+                _share.toUint128(),
+                _handler.tokenId(address(_pool), _handlerHook, tick, tick + _spacing)
+            );
+    }
+
+    /**
+     * @dev Retrieves the amount of free liquidity for a given tick.
+     * @param tick The tick value for which to retrieve the free liquidity.
+     * @return The amount of free liquidity for the specified tick.
+     */
+    function getTickFreeLiquidity(IOrangeStrykeLPAutomatorV1_1 automator, int24 tick) external view returns (uint128) {
+        IUniswapV3SingleTickLiquidityHandlerV2 _handler = automator.handler();
+        IUniswapV3Pool _pool = automator.pool();
+        address _handlerHook = automator.handlerHook();
+        int24 _spacing = automator.poolTickSpacing();
+
+        return
+            _handler
+                .redeemableLiquidity(
+                    address(this),
+                    _handler.tokenId(address(_pool), _handlerHook, tick, tick + _spacing)
+                )
+                .toUint128();
+    }
+
+    /**
+     * @dev Calculates the total free assets in Dopex pools and returns the sum.
+     * Free assets are the assets that can be redeemed from the pools.
+     * This function iterates through the active ticks in the pool and calculates the liquidity
+     * that can be redeemed for each tick. It then converts the liquidity to token amounts using
+     * the current sqrt ratio and tick values. The sum of token amounts is calculated and merged
+     * with the total assets in the automator. Finally, the quote value is obtained using the
+     * current tick and the base value, and returned as the result.
+     * @return The total free assets in Dopex pools.
+     */
+    // TODO: fix stack too deep
+    function freeAssets(IOrangeStrykeLPAutomatorV1_1 automator) public view returns (uint256) {
+        // 1. calculate the free assets in Dopex pools
+        IUniswapV3Pool _pool = automator.pool();
+        IUniswapV3SingleTickLiquidityHandlerV2 _handler = automator.handler();
+        address _handlerHook = automator.handlerHook();
+        int24[] memory _ticks = automator.getActiveTicks();
+        int24 _spacing = automator.poolTickSpacing();
+        uint256 _tLen = _ticks.length;
+
+        uint256 _tid;
+        uint128 _liquidity;
+        (int24 _lt, int24 _ut) = (0, 0);
+        (uint256 _sum0, uint256 _sum1) = (0, 0);
+        (uint256 _a0, uint256 _a1) = (0, 0);
+
+        (uint160 _sqrtRatioX96, , , , , , ) = _pool.slot0();
+
+        for (uint256 i = 0; i < _tLen; ) {
+            _lt = _ticks[i];
+            _ut = _lt + _spacing;
+            _tid = _handler.tokenId(address(_pool), _handlerHook, _lt, _ut);
+
+            _liquidity = _handler.redeemableLiquidity(address(this), _tid).toUint128();
+
+            (_a0, _a1) = LiquidityAmounts.getAmountsForLiquidity(
+                _sqrtRatioX96,
+                _lt.getSqrtRatioAtTick(),
+                _ut.getSqrtRatioAtTick(),
+                _liquidity
+            );
+
+            _sum0 += _a0;
+            _sum1 += _a1;
+
+            unchecked {
+                i++;
+            }
+        }
+
+        // 2. merge into the total assets in the automator
+        IERC20 _asset = automator.asset();
+        IERC20 _counterAsset = automator.counterAsset();
+        (uint256 _base, uint256 _quote) = (_counterAsset.balanceOf(address(this)), _asset.balanceOf(address(this)));
+
+        if (address(_asset) == _pool.token0()) {
+            _base += _sum1;
+            _quote += _sum0;
+        } else {
+            _base += _sum0;
+            _quote += _sum1;
+        }
+
+        return
+            _quote +
+            automator.quoter().getQuote(
+                ChainlinkQuoter.QuoteRequest({
+                    baseToken: address(_counterAsset),
+                    quoteToken: address(_asset),
+                    baseAmount: _base,
+                    baseUsdFeed: automator.counterAssetUsdFeed(),
+                    quoteUsdFeed: automator.assetUsdFeed()
+                })
+            );
+    }
+
+    /**
+     * @dev Retrieves the positions of the automator.
+     * @return balanceDepositAsset The balance of the deposit asset.
+     * @return balanceCounterAsset The balance of the counter asset.
+     * @return rebalanceTicks An array of structs representing the active ticks and its liquidity.
+     */
+    function getAutomatorPositions(
+        IOrangeStrykeLPAutomatorV1_1 automator
+    )
+        external
+        view
+        returns (
+            uint256 balanceDepositAsset,
+            uint256 balanceCounterAsset,
+            IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[] memory rebalanceTicks
+        )
+    {
+        IUniswapV3Pool _pool = automator.pool();
+        IUniswapV3SingleTickLiquidityHandlerV2 _handler = automator.handler();
+        address _handlerHook = automator.handlerHook();
+        int24 _spacing = automator.poolTickSpacing();
+        int24[] memory _ticks = automator.getActiveTicks();
+        uint256 _tLen = _ticks.length;
+        uint256 _tid;
+        uint128 _liquidity;
+        (int24 _lt, int24 _ut) = (0, 0);
+
+        rebalanceTicks = new IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[](_tLen);
+
+        for (uint256 i = 0; i < _tLen; ) {
+            _lt = _ticks[i];
+            _ut = _lt + _spacing;
+            _tid = _handler.tokenId(address(_pool), _handlerHook, _lt, _ut);
+
+            _liquidity = _handler.convertToAssets((_handler.balanceOf(address(this), _tid)).toUint128(), _tid);
+
+            rebalanceTicks[i] = IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo({tick: _lt, liquidity: _liquidity});
+
+            unchecked {
+                i++;
+            }
+        }
+
+        IERC20 _asset = automator.asset();
+        IERC20 _counterAsset = automator.counterAsset();
+
+        return (_asset.balanceOf(address(this)), _counterAsset.balanceOf(address(this)), rebalanceTicks);
+    }
+}
