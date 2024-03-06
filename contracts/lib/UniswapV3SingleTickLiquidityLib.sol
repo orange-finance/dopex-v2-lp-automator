@@ -74,10 +74,10 @@ library UniswapV3SingleTickLiquidityLib {
 
         IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory _tki = handler.tokenIds(tokenId_);
 
-        // Starting from handler v2, totalLiquidity might be less than liquidityUsed because reservedLiquidity has been introduced.
-        // Therefore, if totalLiquidity is less than liquidityUsed, we should return 0 to avoid underflow.
-        if (_tki.totalLiquidity < _tki.liquidityUsed) return 0;
-        uint256 _freeLiquidity = _tki.totalLiquidity - _tki.liquidityUsed;
+        // FIXME: wrong locked liquidity calculation
+        uint256 _freeLiquidity = _tki.totalLiquidity < _tki.liquidityUsed
+            ? 0
+            : _tki.totalLiquidity - _tki.liquidityUsed;
         uint256 _maxRedeem = handler.convertToAssets(uint128(_shares), tokenId_) - 1;
 
         if (_freeLiquidity >= _maxRedeem) return 0;

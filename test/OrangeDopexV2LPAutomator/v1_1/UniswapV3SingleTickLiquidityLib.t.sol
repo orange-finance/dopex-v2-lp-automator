@@ -2,14 +2,19 @@
 
 pragma solidity 0.8.19;
 
-/* solhint-disable func-name-mixedcase */
+/* solhint-disable func-name-mixedcase, custom-errors */
 import {WETH_USDC_Fixture} from "./fixture/WETH_USDC_Fixture.t.sol";
 import {DealExtension} from "../../helper/DealExtension.t.sol";
 import {UniswapV3SingleTickLiquidityLib} from "./../../../contracts/lib/UniswapV3SingleTickLiquidityLib.sol";
 import {IUniswapV3SingleTickLiquidityHandlerV2} from "./../../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
+import {UniswapV3Helper} from "../../helper/UniswapV3Helper.t.sol";
+import {DopexV2Helper} from "../../helper/DopexV2Helper.t.sol";
+import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
 contract TestUniswapV3SingleTickLiquidityLib is WETH_USDC_Fixture, DealExtension {
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandlerV2;
+    using UniswapV3Helper for IUniswapV3Pool;
+    using DopexV2Helper for IUniswapV3Pool;
 
     function setUp() public override {
         vm.createSelectFork("arb", 181171193);
@@ -43,10 +48,6 @@ contract TestUniswapV3SingleTickLiquidityLib is WETH_USDC_Fixture, DealExtension
         int24 _tickLower = _currentTick - (_currentTick % _spacing) + _spacing;
         int24 _tickUpper = _tickLower + _spacing;
 
-        emit log_named_int("current tick", _currentTick);
-        emit log_named_int("lower tick", _tickLower);
-        emit log_named_int("upper tick", _tickUpper);
-
         uint256 _tokenId = handlerV2.tokenId(address(pool), address(0), _tickLower, _tickUpper);
         /*/////////////////////////////////////////////////////////////
                             case: shares not used
@@ -60,13 +61,6 @@ contract TestUniswapV3SingleTickLiquidityLib is WETH_USDC_Fixture, DealExtension
         assertEq(_redeemable, _liquidity - 1, "all liquidity redeemable (rounded down)");
         IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory _tokenIdInfo = handlerV2.tokenIds(_tokenId);
 
-        emit log_named_uint(
-            "totalLiquidity - liquidity used",
-            _tokenIdInfo.totalLiquidity - _tokenIdInfo.liquidityUsed
-        );
-        emit log_named_uint("total liquidity", _tokenIdInfo.totalLiquidity);
-        emit log_named_uint("liquidity used", _tokenIdInfo.liquidityUsed);
-
         /*/////////////////////////////////////////////////////////////
                             case: shares partially used
         /////////////////////////////////////////////////////////////*/
@@ -74,13 +68,6 @@ contract TestUniswapV3SingleTickLiquidityLib is WETH_USDC_Fixture, DealExtension
         _useDopexPosition(_tickLower, _tickUpper, 599999999);
         _redeemable = handlerV2.redeemableLiquidity(address(this), _tokenId);
         _tokenIdInfo = handlerV2.tokenIds(_tokenId);
-
-        emit log_named_uint(
-            "totalLiquidity - liquidity used",
-            _tokenIdInfo.totalLiquidity - _tokenIdInfo.liquidityUsed
-        );
-        emit log_named_uint("total liquidity", _tokenIdInfo.totalLiquidity);
-        emit log_named_uint("liquidity used", _tokenIdInfo.liquidityUsed);
 
         assertEq(_redeemable, _tokenIdInfo.totalLiquidity - _tokenIdInfo.liquidityUsed, "partial liquidity redeemable");
 
@@ -92,17 +79,38 @@ contract TestUniswapV3SingleTickLiquidityLib is WETH_USDC_Fixture, DealExtension
         _redeemable = handlerV2.redeemableLiquidity(address(this), _tokenId);
         _tokenIdInfo = handlerV2.tokenIds(_tokenId);
 
-        emit log_named_uint(
-            "totalLiquidity - liquidity used",
-            _tokenIdInfo.totalLiquidity - _tokenIdInfo.liquidityUsed
-        );
-        emit log_named_uint("total liquidity", _tokenIdInfo.totalLiquidity);
-        emit log_named_uint("liquidity used", _tokenIdInfo.liquidityUsed);
-
         assertEq(_redeemable, 0, "no liquidity redeemable");
     }
 
-    function test_myLockedLiquidity() public {
+    function test_redeemableLiquidity_shouldNotUnderflow() public {
+        deal(address(WETH), address(this), 10000 ether);
+        dealUsdc(address(this), 1_000_000e6);
+
+        WETH.approve(address(manager), type(uint256).max);
+        USDC.approve(address(manager), type(uint256).max);
+
+        int24 _currentLower = pool.currentLower();
+
+        int24 _tickLower = _currentLower - 10;
+        int24 _tickUpper = _currentLower;
+
+        _mintDopexPosition(_tickLower, _tickUpper, pool.singleLiqLeft(_tickLower, 100_000e6));
+
+        uint256 _tokenId = handlerV2.tokenId(address(pool), address(0), _tickLower, _tickUpper);
+
+        uint128 _twoThirdOfFreeLiquidity = (pool.freeLiquidityOfTick(address(0), _tickLower) * 2) / 3;
+        // use two-third of the liquidity
+        _useDopexPosition(_tickLower, _tickUpper, _twoThirdOfFreeLiquidity);
+
+        // reserve same amount of liquidity
+        // then totalLiquidity < liquidityUsed = reservedLiquidity
+        _reserveDopexPosition(_tickLower, _tickUpper, _twoThirdOfFreeLiquidity);
+
+        // redeemable liquidity (totalLiquidity - liquidityUsed) should not underflow. It should be 0
+        assertEq(0, handlerV2.redeemableLiquidity(address(this), _tokenId));
+    }
+
+    function test_lockedLiquidity() public {
         deal(address(WETH), address(this), 10000 ether);
         dealUsdc(address(this), 1000_000e6);
 
@@ -114,10 +122,6 @@ contract TestUniswapV3SingleTickLiquidityLib is WETH_USDC_Fixture, DealExtension
 
         int24 _tickLower = _currentTick - (_currentTick % _spacing) + _spacing;
         int24 _tickUpper = _tickLower + _spacing;
-
-        emit log_named_int("current tick", _currentTick);
-        emit log_named_int("lower tick", _tickLower);
-        emit log_named_int("upper tick", _tickUpper);
 
         uint256 _tokenId = handlerV2.tokenId(address(pool), address(0), _tickLower, _tickUpper);
         /*/////////////////////////////////////////////////////////////
@@ -140,13 +144,6 @@ contract TestUniswapV3SingleTickLiquidityLib is WETH_USDC_Fixture, DealExtension
         _locked = handlerV2.lockedLiquidity(address(this), _tokenId);
         _tokenIdInfo = handlerV2.tokenIds(_tokenId);
 
-        emit log_named_uint(
-            "totalLiquidity - liquidity used",
-            _tokenIdInfo.totalLiquidity - _tokenIdInfo.liquidityUsed
-        );
-        emit log_named_uint("total liquidity", _tokenIdInfo.totalLiquidity);
-        emit log_named_uint("liquidity used", _tokenIdInfo.liquidityUsed);
-
         assertEq(
             _locked,
             999999999 - (_tokenIdInfo.totalLiquidity - _tokenIdInfo.liquidityUsed),
@@ -161,17 +158,10 @@ contract TestUniswapV3SingleTickLiquidityLib is WETH_USDC_Fixture, DealExtension
         _locked = handlerV2.lockedLiquidity(address(this), _tokenId);
         _tokenIdInfo = handlerV2.tokenIds(_tokenId);
 
-        emit log_named_uint(
-            "totalLiquidity - liquidity used",
-            _tokenIdInfo.totalLiquidity - _tokenIdInfo.liquidityUsed
-        );
-        emit log_named_uint("total liquidity", _tokenIdInfo.totalLiquidity);
-        emit log_named_uint("liquidity used", _tokenIdInfo.liquidityUsed);
-
         assertEq(_locked, 999999999, "all liquidity locked (rounded down)");
     }
 
-    function test_myLockedLiquidity_anotherMinterExists() public {
+    function test_lockedLiquidity_anotherMinterExists() public {
         deal(address(WETH), address(this), 10000 ether);
         dealUsdc(address(this), 1000_000e6);
         WETH.approve(address(manager), type(uint256).max);
@@ -214,6 +204,42 @@ contract TestUniswapV3SingleTickLiquidityLib is WETH_USDC_Fixture, DealExtension
         assertEq(_locked, 0, "no liquidity locked");
     }
 
+    // FIXME: wrong locked liquidity calculation
+    function test_lockedLiquidity_shouldNotUnderflow() public {
+        deal(address(WETH), address(this), 10000 ether);
+        dealUsdc(address(this), 1_000_000e6);
+
+        WETH.approve(address(manager), type(uint256).max);
+        USDC.approve(address(manager), type(uint256).max);
+
+        int24 _currentLower = pool.currentLower();
+
+        int24 _tickLower = _currentLower - 10;
+        int24 _tickUpper = _currentLower;
+
+        uint128 _mintLiquidity = pool.singleLiqLeft(_tickLower, 100_000e6);
+
+        _mintDopexPosition(_tickLower, _tickUpper, _mintLiquidity);
+
+        uint128 _twoThirdOfFreeLiquidity = (pool.freeLiquidityOfTick(address(0), _tickLower) * 2) / 3;
+        // use two-third of the liquidity
+        _useDopexPosition(_tickLower, _tickUpper, _twoThirdOfFreeLiquidity);
+
+        // reserve same amount of liquidity
+        // then totalLiquidity < liquidityUsed = reservedLiquidity
+        _reserveDopexPosition(_tickLower, _tickUpper, _twoThirdOfFreeLiquidity);
+
+        uint256 _tokenId = handlerV2.tokenId(address(pool), address(0), _tickLower, _tickUpper);
+
+        IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory _ti = handlerV2.tokenIds(_tokenId);
+        emit log_named_uint("ti.totalLiquidity", _ti.totalLiquidity);
+        emit log_named_uint("ti.liquidityUsed", _ti.liquidityUsed);
+        emit log_named_uint("ti.reservedLiquidity", _ti.reservedLiquidity);
+
+        // locked liquidity calculation should not underflow.
+        // assertEq(_mintLiquidity, handlerV2.lockedLiquidity(address(this), _tokenId));
+    }
+
     function _mintDopexPosition(int24 lowerTick, int24 upperTick, uint128 liquidity) internal {
         IUniswapV3SingleTickLiquidityHandlerV2.MintPositionParams
             memory _params = IUniswapV3SingleTickLiquidityHandlerV2.MintPositionParams({
@@ -238,5 +264,25 @@ contract TestUniswapV3SingleTickLiquidityLib is WETH_USDC_Fixture, DealExtension
             });
 
         manager.usePosition(handlerV2, abi.encode(_params, ""));
+    }
+
+    function _reserveDopexPosition(int24 lowerTick, int24 upperTick, uint128 liquidityToReserve) internal {
+        uint128 _shares = handlerV2.convertToShares(
+            liquidityToReserve,
+            handlerV2.tokenId(address(pool), address(0), lowerTick, upperTick)
+        );
+
+        IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams
+            memory _params = IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams({
+                pool: address(pool),
+                hook: address(0),
+                tickLower: lowerTick,
+                tickUpper: upperTick,
+                shares: _shares
+            });
+
+        // solhint-disable-next-line avoid-low-level-calls
+        (bool ok, ) = address(handlerV2).call(abi.encodeWithSignature("reserveLiquidity(bytes)", abi.encode(_params)));
+        require(ok, "reserveLiquidity failed");
     }
 }
