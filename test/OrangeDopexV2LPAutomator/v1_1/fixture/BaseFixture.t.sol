@@ -7,6 +7,8 @@ import {Test, StdStorage, stdStorage} from "forge-std/Test.sol";
 import {IDopexV2PositionManager} from "./../../../../contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
 import {IUniswapV3SingleTickLiquidityHandlerV2} from "./../../../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 import {UniswapV3SingleTickLiquidityLib} from "./../../../../contracts/lib/UniswapV3SingleTickLiquidityLib.sol";
+import {ChainlinkQuoter} from "./../../../../contracts/ChainlinkQuoter.sol";
+import {StrykeVaultInspector} from "./../../../../contracts/periphery/StrykeVaultInspector.sol";
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import {IQuoter} from "@uniswap/v3-periphery/contracts/interfaces/IQuoter.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
@@ -37,6 +39,13 @@ contract BaseFixture is Test {
     ISwapRouter public router = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
     IQuoter public quoter = IQuoter(0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6);
 
+    // base contracts
+    ChainlinkQuoter public chainlinkQuoter;
+    StrykeVaultInspector public inspector;
+
     // solhint-disable-next-line no-empty-blocks
-    function setUp() public virtual {}
+    function setUp() public virtual {
+        chainlinkQuoter = new ChainlinkQuoter(address(0xFdB631F5EE196F0ed6FAa767959853A9F217697D));
+        inspector = new StrykeVaultInspector();
+    }
 }

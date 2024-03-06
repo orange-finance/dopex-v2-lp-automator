@@ -2,12 +2,12 @@
 
 pragma solidity 0.8.19;
 
-/* solhint-disable func-name-mixedcase, var-name-mixedcase */
+/* solhint-disable func-name-mixedcase, var-name-mixedcase, contract-name-camelcase */
 import {StdStorage, stdStorage} from "forge-std/StdStorage.sol";
 import {WETH_USDC_Fixture} from "./fixture/WETH_USDC_Fixture.t.sol";
-import {AutomatorHelper} from "../../helper/AutomatorHelper.t.sol";
+import {auto11} from "../../helper/AutomatorHelperV1_1.t.sol";
 import {IERC6909} from "../../../contracts/vendor/dopexV2/IERC6909.sol";
-import {IOrangeDopexV2LPAutomatorV1} from "../../../contracts/interfaces/IOrangeDopexV2LPAutomatorV1.sol";
+import {IOrangeStrykeLPAutomatorV1_1} from "./../../../contracts/interfaces/IOrangeStrykeLPAutomatorV1_1.sol";
 import {IUniswapV3SingleTickLiquidityHandlerV2} from "./../../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 import {OrangeDopexV2LPAutomatorV1} from "./../../../contracts/OrangeDopexV2LPAutomatorV1.sol";
 import {UniswapV3SingleTickLiquidityLib} from "./../../../contracts/lib/UniswapV3SingleTickLiquidityLib.sol";
@@ -20,7 +20,7 @@ import {UniswapV3Helper} from "../../helper/UniswapV3Helper.t.sol";
 import {DopexV2Helper} from "../../helper/DopexV2Helper.t.sol";
 import {IERC20} from "@openzeppelin/contracts//interfaces/IERC20.sol";
 
-contract TestOrangeDopexV2LPAutomatorV1Redeem is WETH_USDC_Fixture {
+contract TestOrangeStrykeLPAutomatorV1_1Redeem is WETH_USDC_Fixture {
     using stdStorage for StdStorage;
     using FullMath for uint256;
     using UniswapV3Helper for IUniswapV3Pool;
@@ -40,7 +40,7 @@ contract TestOrangeDopexV2LPAutomatorV1Redeem is WETH_USDC_Fixture {
         assertEq(WETH.balanceOf(alice), 0);
 
         vm.prank(alice);
-        (uint256 _assets, IOrangeDopexV2LPAutomatorV1.LockedDopexShares[] memory _locked) = automator.redeem(1e18, 0);
+        (uint256 _assets, IOrangeStrykeLPAutomatorV1_1.LockedDopexShares[] memory _locked) = automator.redeem(1e18, 0);
 
         assertEq(_locked.length, 0);
         assertEq(_assets, 1 ether);
@@ -62,7 +62,7 @@ contract TestOrangeDopexV2LPAutomatorV1Redeem is WETH_USDC_Fixture {
         _mint(_balanceBasedWeth, _balanceBasedUsdc, _oor_belowLower, _oor_aboveLower);
 
         vm.startPrank(alice);
-        (uint256 _assets, IOrangeDopexV2LPAutomatorV1.LockedDopexShares[] memory _locked) = automator.redeem(automator.balanceOf(alice), 0); // prettier-ignore
+        (uint256 _assets, IOrangeStrykeLPAutomatorV1_1.LockedDopexShares[] memory _locked) = automator.redeem(automator.balanceOf(alice), 0); // prettier-ignore
         vm.stopPrank();
 
         assertEq(_locked.length, 0);
@@ -86,7 +86,7 @@ contract TestOrangeDopexV2LPAutomatorV1Redeem is WETH_USDC_Fixture {
 
         // now the balance of WETH in automator ≈ 1 ether
         vm.prank(alice);
-        (uint256 _assets, IOrangeDopexV2LPAutomatorV1.LockedDopexShares[] memory _locked) = automator.redeem(1.3 ether, 0); // prettier-ignore
+        (uint256 _assets, IOrangeStrykeLPAutomatorV1_1.LockedDopexShares[] memory _locked) = automator.redeem(1.3 ether, 0); // prettier-ignore
 
         // 1.3 ether * 1 ether (redeemable WETH in automator) / 2.3 ether(automator total supply) = 565217391304347826
         // some error in calculation because WETH is not actually used to mint dopex position as expected (less amount is used)
@@ -119,7 +119,7 @@ contract TestOrangeDopexV2LPAutomatorV1Redeem is WETH_USDC_Fixture {
 
         // redeem alice's all shares
         vm.prank(alice);
-        (uint256 _assets, IOrangeDopexV2LPAutomatorV1.LockedDopexShares[] memory _locked) = automator.redeem(1.3e18, 0); // prettier-ignore
+        (uint256 _assets, IOrangeStrykeLPAutomatorV1_1.LockedDopexShares[] memory _locked) = automator.redeem(1.3e18, 0); // prettier-ignore
 
         // 1.3e18 * 1.65 WETH (redeemable WETH in automator) / 2.3e18 (automator total supply) = 932608695652173913
         // some error in calculation because WETH is not actually used to mint dopex position as expected (less amount is used)
@@ -193,11 +193,11 @@ contract TestOrangeDopexV2LPAutomatorV1Redeem is WETH_USDC_Fixture {
     }
 
     function _mint(uint256 _amountWeth, uint256 _amountUsdc, int24 _oor_belowLower, int24 _oor_aboveLower) public {
-        IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[]
-            memory _ticksMint = new IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[](2);
+        IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[]
+            memory _ticksMint = new IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[](2);
 
         // token0: WETH, token1: USDC
-        _ticksMint[0] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({
+        _ticksMint[0] = IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo({
             tick: _oor_belowLower,
             liquidity: _toSingleTickLiquidity(
                 _oor_belowLower,
@@ -205,7 +205,7 @@ contract TestOrangeDopexV2LPAutomatorV1Redeem is WETH_USDC_Fixture {
                 (_amountUsdc / 2) - (_amountUsdc / 2).mulDiv(pool.fee(), 1e6 - pool.fee())
             )
         });
-        _ticksMint[1] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({
+        _ticksMint[1] = IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo({
             tick: _oor_aboveLower,
             liquidity: _toSingleTickLiquidity(
                 _oor_aboveLower,
@@ -214,13 +214,13 @@ contract TestOrangeDopexV2LPAutomatorV1Redeem is WETH_USDC_Fixture {
             )
         });
 
-        IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[]
-            memory _ticksBurn = new IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[](0);
+        IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[]
+            memory _ticksBurn = new IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[](0);
 
         automator.rebalance(
             _ticksMint,
             _ticksBurn,
-            AutomatorHelper.calculateRebalanceSwapParamsInRebalance(automator, pool, WETH, USDC, _ticksMint, _ticksBurn)
+            auto11.calculateRebalanceSwapParamsInRebalance(automator, pool, WETH, USDC, _ticksMint, _ticksBurn)
         );
     }
 
@@ -263,13 +263,13 @@ contract TestOrangeDopexV2LPAutomatorV1Redeem is WETH_USDC_Fixture {
     }
 
     function _rebalanceMintSingle(int24 lowerTick, uint128 liquidity) internal {
-        IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[]
-            memory _ticksMint = new OrangeDopexV2LPAutomatorV1.RebalanceTickInfo[](1);
-        _ticksMint[0] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({tick: lowerTick, liquidity: liquidity});
+        IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[]
+            memory _ticksMint = new IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[](1);
+        _ticksMint[0] = IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo({tick: lowerTick, liquidity: liquidity});
         automator.rebalance(
             _ticksMint,
-            new OrangeDopexV2LPAutomatorV1.RebalanceTickInfo[](0),
-            IOrangeDopexV2LPAutomatorV1.RebalanceSwapParams(0, 0, 0, 0)
+            new IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[](0),
+            IOrangeStrykeLPAutomatorV1_1.RebalanceSwapParams(0, 0, 0, 0)
         );
     }
 

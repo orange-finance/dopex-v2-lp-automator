@@ -2,13 +2,13 @@
 
 pragma solidity 0.8.19;
 
-/* solhint-disable func-name-mixedcase , var-name-mixedcase, state-visibility */
+/* solhint-disable func-name-mixedcase , var-name-mixedcase, state-visibility, contract-name-camelcase */
 import {OrangeDopexV2LPAutomatorV1} from "../../../contracts/OrangeDopexV2LPAutomatorV1.sol";
 import {ChainlinkQuoter} from "../../../contracts/ChainlinkQuoter.sol";
 
 import {WETH_USDC_Fixture} from "./fixture/WETH_USDC_Fixture.t.sol";
 
-contract TestOrangeDopexV2LPAutomatorV1Deploy is WETH_USDC_Fixture {
+contract TestOrangeStrykeLPAutomatorV1_1Deploy is WETH_USDC_Fixture {
     function setUp() public override {
         vm.createSelectFork("arb", 157066571);
         super.setUp();

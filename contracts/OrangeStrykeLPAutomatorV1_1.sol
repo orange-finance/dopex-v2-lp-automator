@@ -72,10 +72,12 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
     uint24 public depositFeePips;
     address public depositFeeRecipient;
 
-    EnumerableSet.UintSet private _activeTicks;
+    EnumerableSet.UintSet internal _activeTicks;
 
     mapping(address => bool) public isOwner;
     mapping(address => bool) public isStrategist;
+
+    uint8 private _decimals;
 
     modifier onlyOwner() {
         if (!isOwner[msg.sender]) revert OnlyOwner();
@@ -129,6 +131,8 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
 
         __ERC20_init(args.name, args.symbol);
 
+        _decimals = IERC20Decimals(address(args.asset)).decimals();
+
         quoter = args.quoter;
         assetUsdFeed = args.assetUsdFeed;
         counterAssetUsdFeed = args.counterAssetUsdFeed;
@@ -144,12 +148,11 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
             : IERC20(args.pool.token0());
         poolTickSpacing = args.pool.tickSpacing();
 
-        if (IERC20Decimals(address(args.asset)).decimals() < 3) revert UnsupportedDecimals();
+        if (_decimals < 3) revert UnsupportedDecimals();
         if (IERC20Decimals(address(counterAsset)).decimals() < 3) revert UnsupportedDecimals();
 
         // The minimum deposit must be set to greater than 0.1% of the asset's value, otherwise, the transaction will result in zero shares being allocated.
-        if (args.minDepositAssets <= (10 ** IERC20Decimals(address(args.asset)).decimals() / 1000))
-            revert MinDepositAssetsTooSmall();
+        if (args.minDepositAssets <= (10 ** _decimals / 1000)) revert MinDepositAssetsTooSmall();
         // The minimum deposit should be set to 1e6 (equivalent to 100% in pip units). Failing to do so will result in a zero deposit fee for the recipient.
         if (args.minDepositAssets < 1e6) revert MinDepositAssetsTooSmall();
 
@@ -205,6 +208,10 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
         depositFeePips = pips;
 
         emit DepositFeePipsSet(pips);
+    }
+
+    function decimals() public view override returns (uint8) {
+        return _decimals;
     }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -317,7 +324,7 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
             uint256 _dead;
             // this cannot overflow as we ensure that the decimals is at least 3 in the constructor
             unchecked {
-                _dead = 10 ** decimals() / 1000;
+                _dead = 10 ** _decimals / 1000;
             }
 
             // NOTE: mint small amount of shares to avoid sandwich attack on the first deposit

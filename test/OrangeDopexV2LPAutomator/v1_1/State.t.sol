@@ -2,22 +2,21 @@
 
 pragma solidity 0.8.19;
 
-/* solhint-disable func-name-mixedcase, var-name-mixedcase, custom-errors */
+/* solhint-disable func-name-mixedcase, var-name-mixedcase, custom-errors, contract-name-camelcase */
 import {WETH_USDC_Fixture} from "./fixture/WETH_USDC_Fixture.t.sol";
-import {IOrangeDopexV2LPAutomatorV1} from "../../../contracts/interfaces/IOrangeDopexV2LPAutomatorV1.sol";
-import {OrangeDopexV2LPAutomatorV1} from "./../../../contracts/OrangeDopexV2LPAutomatorV1.sol";
+import {IOrangeStrykeLPAutomatorV1_1} from "./../../../contracts/interfaces/IOrangeStrykeLPAutomatorV1_1.sol";
 import {ChainlinkQuoter} from "../../../contracts/ChainlinkQuoter.sol";
 import {UniswapV3SingleTickLiquidityLib} from "./../../../contracts/lib/UniswapV3SingleTickLiquidityLib.sol";
 import {IUniswapV3SingleTickLiquidityHandlerV2} from "./../../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
-import {deployAutomatorHarness, AutomatorHarness} from "./harness/AutomatorHarness.t.sol";
-import {AutomatorHelper} from "../../helper/AutomatorHelper.t.sol";
+import {deployAutomatorHarness, DeployArgs, AutomatorHarness} from "./harness/AutomatorHarness.t.sol";
+import {auto11} from "../../helper/AutomatorHelperV1_1.t.sol";
 import {DealExtension} from "../../helper/DealExtension.t.sol";
 import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
 import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import {OracleLibrary} from "@uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol";
 import {IERC20} from "@openzeppelin/contracts//interfaces/IERC20.sol";
 
-contract TestOrangeDopexV2LPAutomatorV1State is WETH_USDC_Fixture, DealExtension {
+contract TestOrangeStrykeLPAutomatorV1_1State is WETH_USDC_Fixture, DealExtension {
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandlerV2;
     using TickMath for int24;
 
@@ -51,21 +50,21 @@ contract TestOrangeDopexV2LPAutomatorV1State is WETH_USDC_Fixture, DealExtension
         uint256 _a0above = WETH.balanceOf(address(automator)) / 3;
         uint256 _a1above = USDC.balanceOf(address(automator)) / 3;
 
-        IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[]
-            memory _ticksMint = new IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[](2);
-        _ticksMint[0] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({
+        IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[]
+            memory _ticksMint = new IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[](2);
+        _ticksMint[0] = IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo({
             tick: _oor_belowLower,
             liquidity: _toSingleTickLiquidity(_oor_belowLower, _a0below, _a1below)
         });
-        _ticksMint[1] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({
+        _ticksMint[1] = IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo({
             tick: _oor_aboveLower,
             liquidity: _toSingleTickLiquidity(_oor_aboveLower, _a0above, _a1above)
         });
 
         automator.rebalance(
             _ticksMint,
-            new IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[](0),
-            IOrangeDopexV2LPAutomatorV1.RebalanceSwapParams(0, 0, 0, 0)
+            new IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[](0),
+            IOrangeStrykeLPAutomatorV1_1.RebalanceSwapParams(0, 0, 0, 0)
         );
 
         uint256 _assetsInOrangeDopexV2LPAutomatorV1 = WETH.balanceOf(address(automator)) +
@@ -85,10 +84,9 @@ contract TestOrangeDopexV2LPAutomatorV1State is WETH_USDC_Fixture, DealExtension
     }
 
     function test_totalAssets_reversedPair() public {
-        automator = AutomatorHelper.deployOrangeDopexV2LPAutomatorV1(
-            vm,
-            AutomatorHelper.DeployArgs({
-                name: "OrangeDopexV2LPAutomatorV1",
+        automator = auto11.deploy(
+            auto11.DeployArgs({
+                name: "OrangeStrykeLPAutomatorV1_1",
                 symbol: "ODV2LP",
                 dopexV2ManagerOwner: managerOwner,
                 admin: address(this),
@@ -218,22 +216,22 @@ contract TestOrangeDopexV2LPAutomatorV1State is WETH_USDC_Fixture, DealExtension
         uint256 _a0above = WETH.balanceOf(address(automator)) / 3;
         uint256 _a1above = USDC.balanceOf(address(automator)) / 3;
 
-        IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[]
-            memory _ticksMint = new IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[](2);
-        _ticksMint[0] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({
+        IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[]
+            memory _ticksMint = new IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[](2);
+        _ticksMint[0] = IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo({
             tick: _oor_belowLower,
             liquidity: _toSingleTickLiquidity(_oor_belowLower, _a0below, _a1below)
         });
 
-        _ticksMint[1] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({
+        _ticksMint[1] = IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo({
             tick: _oor_aboveLower,
             liquidity: _toSingleTickLiquidity(_oor_aboveLower, _a0above, _a1above)
         });
 
         automator.rebalance(
             _ticksMint,
-            new IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[](0),
-            IOrangeDopexV2LPAutomatorV1.RebalanceSwapParams(0, 0, 0, 0)
+            new IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[](0),
+            IOrangeStrykeLPAutomatorV1_1.RebalanceSwapParams(0, 0, 0, 0)
         );
 
         assertApproxEqRel(
@@ -258,7 +256,7 @@ contract TestOrangeDopexV2LPAutomatorV1State is WETH_USDC_Fixture, DealExtension
 
         uint256 _expected = _balanceWETH + _getQuote(address(USDC), address(WETH), uint128(_balanceUSDCE));
 
-        assertApproxEqRel(automator.freeAssets(), _expected, 0.0001e18);
+        assertApproxEqRel(inspector.freeAssets(automator), _expected, 0.0001e18);
     }
 
     function test_freeAssets_hasDopexPositions() public {
@@ -274,21 +272,21 @@ contract TestOrangeDopexV2LPAutomatorV1State is WETH_USDC_Fixture, DealExtension
         uint256 _a0above = WETH.balanceOf(address(automator)) / 4;
         uint256 _a1above = USDC.balanceOf(address(automator)) / 4;
 
-        IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[]
-            memory _ticksMint = new IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[](2);
-        _ticksMint[0] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({
+        IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[]
+            memory _ticksMint = new IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[](2);
+        _ticksMint[0] = IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo({
             tick: _oor_belowLower,
             liquidity: _toSingleTickLiquidity(_oor_belowLower, _a0below, _a1below)
         });
-        _ticksMint[1] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({
+        _ticksMint[1] = IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo({
             tick: _oor_aboveLower,
             liquidity: _toSingleTickLiquidity(_oor_aboveLower, _a0above, _a1above)
         });
 
         automator.rebalance(
             _ticksMint,
-            new IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[](0),
-            IOrangeDopexV2LPAutomatorV1.RebalanceSwapParams(0, 0, 0, 0)
+            new IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[](0),
+            IOrangeStrykeLPAutomatorV1_1.RebalanceSwapParams(0, 0, 0, 0)
         );
 
         uint256 _assetsInOrangeDopexV2LPAutomatorV1 = WETH.balanceOf(address(automator)) +
@@ -297,14 +295,13 @@ contract TestOrangeDopexV2LPAutomatorV1State is WETH_USDC_Fixture, DealExtension
             _positionToAssets(_oor_belowLower, address(automator)) +
             _positionToAssets(_oor_aboveLower, address(automator));
 
-        assertApproxEqRel(automator.freeAssets(), _freeAssets, 0.0001e18);
+        assertApproxEqRel(inspector.freeAssets(automator), _freeAssets, 0.0001e18);
     }
 
     function test_freeAssets_reversedPair() public {
-        automator = AutomatorHelper.deployOrangeDopexV2LPAutomatorV1(
-            vm,
-            AutomatorHelper.DeployArgs({
-                name: "OrangeDopexV2LPAutomatorV1",
+        automator = auto11.deploy(
+            auto11.DeployArgs({
+                name: "OrangeStrykeLPAutomatorV1_1",
                 symbol: "ODV2LP",
                 dopexV2ManagerOwner: managerOwner,
                 admin: address(this),
@@ -325,7 +322,7 @@ contract TestOrangeDopexV2LPAutomatorV1State is WETH_USDC_Fixture, DealExtension
 
         dealUsdc(address(automator), 100e6);
 
-        assertApproxEqRel(automator.freeAssets(), 100e6, 0.0001e18);
+        assertApproxEqRel(inspector.freeAssets(automator), 100e6, 0.0001e18);
     }
 
     function test_convertToShares_noDopexPosition() public {
@@ -422,9 +419,9 @@ contract TestOrangeDopexV2LPAutomatorV1State is WETH_USDC_Fixture, DealExtension
         (int24 _oor_belowLower, ) = _outOfRangeBelow(1);
         (int24 _oor_aboveLower, ) = _outOfRangeAbove(1);
 
-        IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[]
-            memory _ticksMint = new IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[](2);
-        _ticksMint[0] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({
+        IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[]
+            memory _ticksMint = new IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[](2);
+        _ticksMint[0] = IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo({
             tick: _oor_belowLower,
             liquidity: _toSingleTickLiquidity(
                 _oor_belowLower,
@@ -433,7 +430,7 @@ contract TestOrangeDopexV2LPAutomatorV1State is WETH_USDC_Fixture, DealExtension
             )
         });
 
-        _ticksMint[1] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({
+        _ticksMint[1] = IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo({
             tick: _oor_aboveLower,
             liquidity: _toSingleTickLiquidity(
                 _oor_aboveLower,
@@ -444,8 +441,8 @@ contract TestOrangeDopexV2LPAutomatorV1State is WETH_USDC_Fixture, DealExtension
 
         automator.rebalance(
             _ticksMint,
-            new IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[](0),
-            IOrangeDopexV2LPAutomatorV1.RebalanceSwapParams(0, 0, 0, 0)
+            new IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[](0),
+            IOrangeStrykeLPAutomatorV1_1.RebalanceSwapParams(0, 0, 0, 0)
         );
 
         assertApproxEqRel(
@@ -461,147 +458,16 @@ contract TestOrangeDopexV2LPAutomatorV1State is WETH_USDC_Fixture, DealExtension
         );
     }
 
-    function test_getTickAllLiquidity() public {
-        deal(address(WETH), address(automator), 1.3 ether);
-        dealUsdc(address(automator), 1200e6);
-
-        (int24 _oor_belowLower, ) = _outOfRangeBelow(1);
-        (int24 _oor_aboveLower, ) = _outOfRangeAbove(1);
-
-        uint256 _a0below = WETH.balanceOf(address(automator)) / 3;
-        uint256 _a1below = USDC.balanceOf(address(automator)) / 3;
-
-        uint256 _a0above = WETH.balanceOf(address(automator)) / 3;
-        uint256 _a1above = USDC.balanceOf(address(automator)) / 3;
-
-        IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[]
-            memory _ticksMint = new IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[](2);
-        _ticksMint[0] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({
-            tick: _oor_belowLower,
-            liquidity: _toSingleTickLiquidity(_oor_belowLower, _a0below, _a1below)
-        });
-
-        _ticksMint[1] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({
-            tick: _oor_aboveLower,
-            liquidity: _toSingleTickLiquidity(_oor_aboveLower, _a0above, _a1above)
-        });
-
-        automator.rebalance(
-            _ticksMint,
-            new IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[](0),
-            IOrangeDopexV2LPAutomatorV1.RebalanceSwapParams(0, 0, 0, 0)
-        );
-
-        uint256 _belowId = handlerV2.tokenId(
-            address(pool),
-            address(0),
-            _oor_belowLower,
-            _oor_belowLower + pool.tickSpacing()
-        );
-        uint256 _aboveId = handlerV2.tokenId(
-            address(pool),
-            address(0),
-            _oor_aboveLower,
-            _oor_aboveLower + pool.tickSpacing()
-        );
-
-        assertApproxEqRel(
-            automator.getTickAllLiquidity(_oor_belowLower),
-            handlerV2.convertToAssets(uint128(handlerV2.balanceOf(address(automator), _belowId)), _belowId),
-            0.0001e18
-        );
-
-        assertApproxEqRel(
-            automator.getTickAllLiquidity(_oor_aboveLower),
-            handlerV2.convertToAssets(uint128(handlerV2.balanceOf(address(automator), _aboveId)), _aboveId),
-            0.0001e18
-        );
-
-        assertApproxEqRel(automator.getTickAllLiquidity(-200000), 0, 0.0001e18);
-    }
-
-    function test_getTickFreeLiquidity() public {
-        deal(address(WETH), address(automator), 1.3 ether);
-        dealUsdc(address(automator), 1200e6);
-
-        (int24 _oor_belowLower, ) = _outOfRangeBelow(1);
-        (int24 _oor_aboveLower, ) = _outOfRangeAbove(1);
-
-        uint256 _a0below = WETH.balanceOf(address(automator)) / 3;
-        uint256 _a1below = USDC.balanceOf(address(automator)) / 3;
-
-        uint256 _a0above = WETH.balanceOf(address(automator)) / 3;
-        uint256 _a1above = USDC.balanceOf(address(automator)) / 3;
-
-        IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[]
-            memory _ticksMint = new IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[](2);
-        _ticksMint[0] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({
-            tick: _oor_belowLower,
-            liquidity: _toSingleTickLiquidity(_oor_belowLower, _a0below, _a1below)
-        });
-
-        _ticksMint[1] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({
-            tick: _oor_aboveLower,
-            liquidity: _toSingleTickLiquidity(_oor_aboveLower, _a0above, _a1above)
-        });
-
-        automator.rebalance(
-            _ticksMint,
-            new IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[](0),
-            IOrangeDopexV2LPAutomatorV1.RebalanceSwapParams(0, 0, 0, 0)
-        );
-
-        uint256 _belowId = handlerV2.tokenId(
-            address(pool),
-            address(0),
-            _oor_belowLower,
-            _oor_belowLower + pool.tickSpacing()
-        );
-        uint256 _aboveId = handlerV2.tokenId(
-            address(pool),
-            address(0),
-            _oor_aboveLower,
-            _oor_aboveLower + pool.tickSpacing()
-        );
-
-        IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory _belowInfo = _tokenInfo(_oor_belowLower);
-        IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory _aboveInfo = _tokenInfo(_oor_aboveLower);
-
-        emit log_named_uint("below total liquidity", _belowInfo.totalLiquidity);
-        emit log_named_uint("below liquidity used", _belowInfo.liquidityUsed);
-        emit log_named_uint("below free liquidity", _belowInfo.totalLiquidity - _belowInfo.liquidityUsed);
-
-        emit log_named_uint("above total liquidity", _aboveInfo.totalLiquidity);
-        emit log_named_uint("above liquidity used", _aboveInfo.liquidityUsed);
-        emit log_named_uint("above free liquidity", _aboveInfo.totalLiquidity - _aboveInfo.liquidityUsed);
-
-        _useDopexPosition(
-            _oor_belowLower,
-            _oor_belowLower + pool.tickSpacing(),
-            _belowInfo.totalLiquidity - _belowInfo.liquidityUsed - 1000
-        );
-
-        assertApproxEqRel(
-            automator.getTickFreeLiquidity(_oor_belowLower),
-            handlerV2.redeemableLiquidity(address(automator), _belowId),
-            0.0001e18
-        );
-
-        assertApproxEqRel(
-            automator.getTickFreeLiquidity(_oor_aboveLower),
-            handlerV2.redeemableLiquidity(address(automator), _aboveId),
-            0.0001e18
-        );
-
-        assertApproxEqRel(automator.getTickFreeLiquidity(-200000), 0, 0.0001e18);
-    }
-
     function test_getActiveTicks() public {
         AutomatorHarness _automator = deployAutomatorHarness(
-            OrangeDopexV2LPAutomatorV1.InitArgs({
-                name: "OrangeDopexV2LPAutomatorV1",
+            DeployArgs({
+                name: "OrangeStrykeLPAutomatorV1_1",
                 symbol: "ODV2LP",
+                dopexV2ManagerOwner: managerOwner,
                 admin: address(this),
+                assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
+                counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
+                quoter: chainlinkQuoter,
                 manager: manager,
                 handler: handlerV2,
                 handlerHook: address(0),
@@ -609,12 +475,9 @@ contract TestOrangeDopexV2LPAutomatorV1State is WETH_USDC_Fixture, DealExtension
                 pool: pool,
                 asset: USDC,
                 minDepositAssets: 1e6,
-                assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
-                counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
-                quoter: new ChainlinkQuoter(address(0xFdB631F5EE196F0ed6FAa767959853A9F217697D))
-            }),
-            address(this),
-            10_000e6
+                strategist: address(this),
+                depositCap: 10_000e6
+            })
         );
         _automator.pushActiveTick(1);
         _automator.pushActiveTick(2);
@@ -624,65 +487,6 @@ contract TestOrangeDopexV2LPAutomatorV1State is WETH_USDC_Fixture, DealExtension
         assertEq(_actual.length, 2);
         assertEq(_actual[0], 1);
         assertEq(_actual[1], 2);
-    }
-
-    function test_getAutomatorPositions() public {
-        OrangeDopexV2LPAutomatorV1 _automator = AutomatorHelper.deployOrangeDopexV2LPAutomatorV1(
-            vm,
-            AutomatorHelper.DeployArgs({
-                name: "odpx-WETH-USDC",
-                symbol: "odpx-WETH-USDC",
-                dopexV2ManagerOwner: managerOwner,
-                admin: address(this),
-                strategist: address(this),
-                manager: manager,
-                handler: handlerV2,
-                handlerHook: address(0),
-                router: router,
-                pool: pool,
-                asset: WETH,
-                minDepositAssets: 0.01 ether,
-                depositCap: 1000 ether,
-                quoter: new ChainlinkQuoter(address(0xFdB631F5EE196F0ed6FAa767959853A9F217697D)),
-                assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
-                counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612
-            })
-        );
-
-        deal(address(WETH), address(_automator), 100 ether);
-        dealUsdc(address(_automator), 100_000e6);
-
-        // current tick: -196791
-        IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[]
-            memory _ticksMint = new IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[](2);
-        // mint liquidity use 50k USDC at -199360
-        _ticksMint[0] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({
-            tick: -196810,
-            liquidity: _liquidity1(-196810, 50_000e6)
-        });
-        // mint liquidity use 50 WETH at -199340
-        _ticksMint[1] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({
-            tick: -196770,
-            liquidity: _liquidity0(-196770, 50 ether)
-        });
-
-        AutomatorHelper.rebalanceMint(_automator, _ticksMint);
-
-        (
-            uint256 _balAsset,
-            uint256 _balCounterAsset,
-            IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[] memory _ticks
-        ) = _automator.getAutomatorPositions();
-
-        assertApproxEqAbs(_balAsset, 50 ether, 10);
-        assertApproxEqAbs(_balCounterAsset, 50_000e6, 10);
-
-        assertEq(_ticks.length, 2);
-
-        assertEq(_ticks[0].tick, -196810);
-        assertApproxEqRel(_ticks[0].liquidity, _liquidity1(-196810, 50_000e6), 0.00001e18); // 0.001% tolerance
-        assertEq(_ticks[1].tick, -196770);
-        assertApproxEqRel(_ticks[1].liquidity, _liquidity0(-196770, 50 ether), 0.00001e18); // 0.001% tolerance
     }
 
     function _liquidity0(int24 tickLower, uint256 amount0) private pure returns (uint128) {
