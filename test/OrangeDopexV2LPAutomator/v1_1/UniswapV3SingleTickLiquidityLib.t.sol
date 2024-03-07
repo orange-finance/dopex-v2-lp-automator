@@ -204,7 +204,6 @@ contract TestUniswapV3SingleTickLiquidityLib is WETH_USDC_Fixture, DealExtension
         assertEq(_locked, 0, "no liquidity locked");
     }
 
-    // FIXME: wrong locked liquidity calculation
     function test_lockedLiquidity_shouldNotUnderflow() public {
         deal(address(WETH), address(this), 10000 ether);
         dealUsdc(address(this), 1_000_000e6);
@@ -226,18 +225,21 @@ contract TestUniswapV3SingleTickLiquidityLib is WETH_USDC_Fixture, DealExtension
         _useDopexPosition(_tickLower, _tickUpper, _twoThirdOfFreeLiquidity);
 
         // reserve same amount of liquidity
-        // then totalLiquidity < liquidityUsed = reservedLiquidity
         _reserveDopexPosition(_tickLower, _tickUpper, _twoThirdOfFreeLiquidity);
 
         uint256 _tokenId = handlerV2.tokenId(address(pool), address(0), _tickLower, _tickUpper);
-
         IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory _ti = handlerV2.tokenIds(_tokenId);
-        emit log_named_uint("ti.totalLiquidity", _ti.totalLiquidity);
-        emit log_named_uint("ti.liquidityUsed", _ti.liquidityUsed);
-        emit log_named_uint("ti.reservedLiquidity", _ti.reservedLiquidity);
+
+        // then totalLiquidity < liquidityUsed = reservedLiquidity
+        assertLt(_ti.totalLiquidity, _ti.liquidityUsed);
 
         // locked liquidity calculation should not underflow.
-        // assertEq(_mintLiquidity, handlerV2.lockedLiquidity(address(this), _tokenId));
+        uint256 _expectLocked = handlerV2.convertToAssets(
+            uint128(handlerV2.balanceOf(address(this), _tokenId)),
+            _tokenId
+        ) - 1;
+
+        assertEq(_expectLocked, handlerV2.lockedLiquidity(address(this), _tokenId));
     }
 
     function _mintDopexPosition(int24 lowerTick, int24 upperTick, uint128 liquidity) internal {

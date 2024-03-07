@@ -74,7 +74,6 @@ library UniswapV3SingleTickLiquidityLib {
 
         IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory _tki = handler.tokenIds(tokenId_);
 
-        // FIXME: wrong locked liquidity calculation
         uint256 _freeLiquidity = _tki.totalLiquidity < _tki.liquidityUsed
             ? 0
             : _tki.totalLiquidity - _tki.liquidityUsed;
