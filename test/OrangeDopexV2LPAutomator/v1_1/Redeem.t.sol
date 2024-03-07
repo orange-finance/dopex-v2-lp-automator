@@ -161,6 +161,84 @@ contract TestOrangeStrykeLPAutomatorV1_1Redeem is WETH_USDC_Fixture {
         );
     }
 
+    // function test_redeem_canRedeemWhenTotalLiquidityLtLiquidityUsed() public {
+    //     // current tick: -196791
+    //     _depositFrom(bob, 1 ether);
+    //     _depositFrom(alice, 1.3 ether);
+
+    //     // mint dopex position using 1.3 WETH
+    //     // liquidity(-196780, -196770, 1.3 WETH, 0 USDC.e) = 138769446144582646
+    //     _rebalanceMintSingle(-196780, 138769446144582646);
+
+    //     // use all liquidity in dopex (can be calculated from TokenIdInfo.totalLiquidity - TokenIdInfo.liquidityUsed)
+    //     // _useDopexPosition(-196780, -196770, 138769446144582645);
+    //     pool.useDopexPosition(address(0), -196780, 138769446144582645, carol);
+
+    //     emit log_named_uint(
+    //         "before balance",
+    //         DopexV2Helper.balanceOfHandler(address(automator), pool, address(0), -196780)
+    //     );
+    //     emit log_named_uint("before totalLiquidity", pool.totalLiquidityOfTick(address(0), -196780));
+    //     emit log_named_uint("before liquidityUsed", pool.usedLiquidityOfTick(address(0), -196780));
+    //     emit log_named_uint("before reservedLiquidity", pool.reservedLiquidityOfTick(-196780));
+
+    //     pool.reserveDopexPosition(-196780, 138769446144582645, address(automator));
+
+    //     emit log_named_uint("after totalLiquidity", pool.totalLiquidityOfTick(address(0), -196780));
+    //     emit log_named_uint("after liquidityUsed", pool.usedLiquidityOfTick(address(0), -196780));
+    //     emit log_named_uint("after reservedLiquidity", pool.reservedLiquidityOfTick(-196780));
+
+    //     // now the balance of WETH in automator ≈ 1 ether
+    //     vm.prank(alice);
+    //     (uint256 _assets, IOrangeStrykeLPAutomatorV1_1.LockedDopexShares[] memory _locked) = automator.redeem(1.3 ether, 0); // prettier-ignore
+
+    //     // 1.3 ether * 1 ether (redeemable WETH in automator) / 2.3 ether(automator total supply) = 565217391304347826
+    //     // some error in calculation because WETH is not actually used to mint dopex position as expected (less amount is used)
+    //     assertApproxEqRel(_assets, 565217391304347826, 0.0001e18); // allow 0.01% diff
+    //     assertEq(_locked.length, 1);
+    // }
+
+    function test_redeem_canRedeemWhenTotalLiquidityLtLiquidityUsed() public {
+        _depositFrom(bob, 1 ether);
+        _depositFrom(alice, 1 ether);
+
+        int24 cl = pool.currentLower();
+
+        // mint 1 ether equivalent liquidity
+        _rebalanceMintSingle(cl + 10, pool.singleLiqRight(cl + 10, 1 ether));
+
+        // mint 1 ether equivalent liquidity by dave
+        deal(address(WETH), dave, 1 ether);
+        vm.prank(dave);
+        WETH.approve(address(manager), 1 ether);
+        pool.mintDopexPosition(address(0), cl + 10, pool.singleLiqRight(cl + 10, 1 ether), dave);
+
+        // use all free liquidity by carol
+        vm.prank(managerOwner);
+        manager.updateWhitelistHandlerWithApp(address(handlerV2), carol, true);
+        pool.useDopexPosition(address(0), cl + 10, pool.freeLiquidityOfTick(address(0), cl + 10), carol);
+
+        // dave reserve to burn all his liquidity
+        pool.reserveDopexPosition(cl + 10, pool.singleLiqRight(cl + 10, 1 ether), dave);
+
+        // total liquidity < liquidity used
+        assertLt(pool.totalLiquidityOfTick(address(0), cl + 10), pool.usedLiquidityOfTick(address(0), cl + 10));
+
+        // alice redeem all her shares
+        vm.prank(alice);
+        (uint256 assets, IOrangeStrykeLPAutomatorV1_1.LockedDopexShares[] memory _locked) = automator.redeem(
+            1 ether,
+            0
+        );
+
+        // half of 1 ether redeemed
+        assertEq(0.5 ether, assets);
+        // part of the liquidity locked
+        assertEq(1, _locked.length);
+        // locked liquidity is equal to the minted liquidity first
+        assertEq(pool.singleLiqRight(cl + 10, 0.5 ether) - 1, _locked[0].shares);
+    }
+
     function test_redeem_revertWhenMinAssetsNotReached() public {
         _depositFrom(bob, 1 ether);
         _depositFrom(alice, 1 ether);

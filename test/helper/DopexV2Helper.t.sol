@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.19;
 
-/* solhint-disable const-name-snakecase */
+/* solhint-disable const-name-snakecase, custom-errors */
 
 import {IDopexV2PositionManager} from "../../contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
 import {IUniswapV3SingleTickLiquidityHandlerV2} from "../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
@@ -65,6 +65,55 @@ library DopexV2Helper {
         DOPEX_V2_POSITION_MANAGER.usePosition(DOPEX_UNIV3_HANDLER, abi.encode(_params, ""));
     }
 
+    function useDopexPosition(
+        IUniswapV3Pool pool,
+        address hook,
+        int24 tickLower,
+        uint128 liquidityToUse,
+        address sender
+    ) internal {
+        IUniswapV3SingleTickLiquidityHandlerV2.UsePositionParams memory _params = IUniswapV3SingleTickLiquidityHandlerV2
+            .UsePositionParams({
+                pool: address(pool),
+                hook: hook,
+                tickLower: tickLower,
+                tickUpper: tickLower + pool.tickSpacing(),
+                liquidityToUse: liquidityToUse
+            });
+
+        vm.prank(sender);
+        DOPEX_V2_POSITION_MANAGER.usePosition(DOPEX_UNIV3_HANDLER, abi.encode(_params, ""));
+    }
+
+    function reserveDopexPosition(
+        IUniswapV3Pool pool,
+        int24 lowerTick,
+        uint128 liquidityToReserve,
+        address sender
+    ) internal {
+        uint128 _shares = DOPEX_UNIV3_HANDLER.convertToShares(
+            liquidityToReserve,
+            _tokenId(pool, address(0), lowerTick)
+        );
+
+        IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams
+            memory _params = IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams({
+                pool: address(pool),
+                hook: address(0),
+                tickLower: lowerTick,
+                tickUpper: lowerTick + pool.tickSpacing(),
+                shares: _shares
+            });
+
+        // solhint-disable-next-line avoid-low-level-calls
+        vm.prank(sender);
+        (bool ok, ) = address(DOPEX_UNIV3_HANDLER).call(
+            abi.encodeWithSignature("reserveLiquidity(bytes)", abi.encode(_params))
+        );
+
+        require(ok, "reserveLiquidity failed");
+    }
+
     function dopexLiquidityOf(
         IUniswapV3Pool pool,
         address hook,
@@ -84,6 +133,10 @@ library DopexV2Helper {
 
     function freeLiquidityOfTick(IUniswapV3Pool pool, address hook, int24 tickLower) internal view returns (uint128) {
         return _freeLiquidityOfTick(pool, hook, tickLower);
+    }
+
+    function reservedLiquidityOfTick(IUniswapV3Pool pool, int24 tickLower) internal view returns (uint128) {
+        return _reservedLiquidityOfTick(pool, tickLower);
     }
 
     function freeLiquidityOfTickByOthers(
@@ -131,6 +184,12 @@ library DopexV2Helper {
         if (_ti.totalLiquidity < _ti.liquidityUsed) return 0;
 
         return _ti.totalLiquidity - _ti.liquidityUsed;
+    }
+
+    function _reservedLiquidityOfTick(IUniswapV3Pool pool, int24 tickLower) private view returns (uint128) {
+        IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory _ti = _tokenIdInfo(pool, address(0), tickLower);
+
+        return _ti.reservedLiquidity;
     }
 
     function tokenIdInfo(
