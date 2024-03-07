@@ -21,7 +21,7 @@ import {IUniswapV3SingleTickLiquidityHandlerV2} from "./vendor/dopexV2/IUniswapV
 import {IDopexV2PositionManager} from "./vendor/dopexV2/IDopexV2PositionManager.sol";
 
 import {ChainlinkQuoter} from "./ChainlinkQuoter.sol";
-import {UniswapV3SingleTickLiquidityLib} from "./lib/UniswapV3SingleTickLiquidityLib.sol";
+import {UniswapV3SingleTickLiquidityLibV2} from "./lib/UniswapV3SingleTickLiquidityLibV2.sol";
 import {OrangeERC20Upgradeable} from "./OrangeERC20Upgradeable.sol";
 import {IERC20Decimals} from "./interfaces/IERC20Extended.sol";
 import {IOrangeStrykeLPAutomatorV1_1} from "./interfaces/IOrangeStrykeLPAutomatorV1_1.sol";
@@ -41,7 +41,7 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
     using SafeCast for uint256;
     using EnumerableSet for EnumerableSet.UintSet;
     using TickMath for int24;
-    using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandlerV2;
+    using UniswapV3SingleTickLiquidityLibV2 for IUniswapV3SingleTickLiquidityHandlerV2;
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                     Vault params
@@ -405,13 +405,17 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
 
             c.tokenId = handler.tokenId(address(pool), handlerHook, c.lowerTick, c.lowerTick + poolTickSpacing);
 
+            (, uint128 _redeemableLiquidity, uint128 _lockedLiquidity) = handler.positionDetail(
+                address(this),
+                c.tokenId
+            );
+
             // total supply before burn is used to calculate the precise share
-            c.shareRedeemable = uint256(
-                handler.convertToShares(handler.redeemableLiquidity(address(this), c.tokenId).toUint128(), c.tokenId)
-            ).mulDiv(shares, _tsBeforeBurn);
-            c.shareLocked = uint256(
-                handler.convertToShares(handler.lockedLiquidity(address(this), c.tokenId).toUint128(), c.tokenId)
-            ).mulDiv(shares, _tsBeforeBurn);
+            c.shareRedeemable = uint256(handler.convertToShares(_redeemableLiquidity, c.tokenId)).mulDiv(
+                shares,
+                _tsBeforeBurn
+            );
+            c.shareLocked = uint256(handler.convertToShares(_lockedLiquidity, c.tokenId)).mulDiv(shares, _tsBeforeBurn);
 
             // locked share is transferred to the user
             if (c.shareLocked > 0) {

@@ -10,10 +10,10 @@ import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {IOrangeStrykeLPAutomatorV1_1} from "./../interfaces/IOrangeStrykeLPAutomatorV1_1.sol";
 import {IUniswapV3SingleTickLiquidityHandlerV2} from "./../vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 import {ChainlinkQuoter} from "./../ChainlinkQuoter.sol";
-import {UniswapV3SingleTickLiquidityLib} from "./../lib/UniswapV3SingleTickLiquidityLib.sol";
+import {UniswapV3SingleTickLiquidityLibV2} from "./../lib/UniswapV3SingleTickLiquidityLibV2.sol";
 
 contract StrykeVaultInspector {
-    using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandlerV2;
+    using UniswapV3SingleTickLiquidityLibV2 for IUniswapV3SingleTickLiquidityHandlerV2;
     using SafeCast for uint256;
     using TickMath for int24;
 
@@ -50,12 +50,11 @@ contract StrykeVaultInspector {
         for (uint256 i = 0; i < _tLen; ) {
             _cache.lowerTick = _ticks[i];
             _cache.upperTick = _cache.lowerTick + _spacing;
-            _cache.liquidity = _handler
-                .redeemableLiquidity(
-                    address(automator),
-                    _handler.tokenId(address(_pool), _handlerHook, _cache.lowerTick, _cache.upperTick)
-                )
-                .toUint128();
+
+            (, _cache.liquidity, ) = _handler.positionDetail(
+                address(automator),
+                _handler.tokenId(address(_pool), _handlerHook, _cache.lowerTick, _cache.upperTick)
+            );
 
             (_cache.amount0, _cache.amount1) = LiquidityAmounts.getAmountsForLiquidity(
                 _sqrtRatioX96,
@@ -101,21 +100,21 @@ contract StrykeVaultInspector {
     /**
      * @dev Retrieves the amount of free liquidity for a given tick.
      * @param tick The tick value for which to retrieve the free liquidity.
-     * @return The amount of free liquidity for the specified tick.
+     * @return freeLiquidity The amount of free liquidity for the specified tick.
      */
-    function getTickFreeLiquidity(IOrangeStrykeLPAutomatorV1_1 automator, int24 tick) external view returns (uint128) {
+    function getTickFreeLiquidity(
+        IOrangeStrykeLPAutomatorV1_1 automator,
+        int24 tick
+    ) external view returns (uint128 freeLiquidity) {
         IUniswapV3SingleTickLiquidityHandlerV2 _handler = automator.handler();
         IUniswapV3Pool _pool = automator.pool();
         address _handlerHook = automator.handlerHook();
         int24 _spacing = automator.poolTickSpacing();
 
-        return
-            _handler
-                .redeemableLiquidity(
-                    address(automator),
-                    _handler.tokenId(address(_pool), _handlerHook, tick, tick + _spacing)
-                )
-                .toUint128();
+        (, freeLiquidity, ) = _handler.positionDetail(
+            address(automator),
+            _handler.tokenId(address(_pool), _handlerHook, tick, tick + _spacing)
+        );
     }
 
     /**
