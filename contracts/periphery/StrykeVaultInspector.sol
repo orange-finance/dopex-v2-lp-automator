@@ -30,14 +30,13 @@ contract StrykeVaultInspector {
     /**
      * @dev Retrieves the total free liquidity in token0 and token1 in the pool.
      * @param automator The automator contract.
-     * @param _pool The pool for which to retrieve the free liquidity.
      * @return sumAmount0 The total free liquidity in token0.
      * @return sumAmount1 The total free liquidity in token1.
      */
     function freePoolPositionInToken01(
-        IOrangeStrykeLPAutomatorV1_1 automator,
-        IUniswapV3Pool _pool
+        IOrangeStrykeLPAutomatorV1_1 automator
     ) public view returns (uint256 sumAmount0, uint256 sumAmount1) {
+        IUniswapV3Pool _pool = automator.pool();
         IUniswapV3SingleTickLiquidityHandlerV2 _handler = automator.handler();
         address _handlerHook = automator.handlerHook();
         int24[] memory _ticks = automator.getActiveTicks();
@@ -130,10 +129,8 @@ contract StrykeVaultInspector {
      * @return The total free assets in Dopex pools.
      */
     function freeAssets(IOrangeStrykeLPAutomatorV1_1 automator) public view returns (uint256) {
-        IUniswapV3Pool _pool = automator.pool();
-
         // 1. calculate the free token0 & token1 in Dopex pools
-        (uint256 _sum0, uint256 _sum1) = freePoolPositionInToken01(automator, _pool);
+        (uint256 _sum0, uint256 _sum1) = freePoolPositionInToken01(automator);
 
         // 2. merge into the total assets in the automator
         IERC20 _asset = automator.asset();
@@ -143,7 +140,7 @@ contract StrykeVaultInspector {
             _asset.balanceOf(address(automator))
         );
 
-        if (address(_asset) == _pool.token0()) {
+        if (address(_asset) == automator.pool().token0()) {
             _base += _sum1;
             _quote += _sum0;
         } else {

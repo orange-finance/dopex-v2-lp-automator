@@ -30,8 +30,7 @@ contract TestInspectorWithV1_1 is WETH_USDC_Fixture, DealExtension {
         dealUsdc(address(automator), 1_000_000e6);
 
         (uint256 token0, uint256 token1) = inspector.freePoolPositionInToken01(
-            IOrangeStrykeLPAutomatorV1_1(address(automator)),
-            pool
+            IOrangeStrykeLPAutomatorV1_1(address(automator))
         );
 
         assertEq(token0, 0);
@@ -53,8 +52,7 @@ contract TestInspectorWithV1_1 is WETH_USDC_Fixture, DealExtension {
         _rebalanceMintSingle(currentLower + 30, pool.singleLiqRight(currentLower + 30, 10 ether));
 
         (uint256 token0, uint256 token1) = inspector.freePoolPositionInToken01(
-            IOrangeStrykeLPAutomatorV1_1(address(automator)),
-            pool
+            IOrangeStrykeLPAutomatorV1_1(address(automator))
         );
 
         assertApproxEqRel(30 ether, token0, 0.00001e18); // 0.01%
@@ -301,8 +299,7 @@ contract TestInspectorWithV1 is Fixture, DealExtension {
         dealUsdc(address(automator), 1_000_000e6);
 
         (uint256 token0, uint256 token1) = inspector.freePoolPositionInToken01(
-            IOrangeStrykeLPAutomatorV1_1(address(automator)),
-            pool
+            IOrangeStrykeLPAutomatorV1_1(address(automator))
         );
 
         assertEq(token0, 0);
@@ -324,8 +321,7 @@ contract TestInspectorWithV1 is Fixture, DealExtension {
         _rebalanceMintSingle(currentLower + 30, pool.singleLiqRight(currentLower + 30, 10 ether));
 
         (uint256 token0, uint256 token1) = inspector.freePoolPositionInToken01(
-            IOrangeStrykeLPAutomatorV1_1(address(automator)),
-            pool
+            IOrangeStrykeLPAutomatorV1_1(address(automator))
         );
 
         assertApproxEqRel(30 ether, token0, 0.00001e18); // 0.01%
