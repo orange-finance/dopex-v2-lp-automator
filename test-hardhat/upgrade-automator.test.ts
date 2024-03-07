@@ -1,12 +1,9 @@
 import hre from 'hardhat'
 import { assert } from 'chai'
-import {
-  loadFixture,
-  impersonateAccount,
-  stopImpersonatingAccount,
-} from '@nomicfoundation/hardhat-toolbox/network-helpers'
+import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import {
   MockAutomatorV2,
+  MockBadAutomatorV2,
   OrangeStrykeLPAutomatorV1_1,
 } from '../typechain-types'
 import { baseSetupFixture } from './fixture'
@@ -24,12 +21,6 @@ describe('Update OrangeStrykeLPAutomatorV1_1', () => {
     const { chainlinkQuoter, stryke, uniswapRouter, tokens, pools, feeds } =
       await loadFixture(baseSetupFixture)
 
-    const OrangeStrykeLPAutomatorV1_1 = await hre.ethers.getContractFactory(
-      'OrangeStrykeLPAutomatorV1_1',
-    )
-    const MockAutomatorV2 =
-      await hre.ethers.getContractFactory('MockAutomatorV2')
-
     const init: OrangeStrykeLPAutomatorV1_1.InitArgsStruct = {
       name: 'OrangeDopexV2LPAutomatorV1',
       symbol: 'ODV2LP',
@@ -46,21 +37,13 @@ describe('Update OrangeStrykeLPAutomatorV1_1', () => {
       minDepositAssets: hre.ethers.parseEther('0.01'),
     }
 
-    const v1 = (await hre.upgrades
-      .deployProxy(OrangeStrykeLPAutomatorV1_1, [init], {
-        kind: 'uups',
-      })
-      .then((c) => c.waitForDeployment())) as OrangeStrykeLPAutomatorV1_1
+    const v1 = await _deployV1(init)
 
-    const v2 = (await hre.upgrades
-      .upgradeProxy(v1, MockAutomatorV2, {
-        kind: 'uups',
-        call: {
-          fn: 'initializeV2',
-          args: [1n, 2n, '0x0000000000000000000000000000000000000003'],
-        },
-      })
-      .then((c) => c.waitForDeployment())) as MockAutomatorV2
+    const v2 = await _v2Upgrade(v1, [
+      1n,
+      2n,
+      '0x0000000000000000000000000000000000000003',
+    ])
 
     assert.equal(v2.target, v1.target)
 
@@ -85,4 +68,95 @@ describe('Update OrangeStrykeLPAutomatorV1_1', () => {
     assert.equal(await v2.bar(), 2n)
     assert.equal(await v2.baz(), '0x0000000000000000000000000000000000000003')
   })
+
+  it('should reject invalid upgrade', async () => {
+    const [ownerSigner] = await hre.ethers.getSigners()
+    const owner = await ownerSigner.getAddress()
+
+    const { chainlinkQuoter, stryke, uniswapRouter, tokens, pools, feeds } =
+      await loadFixture(baseSetupFixture)
+
+    const init: OrangeStrykeLPAutomatorV1_1.InitArgsStruct = {
+      name: 'OrangeDopexV2LPAutomatorV1',
+      symbol: 'ODV2LP',
+      admin: owner,
+      manager: stryke.MANAGER,
+      handler: stryke.HANDLER_V2,
+      handlerHook: hre.ethers.ZeroAddress,
+      router: uniswapRouter,
+      pool: pools.WETH_USDC,
+      asset: tokens.WETH,
+      quoter: chainlinkQuoter.target,
+      assetUsdFeed: feeds.ETH_USD,
+      counterAssetUsdFeed: feeds.USDC_USD,
+      minDepositAssets: hre.ethers.parseEther('0.01'),
+    }
+
+    const v1 = await _deployV1(init)
+
+    const promise = _v2BadUpgrade(v1, [
+      1n,
+      2n,
+      '0x0000000000000000000000000000000000000003',
+    ])
+
+    await assert.isRejected(promise, 'New storage layout is incompatible')
+  })
+
+  async function _deployV1(
+    init: OrangeStrykeLPAutomatorV1_1.InitArgsStruct,
+  ): Promise<OrangeStrykeLPAutomatorV1_1> {
+    const OrangeStrykeLPAutomatorV1_1 = await hre.ethers.getContractFactory(
+      'OrangeStrykeLPAutomatorV1_1',
+    )
+    const c = hre.upgrades
+      .deployProxy(OrangeStrykeLPAutomatorV1_1, [init], {
+        kind: 'uups',
+      })
+      .then((c) =>
+        c.waitForDeployment(),
+      ) as Promise<OrangeStrykeLPAutomatorV1_1>
+
+    return c
+  }
+
+  async function _v2Upgrade(
+    v1: OrangeStrykeLPAutomatorV1_1,
+    upgradeArgs: unknown[],
+  ): Promise<MockAutomatorV2> {
+    const MockAutomatorV2 =
+      await hre.ethers.getContractFactory('MockAutomatorV2')
+
+    const v2 = (await hre.upgrades
+      .upgradeProxy(v1, MockAutomatorV2, {
+        kind: 'uups',
+        call: {
+          fn: 'initializeV2',
+          args: upgradeArgs,
+        },
+      })
+      .then((c) => c.waitForDeployment())) as MockAutomatorV2
+
+    return v2
+  }
+
+  async function _v2BadUpgrade(
+    v1: OrangeStrykeLPAutomatorV1_1,
+    upgradeArgs: unknown[],
+  ): Promise<MockBadAutomatorV2> {
+    const MockAutomatorV2 =
+      await hre.ethers.getContractFactory('MockBadAutomatorV2')
+
+    const v2 = (await hre.upgrades
+      .upgradeProxy(v1, MockAutomatorV2, {
+        kind: 'uups',
+        call: {
+          fn: 'initializeV2',
+          args: upgradeArgs,
+        },
+      })
+      .then((c) => c.waitForDeployment())) as MockAutomatorV2
+
+    return v2
+  }
 })
