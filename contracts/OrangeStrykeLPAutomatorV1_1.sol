@@ -31,8 +31,8 @@ interface IMulticallProvider {
 }
 
 /**
- * @title OrangeDopexV2LPAutomatorV1
- * @dev Automate liquidity provision for Dopex V2 contract
+ * @title OrangeStrykeLPAutomatorV1
+ * @dev Automate liquidity provision of Stryke CLAMM
  * @author Orange Finance
  */
 contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgradeable, OrangeERC20Upgradeable {
@@ -43,41 +43,54 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
     using TickMath for int24;
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandlerV2;
 
-    bytes32 public constant STRATEGIST_ROLE = keccak256("STRATEGIST_ROLE");
+    /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                    Vault params
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
     uint24 private constant _MAX_TICKS = 120;
     /// @notice max deposit fee percentage is 1% (hundredth of 1e6)
     uint24 private constant _MAX_PERF_FEE_PIPS = 10_000;
 
-    IDopexV2PositionManager public manager;
-    IUniswapV3SingleTickLiquidityHandlerV2 public handler;
-    address public handlerHook;
-
-    ChainlinkQuoter public quoter;
-    address public assetUsdFeed;
-    address public counterAssetUsdFeed;
-
-    IUniswapV3Pool public pool;
-    ISwapRouter public router;
-
     IERC20 public asset;
     IERC20 public counterAsset;
 
-    int24 public poolTickSpacing;
-
     uint256 public minDepositAssets;
-
     uint256 public depositCap;
 
     /// @notice deposit fee percentage, hundredths of a bip (1 pip = 0.0001%)
     uint24 public depositFeePips;
     address public depositFeeRecipient;
 
-    EnumerableSet.UintSet internal _activeTicks;
-
     mapping(address => bool) public isOwner;
     mapping(address => bool) public isStrategist;
 
+    EnumerableSet.UintSet internal _activeTicks;
+
     uint8 private _decimals;
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                    Stryke
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
+    IDopexV2PositionManager public manager;
+    IUniswapV3SingleTickLiquidityHandlerV2 public handler;
+    address public handlerHook;
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                    Chainlink
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
+    ChainlinkQuoter public quoter;
+    address public assetUsdFeed;
+    address public counterAssetUsdFeed;
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                    Uniswap
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
+    IUniswapV3Pool public pool;
+    ISwapRouter public router;
+    int24 public poolTickSpacing;
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                    Modifiers
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
     modifier onlyOwner() {
         if (!isOwner[msg.sender]) revert OnlyOwner();
@@ -88,6 +101,10 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
         if (!isStrategist[msg.sender]) revert OnlyOwner();
         _;
     }
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                    Upgradeable functions
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
     constructor() {
         _disableInitializers();
