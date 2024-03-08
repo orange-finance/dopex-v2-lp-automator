@@ -43,7 +43,7 @@ library UniswapV3SingleTickLiquidityLibV2 {
         // Starting from handler v2, totalLiquidity might be less than liquidityUsed because reservedLiquidity has been introduced.
         // Therefore, if totalLiquidity is less than liquidityUsed, we should return 0 to avoid underflow.
         uint128 freePool = _tki.totalLiquidity < _tki.liquidityUsed ? 0 : _tki.totalLiquidity - _tki.liquidityUsed;
-        uint128 maxRedeem = handler.convertToAssets(uint128(_shares), tokenId_) - 1;
+        uint128 maxRedeem = all - 1;
 
         locked = maxRedeem > freePool ? maxRedeem - freePool : 0;
         redeemable = maxRedeem - locked;
