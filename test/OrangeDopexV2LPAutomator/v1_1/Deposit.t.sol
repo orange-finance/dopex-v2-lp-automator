@@ -2,24 +2,28 @@
 
 pragma solidity 0.8.19;
 
-import "./Fixture.t.sol";
-// TODO: migrate all utility to this helper functions
-import "../helper/AutomatorHelper.t.sol";
+/* solhint-disable func-name-mixedcase, contract-name-camelcase */
+import {WETH_USDC_Fixture} from "./fixture/WETH_USDC_Fixture.t.sol";
+import {auto11} from "../../helper/AutomatorHelperV1_1.t.sol";
+import {ChainlinkQuoter} from "./../../../contracts/ChainlinkQuoter.sol";
+import {OrangeStrykeLPAutomatorV1_1} from "./../../../contracts/OrangeStrykeLPAutomatorV1_1.sol";
+import {IOrangeStrykeLPAutomatorV1_1} from "./../../../contracts/interfaces/IOrangeStrykeLPAutomatorV1_1.sol";
+import {IERC20} from "@openzeppelin/contracts//interfaces/IERC20.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts//proxy/ERC1967/ERC1967Proxy.sol";
 
-contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
+contract TestOrangeStrykeLPAutomatorV1_1Deposit is WETH_USDC_Fixture {
     function setUp() public override {
         vm.createSelectFork("arb", 157066571);
         super.setUp();
 
         vm.prank(managerOwner);
-        manager.updateWhitelistHandlerWithApp(address(uniV3Handler), address(this), true);
+        manager.updateWhitelistHandlerWithApp(address(handlerV2), address(this), true);
     }
 
     function test_deposit_firstTime() public {
-        automator = AutomatorHelper.deployOrangeDopexV2LPAutomator(
-            vm,
-            AutomatorHelper.DeployArgs({
-                name: "OrangeDopexV2LPAutomator",
+        automator = auto11.deploy(
+            auto11.DeployArgs({
+                name: "OrangeDopexV2LPAutomatorV1",
                 symbol: "ODV2LP",
                 dopexV2ManagerOwner: managerOwner,
                 admin: address(this),
@@ -29,8 +33,8 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
                 counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
                 manager: manager,
                 router: router,
-                handler: uniV3Handler,
-                handlerHook: emptyHook,
+                handler: handlerV2,
+                handlerHook: address(0),
                 pool: pool,
                 asset: USDC,
                 minDepositAssets: 1e6,
@@ -45,23 +49,9 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
     }
 
     function test_deposit_secondTime() public {
-        _depositFrom(alice, 10 ether);
-        uint256 _shares = _depositFrom(bob, 10 ether);
-
-        // dead shares are deducted
-        assertEq(_shares, 10 ether);
-    }
-
-    function test_deposit_revertWhenDepositIsZero() public {
-        vm.expectRevert(OrangeDopexV2LPAutomator.AmountZero.selector);
-        automator.deposit(0);
-    }
-
-    function test_deposit_revertWhenDepositCapExceeded() public {
-        automator = AutomatorHelper.deployOrangeDopexV2LPAutomator(
-            vm,
-            AutomatorHelper.DeployArgs({
-                name: "OrangeDopexV2LPAutomator",
+        automator = auto11.deploy(
+            auto11.DeployArgs({
+                name: "OrangeDopexV2LPAutomatorV1",
                 symbol: "ODV2LP",
                 dopexV2ManagerOwner: managerOwner,
                 admin: address(this),
@@ -71,8 +61,62 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
                 counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
                 manager: manager,
                 router: router,
-                handler: uniV3Handler,
-                handlerHook: emptyHook,
+                handler: handlerV2,
+                handlerHook: address(0),
+                pool: pool,
+                asset: USDC,
+                minDepositAssets: 1e6,
+                depositCap: 20 ether
+            })
+        );
+
+        _depositFrom(alice, 10 ether);
+        uint256 _shares = _depositFrom(bob, 10 ether);
+
+        // dead shares are deducted
+        assertEq(_shares, 10 ether);
+    }
+
+    function test_deposit_revertWhenDepositIsZero() public {
+        automator = auto11.deploy(
+            auto11.DeployArgs({
+                name: "OrangeDopexV2LPAutomatorV1",
+                symbol: "ODV2LP",
+                dopexV2ManagerOwner: managerOwner,
+                admin: address(this),
+                strategist: address(this),
+                quoter: new ChainlinkQuoter(address(0xFdB631F5EE196F0ed6FAa767959853A9F217697D)),
+                assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
+                counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
+                manager: manager,
+                router: router,
+                handler: handlerV2,
+                handlerHook: address(0),
+                pool: pool,
+                asset: USDC,
+                minDepositAssets: 1e6,
+                depositCap: 10_000e6
+            })
+        );
+        vm.expectRevert(IOrangeStrykeLPAutomatorV1_1.AmountZero.selector);
+        automator.deposit(0);
+    }
+
+    function test_deposit_revertWhenDepositCapExceeded() public {
+        automator = auto11.deploy(
+            auto11.DeployArgs({
+                name: "OrangeDopexV2LPAutomatorV1",
+                symbol: "ODV2LP",
+                dopexV2ManagerOwner: managerOwner,
+                admin: address(this),
+                strategist: address(this),
+                quoter: new ChainlinkQuoter(address(0xFdB631F5EE196F0ed6FAa767959853A9F217697D)),
+                assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
+                counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
+                manager: manager,
+                router: router,
+                handler: handlerV2,
+                handlerHook: address(0),
                 pool: pool,
                 asset: USDC,
                 minDepositAssets: 1e6,
@@ -84,15 +128,14 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
 
         _depositFrom(alice, 5_000e6);
 
-        vm.expectRevert(OrangeDopexV2LPAutomator.DepositCapExceeded.selector);
+        vm.expectRevert(IOrangeStrykeLPAutomatorV1_1.DepositCapExceeded.selector);
         automator.deposit(5_001e6);
     }
 
     function test_deposit_revertWhenDepositTooSmall() public {
-        automator = AutomatorHelper.deployOrangeDopexV2LPAutomator(
-            vm,
-            AutomatorHelper.DeployArgs({
-                name: "OrangeDopexV2LPAutomator",
+        automator = auto11.deploy(
+            auto11.DeployArgs({
+                name: "OrangeDopexV2LPAutomatorV1",
                 symbol: "ODV2LP",
                 dopexV2ManagerOwner: managerOwner,
                 admin: address(this),
@@ -102,8 +145,8 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
                 counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
                 manager: manager,
                 router: router,
-                handler: uniV3Handler,
-                handlerHook: emptyHook,
+                handler: handlerV2,
+                handlerHook: address(0),
                 pool: pool,
                 asset: USDC,
                 minDepositAssets: 1e6,
@@ -111,15 +154,14 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
             })
         );
 
-        vm.expectRevert(OrangeDopexV2LPAutomator.DepositTooSmall.selector);
+        vm.expectRevert(IOrangeStrykeLPAutomatorV1_1.DepositTooSmall.selector);
         automator.deposit(999999);
     }
 
     function test_deposit_deductedPerfFee_firstDeposit() public {
-        automator = AutomatorHelper.deployOrangeDopexV2LPAutomator(
-            vm,
-            AutomatorHelper.DeployArgs({
-                name: "OrangeDopexV2LPAutomator",
+        automator = auto11.deploy(
+            auto11.DeployArgs({
+                name: "OrangeDopexV2LPAutomatorV1",
                 symbol: "ODV2LP",
                 dopexV2ManagerOwner: managerOwner,
                 admin: address(this),
@@ -129,8 +171,8 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
                 counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
                 manager: manager,
                 router: router,
-                handler: uniV3Handler,
-                handlerHook: emptyHook,
+                handler: handlerV2,
+                handlerHook: address(0),
                 pool: pool,
                 asset: USDC,
                 minDepositAssets: 1e6,
@@ -151,10 +193,9 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
     }
 
     function test_deposit_deductedPerfFee_secondDeposit() public {
-        automator = AutomatorHelper.deployOrangeDopexV2LPAutomator(
-            vm,
-            AutomatorHelper.DeployArgs({
-                name: "OrangeDopexV2LPAutomator",
+        automator = auto11.deploy(
+            auto11.DeployArgs({
+                name: "OrangeDopexV2LPAutomatorV1",
                 symbol: "ODV2LP",
                 dopexV2ManagerOwner: managerOwner,
                 admin: address(this),
@@ -164,8 +205,8 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
                 counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
                 manager: manager,
                 router: router,
-                handler: uniV3Handler,
-                handlerHook: emptyHook,
+                handler: handlerV2,
+                handlerHook: address(0),
                 pool: pool,
                 asset: USDC,
                 minDepositAssets: 1e6,
@@ -185,20 +226,21 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
         assertEq(_shares, 9990000000);
     }
 
-    function test_constructor_minDepositAssetsTooSmall() public {
+    function test_initialize_minDepositAssetsTooSmall() public {
         // set to 1 / 1000 of 1e18 will fail
-        vm.expectRevert(OrangeDopexV2LPAutomator.MinDepositAssetsTooSmall.selector);
-        new OrangeDopexV2LPAutomator(
-            OrangeDopexV2LPAutomator.InitArgs({
-                name: "OrangeDopexV2LPAutomator",
+        address impl = address(new OrangeStrykeLPAutomatorV1_1());
+        bytes memory initCall = abi.encodeCall(
+            OrangeStrykeLPAutomatorV1_1.initialize,
+            OrangeStrykeLPAutomatorV1_1.InitArgs({
+                name: "OrangeDopexV2LPAutomatorV1",
                 symbol: "ODV2LP",
                 admin: address(this),
                 manager: manager,
-                quoter: ChainlinkQuoter(address(1)),
+                quoter: chainlinkQuoter,
                 assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
                 counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
-                handler: uniV3Handler,
-                handlerHook: emptyHook,
+                handler: handlerV2,
+                handlerHook: address(0),
                 router: router,
                 pool: pool,
                 asset: WETH,
@@ -206,33 +248,38 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
             })
         );
 
+        vm.expectRevert(IOrangeStrykeLPAutomatorV1_1.MinDepositAssetsTooSmall.selector);
+        new ERC1967Proxy(impl, initCall);
+
         // set to 1e6 (100% in pip) - 1 will fail
-        vm.expectRevert(OrangeDopexV2LPAutomator.MinDepositAssetsTooSmall.selector);
-        new OrangeDopexV2LPAutomator(
-            OrangeDopexV2LPAutomator.InitArgs({
-                name: "OrangeDopexV2LPAutomator",
+        impl = address(new OrangeStrykeLPAutomatorV1_1());
+        initCall = abi.encodeCall(
+            OrangeStrykeLPAutomatorV1_1.initialize,
+            OrangeStrykeLPAutomatorV1_1.InitArgs({
+                name: "OrangeDopexV2LPAutomatorV1",
                 symbol: "ODV2LP",
                 admin: address(this),
                 manager: manager,
-                quoter: ChainlinkQuoter(address(1)),
+                quoter: chainlinkQuoter,
                 assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
                 counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
-                handler: uniV3Handler,
-                handlerHook: emptyHook,
+                handler: handlerV2,
+                handlerHook: address(0),
                 router: router,
                 pool: pool,
-                asset: USDC,
-                minDepositAssets: 999999 // 1e6 - 1
+                asset: WETH,
+                minDepositAssets: 999999
             })
         );
+        vm.expectRevert(IOrangeStrykeLPAutomatorV1_1.MinDepositAssetsTooSmall.selector);
+        new ERC1967Proxy(impl, initCall);
     }
 
     function test_deposit_sharesRoundedToZero() public {
-        automator = AutomatorHelper.deployOrangeDopexV2LPAutomator({
-            vm: vm,
-            args: AutomatorHelper.DeployArgs({
+        automator = auto11.deploy({
+            args: auto11.DeployArgs({
                 dopexV2ManagerOwner: managerOwner,
-                name: "OrangeDopexV2LPAutomator",
+                name: "OrangeDopexV2LPAutomatorV1",
                 symbol: "ODV2LP",
                 admin: address(this),
                 strategist: address(this),
@@ -240,8 +287,8 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
                 assetUsdFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
                 counterAssetUsdFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
                 manager: manager,
-                handler: uniV3Handler,
-                handlerHook: emptyHook,
+                handler: handlerV2,
+                handlerHook: address(0),
                 router: router,
                 pool: pool,
                 asset: USDC,
@@ -261,8 +308,18 @@ contract TestOrangeDopexV2LPAutomatorDeposit is Fixture {
         deal(address(USDC), bob, 1e6);
         vm.startPrank(bob);
         USDC.approve(address(automator), 1e6);
-        vm.expectRevert(OrangeDopexV2LPAutomator.DepositTooSmall.selector);
+        vm.expectRevert(IOrangeStrykeLPAutomatorV1_1.DepositTooSmall.selector);
         automator.deposit(1e6);
+        vm.stopPrank();
+    }
+
+    function _depositFrom(address account, uint256 amount) internal returns (uint256 shares) {
+        IERC20 _asset = automator.asset();
+        deal(address(_asset), account, amount);
+
+        vm.startPrank(account);
+        _asset.approve(address(automator), amount);
+        shares = automator.deposit(amount);
         vm.stopPrank();
     }
 }

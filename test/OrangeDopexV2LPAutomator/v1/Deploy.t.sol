@@ -2,16 +2,17 @@
 
 pragma solidity 0.8.19;
 
-import "forge-std/Test.sol";
-import {OrangeDopexV2LPAutomator} from "../../contracts/OrangeDopexV2LPAutomator.sol";
-import {ChainlinkQuoter} from "../../contracts/ChainlinkQuoter.sol";
+/* solhint-disable func-name-mixedcase , var-name-mixedcase, state-visibility */
+import {Test} from "forge-std/Test.sol";
+import {OrangeDopexV2LPAutomatorV1} from "../../../contracts/OrangeDopexV2LPAutomatorV1.sol";
+import {ChainlinkQuoter} from "../../../contracts/ChainlinkQuoter.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IDopexV2PositionManager} from "../../contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
-import {IUniswapV3SingleTickLiquidityHandlerV2} from "../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
+import {IDopexV2PositionManager} from "../../../contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
+import {IUniswapV3SingleTickLiquidityHandlerV2} from "../../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
-contract TestOrangeDopexV2LPAutomatorDeploy is Test {
+contract TestOrangeDopexV2LPAutomatorV1Deploy is Test {
     IERC20 constant WETH = IERC20(0x82aF49447D8a07e3bd95BD0d56f35241523fBab1);
     IERC20 constant USDC = IERC20(0xaf88d065e77c8cC2239327C5EDb3A432268e5831);
     IDopexV2PositionManager constant DOPEX_POSITION_MANAGER =
@@ -28,10 +29,10 @@ contract TestOrangeDopexV2LPAutomatorDeploy is Test {
     function test_deploy_revertUnsupportedAssetsDecimals() public {
         vm.mockCall(address(WETH), abi.encodeWithSignature("decimals()"), abi.encode(uint8(2)));
 
-        vm.expectRevert(OrangeDopexV2LPAutomator.UnsupportedDecimals.selector);
-        new OrangeDopexV2LPAutomator(
-            OrangeDopexV2LPAutomator.InitArgs({
-                name: "OrangeDopexV2LPAutomator",
+        vm.expectRevert(OrangeDopexV2LPAutomatorV1.UnsupportedDecimals.selector);
+        new OrangeDopexV2LPAutomatorV1(
+            OrangeDopexV2LPAutomatorV1.InitArgs({
+                name: "OrangeDopexV2LPAutomatorV1",
                 symbol: "ODV2LP",
                 admin: address(this),
                 manager: DOPEX_POSITION_MANAGER,
@@ -51,10 +52,10 @@ contract TestOrangeDopexV2LPAutomatorDeploy is Test {
     function test_deploy_revertUnsupportedCounterAssetsDecimals() public {
         vm.mockCall(address(USDC), abi.encodeWithSignature("decimals()"), abi.encode(uint8(2)));
 
-        vm.expectRevert(OrangeDopexV2LPAutomator.UnsupportedDecimals.selector);
-        new OrangeDopexV2LPAutomator(
-            OrangeDopexV2LPAutomator.InitArgs({
-                name: "OrangeDopexV2LPAutomator",
+        vm.expectRevert(OrangeDopexV2LPAutomatorV1.UnsupportedDecimals.selector);
+        new OrangeDopexV2LPAutomatorV1(
+            OrangeDopexV2LPAutomatorV1.InitArgs({
+                name: "OrangeDopexV2LPAutomatorV1",
                 symbol: "ODV2LP",
                 admin: address(this),
                 manager: DOPEX_POSITION_MANAGER,

@@ -2,6 +2,7 @@
 
 pragma solidity 0.8.19;
 
+/* solhint-disable const-name-snakecase */
 import {Vm} from "forge-std/Vm.sol";
 
 interface IUSDC {

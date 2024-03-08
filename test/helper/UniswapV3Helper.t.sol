@@ -24,6 +24,19 @@ library UniswapV3Helper {
         return tick;
     }
 
+    function currentLower(IUniswapV3Pool pool) internal view returns (int24) {
+        (, int24 _ct, , , , , ) = pool.slot0();
+        int24 _spacing = pool.tickSpacing();
+
+        // current lower tick is calculated by rounding down the current tick to the nearest tick spacing
+        // if current tick is negative and not divisible by tick spacing, we need to subtract one tick spacing to get the correct lower tick
+        int24 _currentLt = _ct < 0 && _ct % _spacing != 0
+            ? (_ct / _spacing - 1) * _spacing
+            : (_ct / _spacing) * _spacing;
+
+        return _currentLt;
+    }
+
     function singleTickLiq(
         IUniswapV3Pool pool,
         int24 tickCurrent,
@@ -39,6 +52,22 @@ library UniswapV3Helper {
                 amount0,
                 amount1
             );
+    }
+
+    function singleLiqLeft(IUniswapV3Pool pool, int24 tickLower, uint256 amount1) internal view returns (uint128) {
+        int24 spacing = pool.tickSpacing();
+        uint160 sqrtRatioAX96 = tickLower.getSqrtRatioAtTick();
+        uint160 sqrtRatioBX96 = (tickLower + spacing).getSqrtRatioAtTick();
+
+        return LiquidityAmounts.getLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1);
+    }
+
+    function singleLiqRight(IUniswapV3Pool pool, int24 tickLower, uint256 amount0) internal view returns (uint128) {
+        int24 spacing = pool.tickSpacing();
+        uint160 sqrtRatioAX96 = tickLower.getSqrtRatioAtTick();
+        uint160 sqrtRatioBX96 = (tickLower + spacing).getSqrtRatioAtTick();
+
+        return LiquidityAmounts.getLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amount0);
     }
 
     function getLiquidityForAmounts(
