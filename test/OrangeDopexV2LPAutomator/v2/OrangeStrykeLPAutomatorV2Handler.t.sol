@@ -88,13 +88,21 @@ contract OrangeStrykeLPAutomatorV2Handler is Test {
         }
     }
 
-    function deposit(uint256 assets, address depositor) external {
+    function deposit(uint256 assets, address depositor) external returns (uint256 shares) {
         IERC20 _asset = automator.asset();
         deal(address(_asset), depositor, assets);
         vm.startPrank(depositor);
         _asset.approve(address(automator), assets);
-        automator.deposit(assets);
+        shares = automator.deposit(assets);
         vm.stopPrank();
+    }
+
+    function redeem(uint256 shares, address router, bytes memory swapCalldata, address redeemer) external {
+        vm.prank(automatorOwner);
+        automator.setRouterWhitelist(router, true);
+
+        vm.prank(redeemer);
+        automator.redeem(shares, router, swapCalldata);
     }
 
     function rebalance(

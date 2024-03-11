@@ -6,6 +6,7 @@ pragma solidity 0.8.19;
 /* solhint-disable func-name-mixedcase */
 import {IOrangeStrykeLPAutomatorV2} from "../../../contracts/v2/IOrangeStrykeLPAutomatorV2.sol";
 import {Test, Vm} from "forge-std/Test.sol";
+import {IERC20} from "@openzeppelin/contracts//interfaces/IERC20.sol";
 
 Vm constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
 
@@ -21,6 +22,18 @@ function parseTicks(string memory ticks) pure returns (IOrangeStrykeLPAutomatorV
     bytes memory parsedTicks = vm.parseJson(ticks, ".");
     RawRebalanceTick[] memory rawTicks = abi.decode(parsedTicks, (RawRebalanceTick[]));
     return rawToConvertedRebalanceTicks(rawTicks);
+}
+
+function rebalanceMintSingle(IOrangeStrykeLPAutomatorV2 automator, int24 lowerTick, uint128 liquidity) {
+    IOrangeStrykeLPAutomatorV2.RebalanceTick[] memory _ticksMint = new IOrangeStrykeLPAutomatorV2.RebalanceTick[](1);
+    _ticksMint[0] = IOrangeStrykeLPAutomatorV2.RebalanceTick({tick: lowerTick, liquidity: liquidity});
+    automator.rebalance(
+        _ticksMint,
+        new IOrangeStrykeLPAutomatorV2.RebalanceTick[](0),
+        address(0),
+        "",
+        IOrangeStrykeLPAutomatorV2.RebalanceShortage({token: IERC20(address(0)), shortage: 0})
+    );
 }
 
 function rawToConvertedRebalanceTicks(

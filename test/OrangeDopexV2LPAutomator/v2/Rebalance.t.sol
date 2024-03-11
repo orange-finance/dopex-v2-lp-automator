@@ -54,17 +54,19 @@ contract TestOrangeStrykeLPAutomatorV2Rebalance is WETH_USDC_Fixture {
         address sender,
         uint256 amount
     ) internal returns (address router, bytes memory swapCalldata) {
-        string[] memory buildSwapData = new string[](10);
+        string[] memory buildSwapData = new string[](12);
         buildSwapData[0] = "node";
         buildSwapData[1] = "test/OrangeDopexV2LPAutomator/v2/kyberswap.mjs";
         buildSwapData[2] = "-i";
         buildSwapData[3] = "weth";
         buildSwapData[4] = "-o";
         buildSwapData[5] = "usdc";
-        buildSwapData[6] = "-a";
-        buildSwapData[7] = Strings.toString(amount);
-        buildSwapData[8] = "-s";
-        buildSwapData[9] = Strings.toHexString(uint256(uint160(sender)));
+        buildSwapData[6] = "-u";
+        buildSwapData[7] = "18";
+        buildSwapData[8] = "-a";
+        buildSwapData[9] = Strings.toString(amount);
+        buildSwapData[10] = "-s";
+        buildSwapData[11] = Strings.toHexString(uint256(uint160(sender)));
 
         bytes memory swapData = vm.ffi(buildSwapData);
         (router, swapCalldata) = abi.decode(swapData, (address, bytes));
