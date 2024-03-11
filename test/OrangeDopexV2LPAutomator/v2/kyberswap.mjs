@@ -4,6 +4,7 @@ import { parseUnits, encodeAbiParameters } from 'viem'
 
 program.requiredOption('-i, --in-token <token>', 'token to swap')
 program.requiredOption('-o, --out-token <token>', 'token to receive')
+program.requiredOption('-u', '--unit', 'unit of token', 'wei')
 program.requiredOption('-a, --amount <amount>', 'amount of token to swap')
 program.requiredOption('-s --sender <address>', 'sender address')
 program.parse()
@@ -20,7 +21,7 @@ const TOKENS = {
 }
 
 async function kyberswap() {
-  const { inToken, outToken, amount, sender } = program.opts()
+  const { inToken, outToken, amount, sender, unit } = program.opts()
 
   const it = TOKENS[inToken]
   const ot = TOKENS[outToken]
@@ -34,12 +35,14 @@ async function kyberswap() {
     },
   })
 
+  const amountIn = getAmountIn(amount, unit)
+
   // get swap routes
   const { data: rs } = await client.get('/routes', {
     params: {
       tokenIn: it.address,
       tokenOut: ot.address,
-      amountIn: parseUnits(amount, it.decimals).toString(),
+      amountIn: amountIn.toString(),
     },
   })
 
@@ -59,6 +62,12 @@ async function kyberswap() {
   )
 
   console.log(encoded)
+}
+
+function getAmountIn(amount, unit) {
+  if (unit === 'wei') return BigInt(amount)
+
+  return parseUnits(amount, unit)
 }
 
 kyberswap().catch((e) => {
