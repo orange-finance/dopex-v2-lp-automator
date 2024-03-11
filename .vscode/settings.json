@@ -13,6 +13,7 @@
     "inheritdoc",
     "Initializable",
     "keccak",
+    "kyberswap",
     "liquidization",
     "mixedcase",
     "mload",
