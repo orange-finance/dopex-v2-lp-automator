@@ -36,6 +36,35 @@ contract TestOrangeStrykeLPAutomatorV2Rebalance is WETH_USDC_Fixture, DealExtens
         emit log_named_uint("alice weth after: ", WETH.balanceOf(alice));
     }
 
+    // function test_redeemWithAggregator_hasPositions_Skip() public {
+    //     uint256 shares = automator.deposit(50 ether, alice);
+    //     // uint256 usdc = automator.automator().pool().getQuote(address(WETH), address(USDC), 50 ether);
+    //     dealUsdc(address(automator.automator()), 100_000e6);
+
+    //     automator.rebalanceSingleLeft(pool.currentTick() - 10, 30_000e6);
+    //     automator.rebalanceSingleLeft(pool.currentTick() - 20, 30_000e6);
+
+    //     // swap all free usdc when redeeming
+    //     (, uint256 free1) = inspector.freePoolPositionInToken01(automator.automator());
+    //     uint256 freeUsdc = USDC.balanceOf(address(automator.automator())) + free1;
+    //     (address router, bytes memory swapCalldata) = _buildSwapData(address(automator.automator()), freeUsdc);
+
+    //     emit log_named_uint("vault weth balance before: ", WETH.balanceOf(address(automator.automator())));
+    //     emit log_named_uint("vault usdc balance before: ", USDC.balanceOf(address(automator.automator())));
+    //     emit log_named_uint("alice weth before: ", WETH.balanceOf(alice));
+
+    //     automator.redeem(shares, router, swapCalldata, alice);
+
+    //     uint256 expectedWeth = 50 ether +
+    //         automator.automator().pool().getQuote(address(USDC), address(WETH), uint128(freeUsdc));
+
+    //     emit log_named_uint("vault weth balance after: ", WETH.balanceOf(address(automator.automator()))); // prettier-ignore
+    //     emit log_named_uint("vault usdc balance after: ", USDC.balanceOf(address(automator.automator()))); // prettier-ignore
+    //     emit log_named_uint("alice weth after: ", WETH.balanceOf(alice));
+
+    //     assertApproxEqRel(expectedWeth, WETH.balanceOf(alice), 0.001e18);
+    // }
+
     function _buildSwapData(
         address sender,
         uint256 amount

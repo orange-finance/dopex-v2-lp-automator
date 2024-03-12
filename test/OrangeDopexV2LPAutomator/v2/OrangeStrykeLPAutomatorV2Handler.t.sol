@@ -12,6 +12,8 @@ import {OrangeStrykeLPAutomatorV2} from "../../../contracts/v2/OrangeStrykeLPAut
 import {ChainlinkQuoter} from "../../../contracts/ChainlinkQuoter.sol";
 import {IBalancerVault} from "../../../contracts/vendor/balancer/IBalancerVault.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
+import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 
 import {ERC1967Proxy} from "@openzeppelin/contracts//proxy/ERC1967/ERC1967Proxy.sol";
 
@@ -120,5 +122,45 @@ contract OrangeStrykeLPAutomatorV2Handler is Test {
 
         vm.prank(strategist);
         automator.rebalance(mintTicks, burnTicks, router, swapCalldata, shortage);
+    }
+
+    function rebalanceSingleLeft(int24 lowerTick, uint256 amount1) external {
+        uint128 liquidity = LiquidityAmounts.getLiquidityForAmount1(
+            TickMath.getSqrtRatioAtTick(lowerTick),
+            TickMath.getSqrtRatioAtTick(automator.poolTickSpacing()),
+            amount1
+        );
+
+        IOrangeStrykeLPAutomatorV2.RebalanceTick[] memory mintTicks = new IOrangeStrykeLPAutomatorV2.RebalanceTick[](1);
+        mintTicks[0] = IOrangeStrykeLPAutomatorV2.RebalanceTick({tick: lowerTick, liquidity: liquidity});
+
+        vm.prank(strategist);
+        automator.rebalance(
+            mintTicks,
+            new IOrangeStrykeLPAutomatorV2.RebalanceTick[](0),
+            address(0),
+            "",
+            IOrangeStrykeLPAutomatorV2.RebalanceShortage(IERC20(address(0)), 0)
+        );
+    }
+
+    function rebalanceSingleRight(int24 lowerTick, uint256 amount0) external {
+        uint128 liquidity = LiquidityAmounts.getLiquidityForAmount0(
+            TickMath.getSqrtRatioAtTick(lowerTick),
+            TickMath.getSqrtRatioAtTick(automator.poolTickSpacing()),
+            amount0
+        );
+
+        IOrangeStrykeLPAutomatorV2.RebalanceTick[] memory mintTicks = new IOrangeStrykeLPAutomatorV2.RebalanceTick[](1);
+        mintTicks[0] = IOrangeStrykeLPAutomatorV2.RebalanceTick({tick: lowerTick, liquidity: liquidity});
+
+        vm.prank(strategist);
+        automator.rebalance(
+            mintTicks,
+            new IOrangeStrykeLPAutomatorV2.RebalanceTick[](0),
+            address(0),
+            "",
+            IOrangeStrykeLPAutomatorV2.RebalanceShortage(IERC20(address(0)), 0)
+        );
     }
 }
