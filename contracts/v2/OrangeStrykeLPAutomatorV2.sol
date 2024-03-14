@@ -25,6 +25,8 @@ import {OrangeERC20Upgradeable} from "../OrangeERC20Upgradeable.sol";
 import {IERC20Decimals} from "../interfaces/IERC20Extended.sol";
 
 import {IOrangeStrykeLPAutomatorV2} from "./IOrangeStrykeLPAutomatorV2.sol";
+import {IOrangeStrykeLPAutomatorState} from "./../interfaces/IOrangeStrykeLPAutomatorState.sol";
+import {IOrangeSwapProxy} from "./IOrangeSwapProxy.sol";
 
 import {IBalancerVault} from "./../vendor/balancer/IBalancerVault.sol";
 
@@ -97,6 +99,8 @@ contract OrangeStrykeLPAutomatorV2 is
                                                     Uniswap
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
     IUniswapV3Pool public pool;
+    /// @dev previously used as Uniswap Router, now used as own router
+    address public router;
     int24 public poolTickSpacing;
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -109,12 +113,12 @@ contract OrangeStrykeLPAutomatorV2 is
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
     modifier onlyOwner() {
-        if (!isOwner[msg.sender]) revert OnlyOwner();
+        if (!isOwner[msg.sender]) revert Unauthorized();
         _;
     }
 
     modifier onlyStrategist() {
-        if (!isStrategist[msg.sender]) revert OnlyStrategist();
+        if (!isStrategist[msg.sender]) revert Unauthorized();
         _;
     }
 
@@ -248,15 +252,15 @@ contract OrangeStrykeLPAutomatorV2 is
         emit DepositFeePipsSet(pips);
     }
 
-    function setRouterWhitelist(address router, bool approve) external onlyOwner {
+    function setProxyWhitelist(address swapProxy, bool approve) external onlyOwner {
         if (approve) {
             // check if already approved to avoid reusing allowance by the router
-            if (asset.allowance(address(this), router) > 0) revert RouterAlreadyWhitelisted();
-            asset.forceApprove(router, type(uint256).max);
-            counterAsset.forceApprove(router, type(uint256).max);
+            if (asset.allowance(address(this), swapProxy) > 0) revert ProxyAlreadyWhitelisted();
+            asset.forceApprove(swapProxy, type(uint256).max);
+            counterAsset.forceApprove(swapProxy, type(uint256).max);
         } else {
-            asset.forceApprove(router, 0);
-            counterAsset.forceApprove(router, 0);
+            asset.forceApprove(swapProxy, 0);
+            counterAsset.forceApprove(swapProxy, 0);
         }
     }
 
@@ -268,7 +272,7 @@ contract OrangeStrykeLPAutomatorV2 is
                                                     VAULT STATE DERIVATION FUNCTIONS
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
-    /// @inheritdoc IOrangeStrykeLPAutomatorV2
+    /// @inheritdoc IOrangeStrykeLPAutomatorState
     function totalAssets() public view returns (uint256) {
         // 1. calculate the total assets in Dopex pools
         uint256 _length = _activeTicks.length();
@@ -326,20 +330,20 @@ contract OrangeStrykeLPAutomatorV2 is
             );
     }
 
-    /// @inheritdoc IOrangeStrykeLPAutomatorV2
+    /// @inheritdoc IOrangeStrykeLPAutomatorState
     function convertToShares(uint256 assets) external view returns (uint256) {
         // NOTE: no need to check total supply as it is checked in deposit function.
         return assets.mulDiv(totalSupply(), totalAssets());
     }
 
-    /// @inheritdoc IOrangeStrykeLPAutomatorV2
+    /// @inheritdoc IOrangeStrykeLPAutomatorState
     function convertToAssets(uint256 shares) public view returns (uint256) {
         uint256 _supply = totalSupply();
 
         return _supply == 0 ? shares : shares.mulDiv(totalAssets(), _supply);
     }
 
-    /// @inheritdoc IOrangeStrykeLPAutomatorV2
+    /// @inheritdoc IOrangeStrykeLPAutomatorState
     function getActiveTicks() external view returns (int24[] memory) {
         uint256[] memory _tempTicks = _activeTicks.values();
         int24[] memory __activeTicks = new int24[](_tempTicks.length);
@@ -414,8 +418,7 @@ contract OrangeStrykeLPAutomatorV2 is
     /// @inheritdoc IOrangeStrykeLPAutomatorV2
     function redeem(
         uint256 shares,
-        address router,
-        bytes calldata swapCalldata
+        bytes calldata redeemData
     ) external returns (uint256 assets, LockedDopexShares[] memory lockedDopexShares) {
         if (shares == 0) revert AmountZero();
         if (convertToAssets(shares) == 0) revert SharesTooSmall();
@@ -426,6 +429,7 @@ contract OrangeStrykeLPAutomatorV2 is
         _burn(msg.sender, shares);
 
         uint256 _preAssets = asset.balanceOf(address(this));
+        uint256 _preCounter = counterAsset.balanceOf(address(this));
 
         RedeemLoopCache memory c;
         uint256 _length = _activeTicks.length();
@@ -481,7 +485,27 @@ contract OrangeStrykeLPAutomatorV2 is
             }
         }
 
-        router.functionCall(swapCalldata);
+        uint256 _pay = shares.mulDiv(_preCounter, _tsBeforeBurn) + counterAsset.balanceOf(address(this)) - _preCounter;
+
+        if (_pay > 0) {
+            (address _swapProxy, address _swapProvider, bytes memory _swapCalldata) = abi.decode(
+                redeemData,
+                (address, address, bytes)
+            );
+
+            if (asset.allowance(address(this), _swapProxy) == 0) revert Unauthorized();
+
+            IOrangeSwapProxy(_swapProxy).swapInput(
+                IOrangeSwapProxy.SwapInputRequest({
+                    provider: _swapProvider,
+                    swapCalldata: _swapCalldata,
+                    expectTokenIn: asset,
+                    expectTokenOut: counterAsset,
+                    expectAmountIn: _pay,
+                    inputDelta: 10 // 0.01% slippage
+                })
+            );
+        }
 
         // solhint-disable-next-line reentrancy
         assets = shares.mulDiv(_preAssets, _tsBeforeBurn) + asset.balanceOf(address(this)) - _preAssets;
@@ -524,29 +548,29 @@ contract OrangeStrykeLPAutomatorV2 is
     function rebalance(
         RebalanceTick[] calldata ticksMint,
         RebalanceTick[] calldata ticksBurn,
-        address swapRouter,
-        bytes calldata swapCalldata,
-        RebalanceShortage calldata shortage
+        address swapProxy,
+        IOrangeSwapProxy.SwapInputRequest calldata swapRequest,
+        bytes calldata flashLoanData
     ) external onlyStrategist {
         // prepare the calldata for multicall
         bytes[] memory _burnCalldataBatch = _createBurnCalldataBatch(ticksBurn);
         bytes[] memory _mintCalldataBatch = _createMintCalldataBatch(ticksMint);
 
+        (IERC20[] memory _tokens, uint256[] memory _amounts, bool _execFlashLoan) = abi.decode(
+            flashLoanData,
+            (IERC20[], uint256[], bool)
+        );
+
         // prepare flash loan request
         FlashLoanUserData memory _userData = FlashLoanUserData({
-            router: swapRouter,
-            swapCalldata: swapCalldata,
+            swapProxy: swapProxy,
+            swapRequest: swapRequest,
             mintCalldata: _mintCalldataBatch,
             burnCalldata: _burnCalldataBatch
         });
 
-        IERC20[] memory _tokens = new IERC20[](1);
-        uint256[] memory _amounts = new uint256[](1);
-        _tokens[0] = shortage.token;
-        _amounts[0] = shortage.shortage;
-
         // execute flash loan, then _onFlashLoanReceived will call the multicall
-        _makeFlashLoan(_tokens, _amounts, abi.encode(_userData));
+        if (_execFlashLoan) _makeFlashLoan(_tokens, _amounts, abi.encode(_userData));
 
         if (ticksMint.length + _activeTicks.length() > _MAX_TICKS) revert MaxTicksReached();
 
@@ -565,7 +589,8 @@ contract OrangeStrykeLPAutomatorV2 is
         if (_ud.burnCalldata.length > 0) IMulticallProvider(address(manager)).multicall(_ud.burnCalldata);
         if (_ud.mintCalldata.length > 0) IMulticallProvider(address(manager)).multicall(_ud.mintCalldata);
 
-        _ud.router.functionCall(_ud.swapCalldata);
+        // we can directly pass the request as the user data is provided by the trusted strategist
+        IOrangeSwapProxy(_ud.swapProxy).swapInput(_ud.swapRequest);
 
         // repay flash loan
         for (uint256 i = 0; i < tokens.length; ) {

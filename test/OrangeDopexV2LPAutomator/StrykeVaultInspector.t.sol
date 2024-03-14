@@ -8,6 +8,7 @@ import {Fixture} from "./v1/Fixture.t.sol";
 import {WETH_USDC_Fixture} from "./v1_1/fixture/WETH_USDC_Fixture.t.sol";
 import {StrykeVaultInspector} from "./../../contracts/periphery/StrykeVaultInspector.sol";
 import {IOrangeStrykeLPAutomatorV1_1} from "./../../contracts/interfaces/IOrangeStrykeLPAutomatorV1_1.sol";
+import {IOrangeStrykeLPAutomatorState} from "./../../contracts/interfaces/IOrangeStrykeLPAutomatorState.sol";
 import {DopexV2Helper} from "../helper/DopexV2Helper.t.sol";
 import {UniswapV3Helper} from "../helper/UniswapV3Helper.t.sol";
 import {DealExtension} from "../helper/DealExtension.t.sol";
@@ -99,7 +100,7 @@ contract TestInspectorWithV1_1 is WETH_USDC_Fixture, DealExtension {
         (
             uint256 balanceDepositAsset,
             uint256 balanceCounterAsset,
-            IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[] memory rebalanceTicks
+            IOrangeStrykeLPAutomatorState.RebalanceTickInfo[] memory rebalanceTicks
         ) = inspector.getAutomatorPositions(IOrangeStrykeLPAutomatorV1_1(address(automator)));
 
         assertEq(balanceDepositAsset, 100 ether);
@@ -124,7 +125,7 @@ contract TestInspectorWithV1_1 is WETH_USDC_Fixture, DealExtension {
         (
             uint256 balanceDepositAsset,
             uint256 balanceCounterAsset,
-            IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[] memory rebalanceTicks
+            IOrangeStrykeLPAutomatorState.RebalanceTickInfo[] memory rebalanceTicks
         ) = inspector.getAutomatorPositions(IOrangeStrykeLPAutomatorV1_1(address(automator)));
 
         assertApproxEqRel(70 ether, balanceDepositAsset, 0.00001e18); // 0.01%
@@ -265,12 +266,12 @@ contract TestInspectorWithV1_1 is WETH_USDC_Fixture, DealExtension {
     }
 
     function _rebalanceMintSingle(int24 lowerTick, uint128 liquidity) internal {
-        IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[]
-            memory _ticksMint = new IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[](1);
-        _ticksMint[0] = IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo({tick: lowerTick, liquidity: liquidity});
+        IOrangeStrykeLPAutomatorState.RebalanceTickInfo[]
+            memory _ticksMint = new IOrangeStrykeLPAutomatorState.RebalanceTickInfo[](1);
+        _ticksMint[0] = IOrangeStrykeLPAutomatorState.RebalanceTickInfo({tick: lowerTick, liquidity: liquidity});
         automator.rebalance(
             _ticksMint,
-            new IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[](0),
+            new IOrangeStrykeLPAutomatorState.RebalanceTickInfo[](0),
             IOrangeStrykeLPAutomatorV1_1.RebalanceSwapParams(0, 0, 0, 0)
         );
     }
@@ -368,7 +369,7 @@ contract TestInspectorWithV1 is Fixture, DealExtension {
         (
             uint256 balanceDepositAsset,
             uint256 balanceCounterAsset,
-            IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[] memory rebalanceTicks
+            IOrangeStrykeLPAutomatorState.RebalanceTickInfo[] memory rebalanceTicks
         ) = inspector.getAutomatorPositions(IOrangeStrykeLPAutomatorV1_1(address(automator)));
 
         assertEq(balanceDepositAsset, 100 ether);
@@ -393,7 +394,7 @@ contract TestInspectorWithV1 is Fixture, DealExtension {
         (
             uint256 balanceDepositAsset,
             uint256 balanceCounterAsset,
-            IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[] memory rebalanceTicks
+            IOrangeStrykeLPAutomatorState.RebalanceTickInfo[] memory rebalanceTicks
         ) = inspector.getAutomatorPositions(IOrangeStrykeLPAutomatorV1_1(address(automator)));
 
         assertApproxEqRel(70 ether, balanceDepositAsset, 0.00001e18); // 0.01%

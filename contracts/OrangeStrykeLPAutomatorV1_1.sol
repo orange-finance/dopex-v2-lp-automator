@@ -25,6 +25,7 @@ import {UniswapV3SingleTickLiquidityLibV2} from "./lib/UniswapV3SingleTickLiquid
 import {OrangeERC20Upgradeable} from "./OrangeERC20Upgradeable.sol";
 import {IERC20Decimals} from "./interfaces/IERC20Extended.sol";
 import {IOrangeStrykeLPAutomatorV1_1} from "./interfaces/IOrangeStrykeLPAutomatorV1_1.sol";
+import {IOrangeStrykeLPAutomatorState} from "./interfaces/IOrangeStrykeLPAutomatorState.sol";
 
 interface IMulticallProvider {
     function multicall(bytes[] calldata data) external returns (bytes[] memory results);
@@ -236,7 +237,7 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
                                                     VAULT STATE DERIVATION FUNCTIONS
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
-    /// @inheritdoc IOrangeStrykeLPAutomatorV1_1
+    /// @inheritdoc IOrangeStrykeLPAutomatorState
     function totalAssets() public view returns (uint256) {
         // 1. calculate the total assets in Dopex pools
         uint256 _length = _activeTicks.length();
@@ -294,20 +295,20 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
             );
     }
 
-    /// @inheritdoc IOrangeStrykeLPAutomatorV1_1
+    /// @inheritdoc IOrangeStrykeLPAutomatorState
     function convertToShares(uint256 assets) external view returns (uint256) {
         // NOTE: no need to check total supply as it is checked in deposit function.
         return assets.mulDiv(totalSupply(), totalAssets());
     }
 
-    /// @inheritdoc IOrangeStrykeLPAutomatorV1_1
+    /// @inheritdoc IOrangeStrykeLPAutomatorState
     function convertToAssets(uint256 shares) public view returns (uint256) {
         uint256 _supply = totalSupply();
 
         return _supply == 0 ? shares : shares.mulDiv(totalAssets(), _supply);
     }
 
-    /// @inheritdoc IOrangeStrykeLPAutomatorV1_1
+    /// @inheritdoc IOrangeStrykeLPAutomatorState
     function getActiveTicks() external view returns (int24[] memory) {
         uint256[] memory _tempTicks = _activeTicks.values();
         int24[] memory __activeTicks = new int24[](_tempTicks.length);
