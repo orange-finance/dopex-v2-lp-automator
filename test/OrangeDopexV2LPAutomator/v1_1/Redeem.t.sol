@@ -8,6 +8,7 @@ import {WETH_USDC_Fixture} from "./fixture/WETH_USDC_Fixture.t.sol";
 import {auto11} from "../../helper/AutomatorHelperV1_1.t.sol";
 import {IERC6909} from "../../../contracts/vendor/dopexV2/IERC6909.sol";
 import {IOrangeStrykeLPAutomatorV1_1} from "./../../../contracts/interfaces/IOrangeStrykeLPAutomatorV1_1.sol";
+import {IOrangeStrykeLPAutomatorState} from "./../../../contracts/interfaces/IOrangeStrykeLPAutomatorState.sol";
 import {IUniswapV3SingleTickLiquidityHandlerV2} from "./../../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 import {OrangeDopexV2LPAutomatorV1} from "./../../../contracts/OrangeDopexV2LPAutomatorV1.sol";
 import {UniswapV3SingleTickLiquidityLib} from "./../../../contracts/lib/UniswapV3SingleTickLiquidityLib.sol";
@@ -271,11 +272,11 @@ contract TestOrangeStrykeLPAutomatorV1_1Redeem is WETH_USDC_Fixture {
     }
 
     function _mint(uint256 _amountWeth, uint256 _amountUsdc, int24 _oor_belowLower, int24 _oor_aboveLower) public {
-        IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[]
-            memory _ticksMint = new IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[](2);
+        IOrangeStrykeLPAutomatorState.RebalanceTickInfo[]
+            memory _ticksMint = new IOrangeStrykeLPAutomatorState.RebalanceTickInfo[](2);
 
         // token0: WETH, token1: USDC
-        _ticksMint[0] = IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo({
+        _ticksMint[0] = IOrangeStrykeLPAutomatorState.RebalanceTickInfo({
             tick: _oor_belowLower,
             liquidity: _toSingleTickLiquidity(
                 _oor_belowLower,
@@ -283,7 +284,7 @@ contract TestOrangeStrykeLPAutomatorV1_1Redeem is WETH_USDC_Fixture {
                 (_amountUsdc / 2) - (_amountUsdc / 2).mulDiv(pool.fee(), 1e6 - pool.fee())
             )
         });
-        _ticksMint[1] = IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo({
+        _ticksMint[1] = IOrangeStrykeLPAutomatorState.RebalanceTickInfo({
             tick: _oor_aboveLower,
             liquidity: _toSingleTickLiquidity(
                 _oor_aboveLower,
@@ -292,8 +293,8 @@ contract TestOrangeStrykeLPAutomatorV1_1Redeem is WETH_USDC_Fixture {
             )
         });
 
-        IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[]
-            memory _ticksBurn = new IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[](0);
+        IOrangeStrykeLPAutomatorState.RebalanceTickInfo[]
+            memory _ticksBurn = new IOrangeStrykeLPAutomatorState.RebalanceTickInfo[](0);
 
         automator.rebalance(
             _ticksMint,
@@ -341,12 +342,12 @@ contract TestOrangeStrykeLPAutomatorV1_1Redeem is WETH_USDC_Fixture {
     }
 
     function _rebalanceMintSingle(int24 lowerTick, uint128 liquidity) internal {
-        IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[]
-            memory _ticksMint = new IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[](1);
-        _ticksMint[0] = IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo({tick: lowerTick, liquidity: liquidity});
+        IOrangeStrykeLPAutomatorState.RebalanceTickInfo[]
+            memory _ticksMint = new IOrangeStrykeLPAutomatorState.RebalanceTickInfo[](1);
+        _ticksMint[0] = IOrangeStrykeLPAutomatorState.RebalanceTickInfo({tick: lowerTick, liquidity: liquidity});
         automator.rebalance(
             _ticksMint,
-            new IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[](0),
+            new IOrangeStrykeLPAutomatorState.RebalanceTickInfo[](0),
             IOrangeStrykeLPAutomatorV1_1.RebalanceSwapParams(0, 0, 0, 0)
         );
     }

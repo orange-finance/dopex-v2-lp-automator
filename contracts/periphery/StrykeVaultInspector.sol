@@ -7,7 +7,7 @@ import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/Liquid
 import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import {IOrangeStrykeLPAutomatorV1_1} from "./../interfaces/IOrangeStrykeLPAutomatorV1_1.sol";
+import {IOrangeStrykeLPAutomatorState} from "./../interfaces/IOrangeStrykeLPAutomatorState.sol";
 import {IUniswapV3SingleTickLiquidityHandlerV2} from "./../vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 import {ChainlinkQuoter} from "./../ChainlinkQuoter.sol";
 import {UniswapV3SingleTickLiquidityLibV2} from "./../lib/UniswapV3SingleTickLiquidityLibV2.sol";
@@ -34,7 +34,7 @@ contract StrykeVaultInspector {
      * @return sumAmount1 The total free liquidity in token1.
      */
     function freePoolPositionInToken01(
-        IOrangeStrykeLPAutomatorV1_1 automator
+        IOrangeStrykeLPAutomatorState automator
     ) public view returns (uint256 sumAmount0, uint256 sumAmount1) {
         IUniswapV3Pool _pool = automator.pool();
         IUniswapV3SingleTickLiquidityHandlerV2 _handler = automator.handler();
@@ -77,7 +77,7 @@ contract StrykeVaultInspector {
      * @param tick The tick value representing the range.
      * @return The total liquidity of the tick range.
      */
-    function getTickAllLiquidity(IOrangeStrykeLPAutomatorV1_1 automator, int24 tick) external view returns (uint128) {
+    function getTickAllLiquidity(IOrangeStrykeLPAutomatorState automator, int24 tick) external view returns (uint128) {
         IUniswapV3SingleTickLiquidityHandlerV2 _handler = automator.handler();
         IUniswapV3Pool _pool = automator.pool();
         address _handlerHook = automator.handlerHook();
@@ -103,7 +103,7 @@ contract StrykeVaultInspector {
      * @return freeLiquidity The amount of free liquidity for the specified tick.
      */
     function getTickFreeLiquidity(
-        IOrangeStrykeLPAutomatorV1_1 automator,
+        IOrangeStrykeLPAutomatorState automator,
         int24 tick
     ) external view returns (uint128 freeLiquidity) {
         IUniswapV3SingleTickLiquidityHandlerV2 _handler = automator.handler();
@@ -127,7 +127,7 @@ contract StrykeVaultInspector {
      * current tick and the base value, and returned as the result.
      * @return The total free assets in Dopex pools.
      */
-    function freeAssets(IOrangeStrykeLPAutomatorV1_1 automator) public view returns (uint256) {
+    function freeAssets(IOrangeStrykeLPAutomatorState automator) public view returns (uint256) {
         // 1. calculate the free token0 & token1 in Dopex pools
         (uint256 _sum0, uint256 _sum1) = freePoolPositionInToken01(automator);
 
@@ -167,14 +167,14 @@ contract StrykeVaultInspector {
      * @return rebalanceTicks An array of structs representing the active ticks and its liquidity.
      */
     function getAutomatorPositions(
-        IOrangeStrykeLPAutomatorV1_1 automator
+        IOrangeStrykeLPAutomatorState automator
     )
         external
         view
         returns (
             uint256 balanceDepositAsset,
             uint256 balanceCounterAsset,
-            IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[] memory rebalanceTicks
+            IOrangeStrykeLPAutomatorState.RebalanceTickInfo[] memory rebalanceTicks
         )
     {
         rebalanceTicks = _rebalanceTicks(automator);
@@ -186,8 +186,8 @@ contract StrykeVaultInspector {
     }
 
     function _rebalanceTicks(
-        IOrangeStrykeLPAutomatorV1_1 automator
-    ) private view returns (IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[] memory rebalanceTicks) {
+        IOrangeStrykeLPAutomatorState automator
+    ) private view returns (IOrangeStrykeLPAutomatorState.RebalanceTickInfo[] memory rebalanceTicks) {
         IUniswapV3Pool _pool = automator.pool();
         IUniswapV3SingleTickLiquidityHandlerV2 _handler = automator.handler();
         address _handlerHook = automator.handlerHook();
@@ -197,7 +197,7 @@ contract StrykeVaultInspector {
         uint256 _tid;
 
         PositionCalcCache memory _cache;
-        rebalanceTicks = new IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[](_tLen);
+        rebalanceTicks = new IOrangeStrykeLPAutomatorState.RebalanceTickInfo[](_tLen);
 
         for (uint256 i = 0; i < _tLen; ) {
             _cache.lowerTick = _ticks[i];
@@ -209,7 +209,7 @@ contract StrykeVaultInspector {
                 _tid
             );
 
-            rebalanceTicks[i] = IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo({
+            rebalanceTicks[i] = IOrangeStrykeLPAutomatorState.RebalanceTickInfo({
                 tick: _cache.lowerTick,
                 liquidity: _cache.liquidity
             });

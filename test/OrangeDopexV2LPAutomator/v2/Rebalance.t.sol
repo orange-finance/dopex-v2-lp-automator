@@ -8,6 +8,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IOrangeStrykeLPAutomatorV2} from "../../../contracts/v2/IOrangeStrykeLPAutomatorV2.sol";
+import {IOrangeSwapProxy} from "./../../../contracts/v2/IOrangeSwapProxy.sol";
 import {IBalancerVault} from "../../../contracts/vendor/balancer/IBalancerVault.sol";
 import {IBalancerFlashLoanRecipient} from "../../../contracts/vendor/balancer/IBalancerFlashLoanRecipient.sol";
 import {UniswapV3Helper} from "../../helper/UniswapV3Helper.t.sol";
@@ -24,7 +25,7 @@ contract TestOrangeStrykeLPAutomatorV2Rebalance is WETH_USDC_Fixture {
     function test_rebalance_flashLoanAndSwap_Skip() public {
         automator.deposit(100 ether, alice);
 
-        (address router, bytes memory swapCalldata) = _buildSwapData(address(automator.automator()), 50);
+        (address router, bytes memory swapCalldata) = _buildKyberswapData(address(automator.automator()), 50);
 
         emit log_named_uint("vault weth balance before: ", WETH.balanceOf(address(automator.automator())));
         emit log_named_uint("vault usdc balance before: ", USDC.balanceOf(address(automator.automator())));
@@ -36,21 +37,29 @@ contract TestOrangeStrykeLPAutomatorV2Rebalance is WETH_USDC_Fixture {
         emit log_named_address("automator harness address: ", address(automator));
         emit log_named_address("automator address: ", address(automator.automator()));
 
-        _expectFlashLoanCall(address(USDC), estUsdc, router, swapCalldata, new bytes[](0), new bytes[](0));
+        IOrangeSwapProxy.SwapInputRequest memory req = IOrangeSwapProxy.SwapInputRequest({
+            provider: router,
+            swapCalldata: swapCalldata,
+            expectTokenIn: WETH,
+            expectTokenOut: USDC,
+            expectAmountIn: 50 ether,
+            inputDelta: 5 // 0.05% slippage
+        });
 
-        automator.rebalance(
-            "[]",
-            "[]",
-            router,
-            swapCalldata,
-            IOrangeStrykeLPAutomatorV2.RebalanceShortage({token: USDC, shortage: estUsdc})
-        );
+        _expectFlashLoanCall(address(USDC), estUsdc, address(kyberswapProxy), req, new bytes[](0), new bytes[](0));
+
+        IERC20[] memory tokens = new IERC20[](1);
+        tokens[0] = USDC;
+        uint256[] memory amounts = new uint256[](1);
+        amounts[0] = estUsdc;
+
+        automator.rebalance("[]", "[]", address(kyberswapProxy), req, abi.encode(tokens, amounts, true));
 
         emit log_named_uint("vault weth balance after: ", WETH.balanceOf(address(automator.automator()))); // prettier-ignore
         emit log_named_uint("vault usdc balance after: ", USDC.balanceOf(address(automator.automator()))); // prettier-ignore
     }
 
-    function _buildSwapData(
+    function _buildKyberswapData(
         address sender,
         uint256 amount
     ) internal returns (address router, bytes memory swapCalldata) {
@@ -75,8 +84,8 @@ contract TestOrangeStrykeLPAutomatorV2Rebalance is WETH_USDC_Fixture {
     function _expectFlashLoanCall(
         address borrowToken,
         uint256 amount,
-        address router,
-        bytes memory swapCalldata,
+        address swapProxy,
+        IOrangeSwapProxy.SwapInputRequest memory swapRequest,
         bytes[] memory mintCalldataBatch,
         bytes[] memory burnCalldataBatch
     ) internal {
@@ -85,8 +94,8 @@ contract TestOrangeStrykeLPAutomatorV2Rebalance is WETH_USDC_Fixture {
         tokens[0] = IERC20(borrowToken);
         amounts[0] = amount;
         IOrangeStrykeLPAutomatorV2.FlashLoanUserData memory ud = IOrangeStrykeLPAutomatorV2.FlashLoanUserData({
-            router: router,
-            swapCalldata: swapCalldata,
+            swapProxy: swapProxy,
+            swapRequest: swapRequest,
             mintCalldata: mintCalldataBatch,
             burnCalldata: burnCalldataBatch
         });

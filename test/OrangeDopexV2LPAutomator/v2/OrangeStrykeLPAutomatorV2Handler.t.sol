@@ -8,6 +8,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IDopexV2PositionManager} from "../../../contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
 import {IUniswapV3SingleTickLiquidityHandlerV2} from "../../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 import {IOrangeStrykeLPAutomatorV2} from "../../../contracts/v2/IOrangeStrykeLPAutomatorV2.sol";
+import {IOrangeSwapProxy} from "./../../../contracts/v2/IOrangeSwapProxy.sol";
 import {OrangeStrykeLPAutomatorV2} from "../../../contracts/v2/OrangeStrykeLPAutomatorV2.sol";
 import {ChainlinkQuoter} from "../../../contracts/ChainlinkQuoter.sol";
 import {IBalancerVault} from "../../../contracts/vendor/balancer/IBalancerVault.sol";
@@ -99,29 +100,30 @@ contract OrangeStrykeLPAutomatorV2Handler is Test {
         vm.stopPrank();
     }
 
-    function redeem(uint256 shares, address router, bytes memory swapCalldata, address redeemer) external {
+    function redeem(uint256 shares, bytes memory redeemData, address redeemer) external {
+        (address swapProxy, ) = abi.decode(redeemData, (address, bytes));
         vm.prank(automatorOwner);
-        automator.setRouterWhitelist(router, true);
+        automator.setProxyWhitelist(swapProxy, true);
 
         vm.prank(redeemer);
-        automator.redeem(shares, router, swapCalldata);
+        automator.redeem(shares, redeemData);
     }
 
     function rebalance(
         string memory ticksMint,
         string memory ticksBurn,
-        address router,
-        bytes memory swapCalldata,
-        IOrangeStrykeLPAutomatorV2.RebalanceShortage memory shortage
+        address swapProxy,
+        IOrangeSwapProxy.SwapInputRequest memory swapRequest,
+        bytes memory flashLoanData
     ) external {
         vm.prank(automatorOwner);
-        automator.setRouterWhitelist(router, true);
+        automator.setProxyWhitelist(swapProxy, true);
 
         IOrangeStrykeLPAutomatorV2.RebalanceTick[] memory mintTicks = parseTicks(ticksMint);
         IOrangeStrykeLPAutomatorV2.RebalanceTick[] memory burnTicks = parseTicks(ticksBurn);
 
         vm.prank(strategist);
-        automator.rebalance(mintTicks, burnTicks, router, swapCalldata, shortage);
+        automator.rebalance(mintTicks, burnTicks, swapProxy, swapRequest, flashLoanData);
     }
 
     function rebalanceSingleLeft(int24 lowerTick, uint256 amount1) external {
@@ -139,8 +141,15 @@ contract OrangeStrykeLPAutomatorV2Handler is Test {
             mintTicks,
             new IOrangeStrykeLPAutomatorV2.RebalanceTick[](0),
             address(0),
-            "",
-            IOrangeStrykeLPAutomatorV2.RebalanceShortage(IERC20(address(0)), 0)
+            IOrangeSwapProxy.SwapInputRequest({
+                provider: address(0),
+                swapCalldata: new bytes(0),
+                expectTokenIn: IERC20(address(0)),
+                expectTokenOut: IERC20(address(0)),
+                expectAmountIn: 0,
+                inputDelta: 0
+            }),
+            abi.encode(new IERC20[](0), new uint256[](0), false)
         );
     }
 
@@ -159,8 +168,15 @@ contract OrangeStrykeLPAutomatorV2Handler is Test {
             mintTicks,
             new IOrangeStrykeLPAutomatorV2.RebalanceTick[](0),
             address(0),
-            "",
-            IOrangeStrykeLPAutomatorV2.RebalanceShortage(IERC20(address(0)), 0)
+            IOrangeSwapProxy.SwapInputRequest({
+                provider: address(0),
+                swapCalldata: new bytes(0),
+                expectTokenIn: IERC20(address(0)),
+                expectTokenOut: IERC20(address(0)),
+                expectAmountIn: 0,
+                inputDelta: 0
+            }),
+            abi.encode(new IERC20[](0), new uint256[](0), false)
         );
     }
 }
