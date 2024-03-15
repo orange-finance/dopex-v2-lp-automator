@@ -661,7 +661,19 @@ contract OrangeStrykeLPAutomatorV2 is
             lt = ticksMint[i].tick;
             ut = lt + spacing;
 
-            mintCalldataBatch[i] = _createMintCalldata(lt, ut, ticksMint[i].liquidity);
+            mintCalldataBatch[i] = abi.encodeWithSelector(
+                IDopexV2PositionManager.mintPosition.selector,
+                handler,
+                abi.encode(
+                    IUniswapV3SingleTickLiquidityHandlerV2.MintPositionParams({
+                        pool: address(pool),
+                        hook: handlerHook,
+                        tickLower: lt,
+                        tickUpper: ut,
+                        liquidity: ticksMint[i].liquidity
+                    })
+                )
+            );
 
             // If the position is not active, push it to the active ticks
             if (handler.balanceOf(address(this), handler.tokenId(address(pool), handlerHook, lt, ut)) == 0)
@@ -697,23 +709,6 @@ contract OrangeStrykeLPAutomatorV2 is
                 i++;
             }
         }
-    }
-
-    function _createMintCalldata(int24 lt, int24 ut, uint128 liq) internal view returns (bytes memory) {
-        return
-            abi.encodeWithSelector(
-                IDopexV2PositionManager.mintPosition.selector,
-                handler,
-                abi.encode(
-                    IUniswapV3SingleTickLiquidityHandlerV2.MintPositionParams({
-                        pool: address(pool),
-                        hook: handlerHook,
-                        tickLower: lt,
-                        tickUpper: ut,
-                        liquidity: liq
-                    })
-                )
-            );
     }
 
     function _createBurnCalldata(int24 lt, int24 ut, uint128 shares) internal view returns (bytes memory) {
