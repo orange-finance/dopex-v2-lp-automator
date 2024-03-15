@@ -4,7 +4,7 @@ import { parseUnits, encodeAbiParameters } from 'viem'
 
 program.requiredOption('-i, --in-token <token>', 'token to swap')
 program.requiredOption('-o, --out-token <token>', 'token to receive')
-program.requiredOption('-u', '--unit', 'unit of token', 'wei')
+program.requiredOption('-u, --unit <unit>', 'unit of token', 'wei')
 program.requiredOption('-a, --amount <amount>', 'amount of token to swap')
 program.requiredOption('-s --sender <address>', 'sender address')
 program.parse()
@@ -12,11 +12,9 @@ program.parse()
 const TOKENS = {
   weth: {
     address: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
-    decimals: 18,
   },
   usdc: {
     address: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
-    decimals: 6,
   },
 }
 

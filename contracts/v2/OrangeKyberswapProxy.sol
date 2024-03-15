@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.19;
 
-import {Address} from "@openzeppelin/contracts//utils/Address.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {OrangeSwapProxy} from "./OrangeSwapProxy.sol";
@@ -37,12 +37,15 @@ contract OrangeKyberswapProxy is OrangeSwapProxy {
 
     error InvalidFormat();
     error UnsupportedSelector();
+    error SrcTokenDoesNotMatch();
+    error DstTokenDoesNotMatch();
+    error ReceiverIsNotSender();
 
     constructor() {
         owner = msg.sender;
     }
 
-    function swapInput(SwapInputRequest memory request) external override {
+    function safeInputSwap(SwapInputRequest memory request) external override {
         // authorize router
         if (!trustedProviders[request.provider]) revert Unauthorized();
 
@@ -56,28 +59,33 @@ contract OrangeKyberswapProxy is OrangeSwapProxy {
         SwapExecutionParams memory params = abi.decode(args, (SwapExecutionParams));
 
         // check if the token addresses match
-        if (params.desc.srcToken != request.expectTokenIn) revert InvalidFormat();
-        if (params.desc.dstToken != request.expectTokenOut) revert InvalidFormat();
+        if (params.desc.srcToken != request.expectTokenIn) revert SrcTokenDoesNotMatch();
+        if (params.desc.dstToken != request.expectTokenOut) revert DstTokenDoesNotMatch();
+
+        // check if the destination receiver is match
+        if (params.desc.dstReceiver != msg.sender) revert ReceiverIsNotSender();
 
         // check if the amount is within the expected range
         uint256 swapDelta = deltaScale + request.inputDelta;
         uint256 _min = FullMath.mulDiv(request.expectAmountIn * 1e18, deltaScale, swapDelta);
         uint256 _max = FullMath.mulDiv(request.expectAmountIn * 1e18, swapDelta, deltaScale);
-        if (params.desc.amount * 1e18 < _min || params.desc.amount * 1e18 > _max) revert InvalidAmount();
+        if (params.desc.amount * 1e18 < _min || params.desc.amount * 1e18 > _max) revert OutOfDelta();
 
         // receive expectTokenIn from msg.sender
-        IERC20(request.expectTokenIn).safeTransferFrom(msg.sender, address(this), request.expectAmountIn);
-        IERC20(request.expectTokenIn).safeIncreaseAllowance(request.provider, request.expectAmountIn);
+        IERC20(request.expectTokenIn).safeTransferFrom(msg.sender, address(this), params.desc.amount);
 
-        uint256 _preOut = IERC20(request.expectTokenOut).balanceOf(address(this));
+        // approve kyberswap router to spend expectTokenIn
+        if (request.expectTokenIn.allowance(address(this), request.provider) == 0) {
+            request.expectTokenIn.forceApprove(request.provider, type(uint256).max);
+        }
+
+        // we also need to approve expectTokenOut because in some cases, part of the output may be taken as fee
+        if (request.expectTokenOut.allowance(address(this), request.provider) == 0) {
+            request.expectTokenOut.forceApprove(request.provider, type(uint256).max);
+        }
 
         // execute swap
+        // output is directly sent to msg.sender
         request.provider.functionCall(request.swapCalldata, "OrangeKyberSwapProxy: low-level call failed");
-
-        // send expectTokenOut to msg.sender
-        IERC20(request.expectTokenOut).safeTransfer(
-            msg.sender,
-            IERC20(request.expectTokenOut).balanceOf(address(this)) - _preOut
-        );
     }
 }
