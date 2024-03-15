@@ -15,5 +15,5 @@ interface IOrangeSwapProxy {
     }
     function deltaScale() external view returns (uint256);
 
-    function swapInput(SwapInputRequest memory request) external;
+    function safeInputSwap(SwapInputRequest memory request) external;
 }

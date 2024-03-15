@@ -101,7 +101,7 @@ contract OrangeStrykeLPAutomatorV2Handler is Test {
     }
 
     function redeem(uint256 shares, bytes memory redeemData, address redeemer) external {
-        (address swapProxy, ) = abi.decode(redeemData, (address, bytes));
+        (address swapProxy, , ) = abi.decode(redeemData, (address, address, bytes));
         vm.prank(automatorOwner);
         automator.setProxyWhitelist(swapProxy, true);
 

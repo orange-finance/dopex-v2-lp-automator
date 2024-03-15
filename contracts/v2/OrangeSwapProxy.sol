@@ -11,7 +11,7 @@ abstract contract OrangeSwapProxy is IOrangeSwapProxy {
     mapping(address provider => bool) public trustedProviders;
 
     error Unauthorized();
-    error InvalidAmount();
+    error OutOfDelta();
 
     modifier onlyOwner() {
         if (msg.sender != owner) revert Unauthorized();
@@ -30,5 +30,5 @@ abstract contract OrangeSwapProxy is IOrangeSwapProxy {
         trustedProviders[provider] = trusted;
     }
 
-    function swapInput(SwapInputRequest memory request) external virtual;
+    function safeInputSwap(SwapInputRequest memory request) external virtual;
 }

@@ -37,7 +37,7 @@ contract BaseFixture is Test {
     address public managerOwner = 0xEE82496D3ed1f5AFbEB9B29f3f59289fd899d9D0;
 
     // Uniswap V3
-    ISwapRouter public router = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
+    // ISwapRouter public router = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
     IQuoter public quoter = IQuoter(0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6);
 
     // Kyberswap

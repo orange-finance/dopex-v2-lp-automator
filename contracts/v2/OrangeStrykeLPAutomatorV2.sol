@@ -553,12 +553,12 @@ contract OrangeStrykeLPAutomatorV2 is
         // swap
         uint256 _preAssets = asset.balanceOf(address(this));
 
-        IOrangeSwapProxy(_swapProxy).swapInput(
+        IOrangeSwapProxy(_swapProxy).safeInputSwap(
             IOrangeSwapProxy.SwapInputRequest({
                 provider: _swapProvider,
                 swapCalldata: _swapCalldata,
-                expectTokenIn: asset,
-                expectTokenOut: counterAsset,
+                expectTokenIn: counterAsset,
+                expectTokenOut: asset,
                 expectAmountIn: swapIn,
                 inputDelta: 10 // 0.01% slippage
             })
@@ -627,7 +627,7 @@ contract OrangeStrykeLPAutomatorV2 is
         if (_ud.mintCalldata.length > 0) IMulticallProvider(address(manager)).multicall(_ud.mintCalldata);
 
         // we can directly pass the request as the user data is provided by the trusted strategist
-        IOrangeSwapProxy(_ud.swapProxy).swapInput(_ud.swapRequest);
+        IOrangeSwapProxy(_ud.swapProxy).safeInputSwap(_ud.swapRequest);
 
         // repay flash loan
         for (uint256 i = 0; i < tokens.length; ) {

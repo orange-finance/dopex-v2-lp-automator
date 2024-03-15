@@ -9,13 +9,12 @@ import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Po
 import {UniswapV3Helper} from "../../helper/UniswapV3Helper.t.sol";
 import {WETH_USDC_Fixture} from "./fixture/WETH_USDC_Fixture.t.sol";
 import {DealExtension} from "../../helper/DealExtension.t.sol";
-import {IOrangeSwapProxy} from "./../../../contracts/v2/IOrangeSwapProxy.sol";
 
 contract TestOrangeStrykeLPAutomatorV2Redeem is WETH_USDC_Fixture, DealExtension {
     using UniswapV3Helper for IUniswapV3Pool;
 
     function setUp() public override {
-        vm.createSelectFork("arb");
+        vm.createSelectFork("arb", 190518091);
         super.setUp();
     }
 
@@ -24,6 +23,7 @@ contract TestOrangeStrykeLPAutomatorV2Redeem is WETH_USDC_Fixture, DealExtension
         uint256 usdc = automator.automator().pool().getQuote(address(WETH), address(USDC), 50 ether);
         dealUsdc(address(automator.automator()), usdc);
 
+        // (address router, bytes memory swapCalldata) = _buildKyberswapData(address(automator.automator()), usdc);
         (address router, bytes memory swapCalldata) = _buildKyberswapData(address(automator.automator()), usdc);
 
         emit log_named_uint("vault weth balance before: ", WETH.balanceOf(address(automator.automator())));
@@ -55,7 +55,8 @@ contract TestOrangeStrykeLPAutomatorV2Redeem is WETH_USDC_Fixture, DealExtension
         // swap all free usdc when redeeming
         (, uint256 free1) = inspector.freePoolPositionInToken01(automator.automator());
         uint256 freeUsdc = USDC.balanceOf(address(automator.automator())) + free1;
-        (address router, bytes memory swapCalldata) = _buildKyberswapData(address(automator.automator()), freeUsdc);
+        // (address router, bytes memory swapCalldata) = _buildKyberswapData(address(automator.automator()), freeUsdc);
+        (address router, bytes memory swapCalldata) = _buildKyberswapData(address(kyberswapProxy), freeUsdc);
 
         emit log_named_uint("vault weth balance before: ", WETH.balanceOf(address(automator.automator())));
         emit log_named_uint("vault usdc balance before: ", USDC.balanceOf(address(automator.automator())));
@@ -77,7 +78,7 @@ contract TestOrangeStrykeLPAutomatorV2Redeem is WETH_USDC_Fixture, DealExtension
 
     function _buildKyberswapData(
         address sender,
-        uint256 amount
+        uint256 amountUsdc
     ) internal returns (address router, bytes memory swapCalldata) {
         string[] memory buildSwapData = new string[](12);
         buildSwapData[0] = "node";
@@ -89,7 +90,7 @@ contract TestOrangeStrykeLPAutomatorV2Redeem is WETH_USDC_Fixture, DealExtension
         buildSwapData[6] = "-u";
         buildSwapData[7] = "wei";
         buildSwapData[8] = "-a";
-        buildSwapData[9] = Strings.toString(amount);
+        buildSwapData[9] = Strings.toString(amountUsdc);
         buildSwapData[10] = "-s";
         buildSwapData[11] = Strings.toHexString(uint256(uint160(sender)));
 
