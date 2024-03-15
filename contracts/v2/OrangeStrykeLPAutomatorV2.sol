@@ -598,17 +598,25 @@ contract OrangeStrykeLPAutomatorV2 is
             (IERC20[], uint256[], bool)
         );
 
-        // prepare flash loan request
-        FlashLoanUserData memory _userData = FlashLoanUserData({
-            swapProxy: swapProxy,
-            swapRequest: swapRequest,
-            mintCalldata: _mintCalldataBatch,
-            burnCalldata: _burnCalldataBatch
-        });
+        // if needs the other token, execute flash loan, then _onFlashLoanReceived will call the multicall
+        if (_execFlashLoan) {
+            // prepare flash loan request
+            FlashLoanUserData memory _userData = FlashLoanUserData({
+                swapProxy: swapProxy,
+                swapRequest: swapRequest,
+                mintCalldata: _mintCalldataBatch,
+                burnCalldata: _burnCalldataBatch
+            });
+            _makeFlashLoan(_tokens, _amounts, abi.encode(_userData));
+        }
+        // if not, execute multicall directly
+        else {
+            // burn should be called before mint to receive the assets from the burned position
+            if (_burnCalldataBatch.length > 0) IMulticallProvider(address(manager)).multicall(_burnCalldataBatch);
+            if (_mintCalldataBatch.length > 0) IMulticallProvider(address(manager)).multicall(_mintCalldataBatch);
+        }
 
-        // execute flash loan, then _onFlashLoanReceived will call the multicall
-        if (_execFlashLoan) _makeFlashLoan(_tokens, _amounts, abi.encode(_userData));
-
+        // finally, check if tick count is not exceeded
         if (ticksMint.length + _activeTicks.length() > _MAX_TICKS) revert MaxTicksReached();
 
         emit Rebalance(msg.sender, ticksMint, ticksBurn);
@@ -622,7 +630,7 @@ contract OrangeStrykeLPAutomatorV2 is
     ) internal override {
         FlashLoanUserData memory _ud = abi.decode(userData, (FlashLoanUserData));
 
-        // NOTE: burn should be called before mint to receive the assets from the burned position
+        // burn should be called before mint to receive the assets from the burned position
         if (_ud.burnCalldata.length > 0) IMulticallProvider(address(manager)).multicall(_ud.burnCalldata);
         if (_ud.mintCalldata.length > 0) IMulticallProvider(address(manager)).multicall(_ud.mintCalldata);
 
