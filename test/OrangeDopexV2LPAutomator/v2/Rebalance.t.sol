@@ -35,15 +35,13 @@ contract TestOrangeStrykeLPAutomatorV2Rebalance is WETH_USDC_Fixture {
 
         automator.deposit(100 ether, alice);
 
-        (address router, bytes memory swapCalldata) = _buildKyberswapData(address(automator.automator()), 50);
-
         emit log_named_uint("vault weth balance before: ", WETH.balanceOf(address(automator.automator())));
         emit log_named_uint("vault usdc balance before: ", USDC.balanceOf(address(automator.automator())));
 
         uint256 estUsdc = automator.automator().pool().getQuote(address(WETH), address(USDC), 50 ether);
 
         IOrangeSwapProxy.SwapInputRequest memory req = IOrangeSwapProxy.SwapInputRequest({
-            provider: router,
+            provider: kyberswapRouter,
             swapCalldata: SWAP_CALLDATA_STATIC,
             expectTokenIn: WETH,
             expectTokenOut: USDC,
