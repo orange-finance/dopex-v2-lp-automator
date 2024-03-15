@@ -688,32 +688,20 @@ contract OrangeStrykeLPAutomatorV2 is
     function _createBurnCalldataBatch(
         RebalanceTick[] calldata ticksBurn
     ) internal returns (bytes[] memory burnCalldataBatch) {
-        int24 _lt;
-        int24 _ut;
-        uint256 _tid;
-        uint256 _shares;
-        uint256 _burnLength = ticksBurn.length;
-        burnCalldataBatch = new bytes[](_burnLength);
-        for (uint256 i = 0; i < _burnLength; ) {
-            _lt = ticksBurn[i].tick;
-            _ut = _lt + poolTickSpacing;
+        int24 lt;
+        int24 ut;
+        uint256 tid;
+        uint256 shares;
+        uint256 burnLength = ticksBurn.length;
+        burnCalldataBatch = new bytes[](burnLength);
+        for (uint256 i = 0; i < burnLength; ) {
+            lt = ticksBurn[i].tick;
+            ut = lt + poolTickSpacing;
 
-            _tid = _tid = handler.tokenId(address(pool), handlerHook, _lt, _ut);
-            _shares = handler.convertToShares(ticksBurn[i].liquidity, _tid);
-            burnCalldataBatch[i] = _createBurnCalldata(_lt, _ut, _shares.toUint128());
-
-            // if all shares will be burned, pop the active tick
-            if (handler.balanceOf(address(this), _tid) - _shares == 0) _activeTicks.remove(uint256(uint24(_lt)));
-
-            unchecked {
-                i++;
-            }
-        }
-    }
-
-    function _createBurnCalldata(int24 lt, int24 ut, uint128 shares) internal view returns (bytes memory) {
-        return
-            abi.encodeWithSelector(
+            tid = handler.tokenId(address(pool), handlerHook, lt, ut);
+            shares = handler.convertToShares(ticksBurn[i].liquidity, tid);
+            // burnCalldataBatch[i] = _createBurnCalldata(lt, ut, _shares.toUint128());
+            burnCalldataBatch[i] = abi.encodeWithSelector(
                 IDopexV2PositionManager.burnPosition.selector,
                 handler,
                 abi.encode(
@@ -722,9 +710,17 @@ contract OrangeStrykeLPAutomatorV2 is
                         hook: handlerHook,
                         tickLower: lt,
                         tickUpper: ut,
-                        shares: shares
+                        shares: shares.toUint128()
                     })
                 )
             );
+
+            // if all shares will be burned, pop the active tick
+            if (handler.balanceOf(address(this), tid) - shares == 0) _activeTicks.remove(uint256(uint24(lt)));
+
+            unchecked {
+                i++;
+            }
+        }
     }
 }
