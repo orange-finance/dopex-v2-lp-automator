@@ -419,24 +419,58 @@ contract OrangeStrykeLPAutomatorV2 is
     function redeem(
         uint256 shares,
         bytes calldata redeemData
-    ) external returns (uint256 assets, LockedDopexShares[] memory lockedDopexShares) {
+    ) external returns (uint256 assets, LockedDopexShares[] memory lockedShares) {
         if (shares == 0) revert AmountZero();
         if (convertToAssets(shares) == 0) revert SharesTooSmall();
 
-        uint256 _tsBeforeBurn = totalSupply();
+        // cache total supply for precise share calculation
+        uint256 tsBeforeBurn = totalSupply();
 
         // To avoid any reentrancy, we burn the shares first
         _burn(msg.sender, shares);
 
-        uint256 _preAssets = asset.balanceOf(address(this));
-        uint256 _preCounter = counterAsset.balanceOf(address(this));
+        // calculate the redeemable assets and counter assets from the vault
+        uint256 initialRedeemableAssets = asset.balanceOf(address(this)).mulDiv(shares, tsBeforeBurn);
+        uint256 initialRedeemableCounterAssets = counterAsset.balanceOf(address(this)).mulDiv(shares, tsBeforeBurn);
+
+        // burn stryke positions, and receive the assets and counter assets.
+        // locked shares are transferred to the user
+        (
+            uint256 assetsReceived,
+            uint256 counterAssetsReceived,
+            LockedDopexShares[] memory lockedSharesSent
+        ) = _burnStrykePositions(shares, tsBeforeBurn);
+
+        lockedShares = lockedSharesSent;
+
+        // execute swap with aggregator via swap proxy
+        // we cannot call swap calldata directly as it can be manipulated by the user
+        uint256 swapIn = initialRedeemableCounterAssets + counterAssetsReceived;
+        if (swapIn > 0) assetsReceived += _swapCounterWithProxy(swapIn, redeemData);
+
+        assets = initialRedeemableAssets + assetsReceived;
+
+        asset.safeTransfer(msg.sender, assets);
+
+        emit Redeem(msg.sender, shares, assets);
+    }
+
+    function _burnStrykePositions(
+        uint256 shares,
+        uint256 totalSupply
+    )
+        internal
+        returns (uint256 assetsReceived, uint256 counterAssetsReceived, LockedDopexShares[] memory lockedShares)
+    {
+        uint256 preAssets = asset.balanceOf(address(this));
+        uint256 preCounters = counterAsset.balanceOf(address(this));
 
         RedeemLoopCache memory c;
-        uint256 _length = _activeTicks.length();
+        uint256 ticks = _activeTicks.length();
 
-        LockedDopexShares[] memory _tempShares = new LockedDopexShares[](_length);
+        LockedDopexShares[] memory _tempShares = new LockedDopexShares[](ticks);
 
-        for (uint256 i = 0; i < _length; ) {
+        for (uint256 i = 0; i < ticks; ) {
             c.lowerTick = int24(uint24(_activeTicks.at(i)));
 
             c.tokenId = handler.tokenId(address(pool), handlerHook, c.lowerTick, c.lowerTick + poolTickSpacing);
@@ -449,9 +483,9 @@ contract OrangeStrykeLPAutomatorV2 is
             // total supply before burn is used to calculate the precise share
             c.shareRedeemable = uint256(handler.convertToShares(_redeemableLiquidity, c.tokenId)).mulDiv(
                 shares,
-                _tsBeforeBurn
+                totalSupply
             );
-            c.shareLocked = uint256(handler.convertToShares(_lockedLiquidity, c.tokenId)).mulDiv(shares, _tsBeforeBurn);
+            c.shareLocked = uint256(handler.convertToShares(_lockedLiquidity, c.tokenId)).mulDiv(shares, totalSupply);
 
             // locked share is transferred to the user
             if (c.shareLocked > 0) {
@@ -476,43 +510,19 @@ contract OrangeStrykeLPAutomatorV2 is
         }
 
         // copy to exact size array
-        lockedDopexShares = new LockedDopexShares[](c.lockedShareIndex);
+        lockedShares = new LockedDopexShares[](c.lockedShareIndex);
         for (uint256 i = 0; i < c.lockedShareIndex; ) {
-            lockedDopexShares[i] = _tempShares[i];
+            lockedShares[i] = _tempShares[i];
 
             unchecked {
                 i++;
             }
         }
 
-        uint256 _pay = shares.mulDiv(_preCounter, _tsBeforeBurn) + counterAsset.balanceOf(address(this)) - _preCounter;
-
-        if (_pay > 0) {
-            (address _swapProxy, address _swapProvider, bytes memory _swapCalldata) = abi.decode(
-                redeemData,
-                (address, address, bytes)
-            );
-
-            if (asset.allowance(address(this), _swapProxy) == 0) revert Unauthorized();
-
-            IOrangeSwapProxy(_swapProxy).swapInput(
-                IOrangeSwapProxy.SwapInputRequest({
-                    provider: _swapProvider,
-                    swapCalldata: _swapCalldata,
-                    expectTokenIn: asset,
-                    expectTokenOut: counterAsset,
-                    expectAmountIn: _pay,
-                    inputDelta: 10 // 0.01% slippage
-                })
-            );
-        }
-
-        // solhint-disable-next-line reentrancy
-        assets = shares.mulDiv(_preAssets, _tsBeforeBurn) + asset.balanceOf(address(this)) - _preAssets;
-
-        asset.safeTransfer(msg.sender, assets);
-
-        emit Redeem(msg.sender, shares, assets);
+        /* solhint-disable reentrancy */
+        assetsReceived = asset.balanceOf(address(this)) - preAssets;
+        counterAssetsReceived = counterAsset.balanceOf(address(this)) - preCounters;
+        /* solhint-enable reentrancy */
     }
 
     function _burnPosition(int24 lowerTick, int24 upperTick, uint128 shares) internal {
@@ -528,6 +538,33 @@ contract OrangeStrykeLPAutomatorV2 is
                 })
             )
         );
+    }
+
+    function _swapCounterWithProxy(uint256 swapIn, bytes memory redeemData) internal returns (uint256 swapOut) {
+        // decode swap proxy and swap provider from redeem data
+        (address _swapProxy, address _swapProvider, bytes memory _swapCalldata) = abi.decode(
+            redeemData,
+            (address, address, bytes)
+        );
+
+        // only allowed proxy can be used
+        if (asset.allowance(address(this), _swapProxy) == 0) revert Unauthorized();
+
+        // swap
+        uint256 _preAssets = asset.balanceOf(address(this));
+
+        IOrangeSwapProxy(_swapProxy).swapInput(
+            IOrangeSwapProxy.SwapInputRequest({
+                provider: _swapProvider,
+                swapCalldata: _swapCalldata,
+                expectTokenIn: asset,
+                expectTokenOut: counterAsset,
+                expectAmountIn: swapIn,
+                inputDelta: 10 // 0.01% slippage
+            })
+        );
+
+        swapOut = asset.balanceOf(address(this)) - _preAssets;
     }
 
     /**
