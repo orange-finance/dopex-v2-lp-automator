@@ -129,7 +129,7 @@ contract OrangeStrykeLPAutomatorV2Handler is Test {
     function rebalanceSingleLeft(int24 lowerTick, uint256 amount1) external {
         uint128 liquidity = LiquidityAmounts.getLiquidityForAmount1(
             TickMath.getSqrtRatioAtTick(lowerTick),
-            TickMath.getSqrtRatioAtTick(automator.poolTickSpacing()),
+            TickMath.getSqrtRatioAtTick(lowerTick + automator.poolTickSpacing()),
             amount1
         );
 
