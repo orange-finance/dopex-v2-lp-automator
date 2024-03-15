@@ -650,74 +650,27 @@ contract OrangeStrykeLPAutomatorV2 is
     function _createMintCalldataBatch(
         RebalanceTick[] calldata ticksMint
     ) internal returns (bytes[] memory mintCalldataBatch) {
-        (uint256 _actualMintLen, uint256 ignoreIndex) = _getSafeMintParams(ticksMint);
-        mintCalldataBatch = new bytes[](_actualMintLen);
+        uint256 ticks = ticksMint.length;
+        mintCalldataBatch = new bytes[](ticks);
 
-        int24 _lt;
-        int24 _ut;
-        uint256 _tid;
-        uint256 j;
-        for (uint256 i = 0; i < ticksMint.length; ) {
-            if (i == ignoreIndex) {
-                unchecked {
-                    i++;
-                }
-                continue;
-            }
+        int24 spacing = poolTickSpacing;
 
-            _lt = ticksMint[i].tick;
-            _ut = _lt + poolTickSpacing;
+        int24 lt;
+        int24 ut;
+        for (uint256 i = 0; i < ticks; ) {
+            lt = ticksMint[i].tick;
+            ut = lt + spacing;
 
-            mintCalldataBatch[j] = _createMintCalldata(_lt, _ut, ticksMint[i].liquidity);
+            mintCalldataBatch[i] = _createMintCalldata(lt, ut, ticksMint[i].liquidity);
 
             // If the position is not active, push it to the active ticks
-            _tid = handler.tokenId(address(pool), handlerHook, _lt, _ut);
-            if (handler.balanceOf(address(this), _tid) == 0) _activeTicks.add(uint256(uint24(_lt)));
+            if (handler.balanceOf(address(this), handler.tokenId(address(pool), handlerHook, lt, ut)) == 0)
+                _activeTicks.add(uint256(uint24(lt)));
 
-            unchecked {
-                i++;
-                j++;
-            }
-        }
-    }
-
-    // NOTE: skip current tick as it is not allowed to mint on Dopex
-    /**
-     * @dev Returns the length of the ticksMint array after skipping the current tick if it is included.
-     *      Also returns the index of the current tick in the ticksMint array if it is included.
-     *      We need to avoid revert when mint Dopex position in the current tick.
-     *      This should be done on automator because current tick got on caller (this must be off-chain) is different from the current tick got on automator.
-     * @param ticksMint An array of RebalanceTickInfo structs representing the ticks to mint.
-     */
-    function _getSafeMintParams(
-        RebalanceTick[] calldata ticksMint
-    ) internal view returns (uint256 mintLength, uint256 ignoreIndex) {
-        uint256 _providedLength = ticksMint.length;
-        mintLength = _providedLength;
-
-        (, int24 _ct, , , , , ) = pool.slot0();
-        int24 _spacing = poolTickSpacing;
-
-        // current lower tick is calculated by rounding down the current tick to the nearest tick spacing
-        // if current tick is negative and not divisible by tick spacing, we need to subtract one tick spacing to get the correct lower tick
-        int24 _currentLt = _ct < 0 && _ct % _spacing != 0
-            ? (_ct / _spacing - 1) * _spacing
-            : (_ct / _spacing) * _spacing;
-
-        for (uint256 i = 0; i < _providedLength; ) {
-            if (ticksMint[i].tick == _currentLt) {
-                unchecked {
-                    mintLength--;
-                    ignoreIndex = i;
-                    break;
-                }
-            }
             unchecked {
                 i++;
             }
         }
-
-        if (mintLength == _providedLength) ignoreIndex = type(uint256).max;
     }
 
     function _createBurnCalldataBatch(
