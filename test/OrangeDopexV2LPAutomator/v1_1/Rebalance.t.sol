@@ -142,7 +142,7 @@ contract TestOrangeStrykeLPAutomatorV1_1Rebalance is WETH_USDC_Fixture, DealExte
 
         deal(address(WETH), address(_automator), 10 ether);
 
-        for (int24 i = 1; i < 121; i++) {
+        for (int24 i = 1; i < 151; i++) {
             _automator.pushActiveTick(i);
         }
 
