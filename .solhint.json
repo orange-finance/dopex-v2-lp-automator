@@ -2,6 +2,8 @@
   "extends": "solhint:recommended",
   "plugins": ["prettier"],
   "rules": {
-    "prettier/prettier": "error"
+    "prettier/prettier": "error",
+    "immutable-vars-naming": "off",
+    "func-visibility": ["warn", { "ignoreConstructors": true }]
   }
 }

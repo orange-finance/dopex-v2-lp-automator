@@ -2,17 +2,20 @@
 
 pragma solidity 0.8.19;
 
-import "./Fixture.t.sol";
+import {Fixture} from "./Fixture.t.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
-import {OrangeDopexV2LPAutomator} from "../../contracts/OrangeDopexV2LPAutomator.sol";
-import {IOrangeDopexV2LPAutomator} from "../../contracts/interfaces/IOrangeDopexV2LPAutomator.sol";
-import {deployAutomatorHarness, AutomatorHarness} from "../OrangeDopexV2LPAutomator/harness/AutomatorHarness.t.sol";
-import {DealExtension} from "../helper/DealExtension.t.sol";
-import "../helper/AutomatorHelper.t.sol";
-import "../helper/UniswapV3Helper.t.sol";
-import "../helper/DopexV2Helper.t.sol";
+import {OrangeDopexV2LPAutomatorV1} from "../../../contracts/OrangeDopexV2LPAutomatorV1.sol";
+import {IOrangeDopexV2LPAutomatorV1} from "../../../contracts/interfaces/IOrangeDopexV2LPAutomatorV1.sol";
+import {ChainlinkQuoter} from "./../../../contracts/ChainlinkQuoter.sol";
+import {deployAutomatorHarness, AutomatorHarness} from "../../OrangeDopexV2LPAutomator/v1/harness/AutomatorHarness.t.sol";
+import {DealExtension} from "../../helper/DealExtension.t.sol";
+import {AutomatorHelper} from "../../helper/AutomatorHelper.t.sol";
+import {UniswapV3Helper} from "../../helper/UniswapV3Helper.t.sol";
+import {DopexV2Helper} from "../../helper/DopexV2Helper.t.sol";
+import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
-contract TestOrangeDopexV2LPAutomatorRebalance is Fixture, DealExtension {
+/* solhint-disable func-name-mixedcase */
+contract TestOrangeDopexV2LPAutomatorV1Rebalance is Fixture, DealExtension {
     using FixedPointMathLib for uint256;
     using UniswapV3Helper for IUniswapV3Pool;
     using DopexV2Helper for IUniswapV3Pool;
@@ -47,12 +50,12 @@ contract TestOrangeDopexV2LPAutomatorRebalance is Fixture, DealExtension {
         assertApproxEqRel(pool.dopexLiquidityOf(emptyHook, address(automator), -196770), 55005494315662841, 0.001e18);
 
         // burn some positions and mint new ones
-        IOrangeDopexV2LPAutomator.RebalanceTickInfo[] memory _ticksMint = new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](2); // prettier-ignore
-        IOrangeDopexV2LPAutomator.RebalanceTickInfo[] memory _ticksBurn = new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](2); // prettier-ignore
-        _ticksBurn[0] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({tick: -196820, liquidity: 50000000000000000});
-        _ticksBurn[1] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({tick: -196810, liquidity: 50000000000000000});
-        _ticksMint[0] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({tick: -196760, liquidity: 50000000000000000});
-        _ticksMint[1] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({tick: -196750, liquidity: 50000000000000000});
+        IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[] memory _ticksMint = new IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[](2); // prettier-ignore
+        IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[] memory _ticksBurn = new IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[](2); // prettier-ignore
+        _ticksBurn[0] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({tick: -196820, liquidity: 50000000000000000});
+        _ticksBurn[1] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({tick: -196810, liquidity: 50000000000000000});
+        _ticksMint[0] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({tick: -196760, liquidity: 50000000000000000});
+        _ticksMint[1] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({tick: -196750, liquidity: 50000000000000000});
 
         automator.rebalance(_ticksMint, _ticksBurn, AutomatorHelper.calculateRebalanceSwapParamsInRebalance(automator, pool, WETH, USDC, _ticksMint, _ticksBurn)); // prettier-ignore
 
@@ -97,16 +100,16 @@ contract TestOrangeDopexV2LPAutomatorRebalance is Fixture, DealExtension {
         deal(address(WETH), address(automator), 10 ether);
         dealUsdc(address(automator), 10_000e6);
 
-        IOrangeDopexV2LPAutomator.RebalanceTickInfo[]
-            memory _ticksMint = new OrangeDopexV2LPAutomator.RebalanceTickInfo[](3);
-        _ticksMint[0] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({tick: -196810, liquidity: 1e10});
-        _ticksMint[1] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({tick: -196800, liquidity: 1e10});
-        _ticksMint[2] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({tick: -196790, liquidity: 1e10});
+        IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[]
+            memory _ticksMint = new OrangeDopexV2LPAutomatorV1.RebalanceTickInfo[](3);
+        _ticksMint[0] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({tick: -196810, liquidity: 1e10});
+        _ticksMint[1] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({tick: -196800, liquidity: 1e10});
+        _ticksMint[2] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({tick: -196790, liquidity: 1e10});
 
         automator.rebalance(
             _ticksMint,
-            new OrangeDopexV2LPAutomator.RebalanceTickInfo[](0),
-            IOrangeDopexV2LPAutomator.RebalanceSwapParams(0, 0, 0, 0)
+            new OrangeDopexV2LPAutomatorV1.RebalanceTickInfo[](0),
+            IOrangeDopexV2LPAutomatorV1.RebalanceSwapParams(0, 0, 0, 0)
         );
 
         int24[] memory _ticks = automator.getActiveTicks();
@@ -117,8 +120,8 @@ contract TestOrangeDopexV2LPAutomatorRebalance is Fixture, DealExtension {
 
     function test_rebalance_activeTicksFull() public {
         AutomatorHarness _automator = deployAutomatorHarness(
-            OrangeDopexV2LPAutomator.InitArgs({
-                name: "OrangeDopexV2LPAutomator",
+            OrangeDopexV2LPAutomatorV1.InitArgs({
+                name: "OrangeDopexV2LPAutomatorV1",
                 symbol: "ODV2LP",
                 admin: address(this),
                 manager: manager,
@@ -142,25 +145,25 @@ contract TestOrangeDopexV2LPAutomatorRebalance is Fixture, DealExtension {
             _automator.pushActiveTick(i);
         }
 
-        IOrangeDopexV2LPAutomator.RebalanceTickInfo[]
-            memory _ticksMint = new OrangeDopexV2LPAutomator.RebalanceTickInfo[](1);
-        _ticksMint[0] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({tick: 1000, liquidity: 1e6});
+        IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[]
+            memory _ticksMint = new OrangeDopexV2LPAutomatorV1.RebalanceTickInfo[](1);
+        _ticksMint[0] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({tick: 1000, liquidity: 1e6});
 
-        vm.expectRevert(OrangeDopexV2LPAutomator.MaxTicksReached.selector);
+        vm.expectRevert(OrangeDopexV2LPAutomatorV1.MaxTicksReached.selector);
         _automator.rebalance(
             _ticksMint,
-            new OrangeDopexV2LPAutomator.RebalanceTickInfo[](0),
-            IOrangeDopexV2LPAutomator.RebalanceSwapParams(0, 0, 0, 0)
+            new OrangeDopexV2LPAutomatorV1.RebalanceTickInfo[](0),
+            IOrangeDopexV2LPAutomatorV1.RebalanceSwapParams(0, 0, 0, 0)
         );
     }
 
     function _rebalanceMintPositions(uint128 liquidityPerTick, int24 t1, int24 t2, int24 t3, int24 t4) internal {
-        IOrangeDopexV2LPAutomator.RebalanceTickInfo[] memory _ticksMint = new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](4); // prettier-ignore
-        IOrangeDopexV2LPAutomator.RebalanceTickInfo[] memory _ticksBurn = new IOrangeDopexV2LPAutomator.RebalanceTickInfo[](0); // prettier-ignore
-        _ticksMint[0] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({tick: t1, liquidity: liquidityPerTick});
-        _ticksMint[1] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({tick: t2, liquidity: liquidityPerTick});
-        _ticksMint[2] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({tick: t3, liquidity: liquidityPerTick});
-        _ticksMint[3] = IOrangeDopexV2LPAutomator.RebalanceTickInfo({tick: t4, liquidity: liquidityPerTick});
+        IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[] memory _ticksMint = new IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[](4); // prettier-ignore
+        IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[] memory _ticksBurn = new IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo[](0); // prettier-ignore
+        _ticksMint[0] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({tick: t1, liquidity: liquidityPerTick});
+        _ticksMint[1] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({tick: t2, liquidity: liquidityPerTick});
+        _ticksMint[2] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({tick: t3, liquidity: liquidityPerTick});
+        _ticksMint[3] = IOrangeDopexV2LPAutomatorV1.RebalanceTickInfo({tick: t4, liquidity: liquidityPerTick});
 
         automator.rebalance(
             _ticksMint,

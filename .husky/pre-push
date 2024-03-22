@@ -1,1 +1,1 @@
-forge test
+forge test && npx hardhat test

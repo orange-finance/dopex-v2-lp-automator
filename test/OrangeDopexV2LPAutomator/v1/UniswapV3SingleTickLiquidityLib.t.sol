@@ -2,8 +2,11 @@
 
 pragma solidity 0.8.19;
 
-import "./Fixture.t.sol";
-import {DealExtension} from "../helper/DealExtension.t.sol";
+/* solhint-disable func-name-mixedcase */
+import {Fixture} from "./Fixture.t.sol";
+import {DealExtension} from "../../helper/DealExtension.t.sol";
+import {UniswapV3SingleTickLiquidityLib} from "./../../../contracts/lib/UniswapV3SingleTickLiquidityLib.sol";
+import {IUniswapV3SingleTickLiquidityHandlerV2} from "./../../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 
 contract TestUniswapV3SingleTickLiquidityLib is Fixture, DealExtension {
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandlerV2;
