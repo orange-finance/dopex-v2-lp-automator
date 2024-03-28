@@ -265,6 +265,40 @@ contract TestInspectorWithV1_1 is WETH_USDC_Fixture, DealExtension {
         );
     }
 
+    function test_convertSharesToPairAssets() public {
+        automator.setDepositCap(200 ether);
+        // alice deposit 100 WETH
+        _depositFrom(alice, 100 ether);
+        // bob deposit 100 WETH
+        _depositFrom(bob, 100 ether);
+
+        // assume vault takes 1M USDC profit
+        dealUsdc(address(automator), 1_000_000e6);
+
+        int24 lt = pool.currentLower();
+
+        // liquidize assets
+        _rebalanceMintSingle(lt - 40, pool.singleLiqLeft(lt - 30, 100_000e6)); // liquidize 100k USDC
+        _rebalanceMintSingle(lt - 30, pool.singleLiqLeft(lt - 20, 100_000e6)); // liquidize 100k USDC
+        _rebalanceMintSingle(lt - 20, pool.singleLiqLeft(lt - 10, 100_000e6)); // liquidize 100k USDC
+        _rebalanceMintSingle(lt + 10, pool.singleLiqRight(lt + 10, 10 ether)); // liquidize 10 WETH
+        _rebalanceMintSingle(lt + 20, pool.singleLiqRight(lt + 20, 10 ether)); // liquidize 10 WETH
+        _rebalanceMintSingle(lt + 30, pool.singleLiqRight(lt + 30, 10 ether)); // liquidize 10 WETH
+
+        pool.useDopexPosition(address(0), lt - 20, pool.freeLiquidityOfTick(address(0), lt - 20)); // utilize 100k USDC
+        pool.useDopexPosition(address(0), lt + 10, pool.freeLiquidityOfTick(address(0), lt + 10)); // utilize 10 WETH
+
+        // convert shares to pair assets
+        (uint256 weth, uint256 usdc) = inspector.convertSharesToPairAssets(
+            IOrangeStrykeLPAutomatorState(address(automator)),
+            100 ether
+        );
+
+        // bob has 95 WETH and 450k USDC (5 WETH and 50k USDC are locked against bob's position)
+        assertApproxEqRel(weth, 95 ether, 0.0001e18); // 0.01%
+        assertApproxEqRel(usdc, 450_000e6, 0.0001e18); // 0.01%
+    }
+
     function _rebalanceMintSingle(int24 lowerTick, uint128 liquidity) internal {
         IOrangeStrykeLPAutomatorState.RebalanceTickInfo[]
             memory _ticksMint = new IOrangeStrykeLPAutomatorState.RebalanceTickInfo[](1);
@@ -274,6 +308,14 @@ contract TestInspectorWithV1_1 is WETH_USDC_Fixture, DealExtension {
             new IOrangeStrykeLPAutomatorState.RebalanceTickInfo[](0),
             IOrangeStrykeLPAutomatorV1_1.RebalanceSwapParams(0, 0, 0, 0)
         );
+    }
+
+    function _depositFrom(address user, uint256 amount) internal {
+        deal(address(WETH), user, amount);
+        vm.startPrank(user);
+        WETH.approve(address(automator), amount);
+        automator.deposit(amount);
+        vm.stopPrank();
     }
 
     function _getQuote(address base, address quote, uint128 baseAmount) internal view returns (uint256) {
