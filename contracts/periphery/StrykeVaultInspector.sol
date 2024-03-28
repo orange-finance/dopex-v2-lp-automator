@@ -5,6 +5,7 @@ pragma solidity 0.8.19;
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
 import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
+import {FullMath} from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {IOrangeStrykeLPAutomatorState} from "./../interfaces/IOrangeStrykeLPAutomatorState.sol";
@@ -158,6 +159,23 @@ contract StrykeVaultInspector {
                     quoteUsdFeed: automator.assetUsdFeed()
                 })
             );
+    }
+
+    function convertSharesToPairAssets(
+        IOrangeStrykeLPAutomatorState automator,
+        uint256 shares
+    ) external view returns (uint256 assets, uint256 counterAssets) {
+        (address token0, address token1) = (automator.pool().token0(), automator.pool().token1());
+        (uint256 position0, uint256 position1) = freePoolPositionInToken01(automator);
+        (uint256 balance0, uint256 balance1) = (
+            IERC20(token0).balanceOf(address(automator)),
+            IERC20(token1).balanceOf(address(automator))
+        );
+
+        assets = FullMath.mulDiv(position0 + balance0, shares, IERC20(address(automator)).totalSupply());
+        counterAssets = FullMath.mulDiv(position1 + balance1, shares, IERC20(address(automator)).totalSupply());
+
+        if (token1 == address(automator.asset())) (assets, counterAssets) = (counterAssets, assets);
     }
 
     /**

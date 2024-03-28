@@ -34,7 +34,7 @@ contract BaseFixture is Test {
         IUniswapV3SingleTickLiquidityHandlerV2(0x29BbF7EbB9C5146c98851e76A5529985E4052116);
     IDopexV2PositionManager public manager = IDopexV2PositionManager(0xE4bA6740aF4c666325D49B3112E4758371386aDc);
     address public dopexV2OptionMarket = 0x764fA09d0B3de61EeD242099BD9352C1C61D3d27;
-    address public managerOwner = 0xEE82496D3ed1f5AFbEB9B29f3f59289fd899d9D0;
+    address public managerOwner = 0x880C3cdCA73254D466f9c716248339dE88e4a97D;
 
     // Uniswap V3
     // ISwapRouter public router = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
