@@ -238,6 +238,63 @@ contract TestInspectorWithV1_1 is WETH_USDC_Fixture, DealExtension {
         }
     }
 
+    function test_getTickFreeLiquidity_hasPositions_allLiquidityShouldBeFree() public {
+        int24 currentLower = UniswapV3Helper.currentLower(pool);
+
+        deal(address(WETH), address(automator), 100 ether);
+        dealUsdc(address(automator), 1_000_000e6);
+        deal(address(WETH), alice, 100 ether);
+        dealUsdc(alice, 1_000_000e6);
+        vm.startPrank(alice);
+        WETH.approve(address(manager), 100 ether);
+        USDC.approve(address(manager), 1_000_000e6);
+        vm.stopPrank();
+
+        _rebalanceMintSingle(currentLower - 10, pool.singleLiqLeft(currentLower - 10, 100_000e6));
+        _rebalanceMintSingle(currentLower - 20, pool.singleLiqLeft(currentLower - 20, 100_000e6));
+        _rebalanceMintSingle(currentLower - 30, pool.singleLiqLeft(currentLower - 30, 100_000e6));
+
+        _rebalanceMintSingle(currentLower + 10, pool.singleLiqRight(currentLower + 10, 10 ether));
+        _rebalanceMintSingle(currentLower + 20, pool.singleLiqRight(currentLower + 20, 10 ether));
+        _rebalanceMintSingle(currentLower + 30, pool.singleLiqRight(currentLower + 30, 10 ether));
+
+        // mint position by alice to free up all automator's liquidity
+        pool.mintDopexPosition(address(0), currentLower - 10, pool.singleLiqLeft(currentLower - 10, 100_000e6), alice);
+        pool.mintDopexPosition(address(0), currentLower - 20, pool.singleLiqLeft(currentLower - 20, 100_000e6), alice);
+        pool.mintDopexPosition(address(0), currentLower - 30, pool.singleLiqLeft(currentLower - 30, 100_000e6), alice);
+
+        pool.mintDopexPosition(address(0), currentLower + 10, pool.singleLiqRight(currentLower + 10, 10 ether), alice);
+        pool.mintDopexPosition(address(0), currentLower + 20, pool.singleLiqRight(currentLower + 20, 10 ether), alice);
+        pool.mintDopexPosition(address(0), currentLower + 30, pool.singleLiqRight(currentLower + 30, 10 ether), alice);
+
+        for (int24 i = currentLower - 30; i <= currentLower + 30; i += 10) {
+            uint128 liquidity = inspector.getTickFreeLiquidity(IOrangeStrykeLPAutomatorV1_1(address(automator)), i);
+
+            if (i == currentLower) {
+                assertEq(0, liquidity);
+                continue;
+            }
+
+            uint256 tid = pool.tokenId(address(0), i);
+            uint256 shares = handlerV2.balanceOf(address(automator), tid);
+
+            assertEq(liquidity, handlerV2.convertToAssets(uint128(shares), tid), "all liquidity should be free");
+            assertEq(
+                shares,
+                handlerV2.convertToShares(uint128(liquidity), tid),
+                "all free liquidity should be converted to shares"
+            );
+
+            if (i < currentLower) {
+                assertApproxEqRel(pool.singleLiqLeft(i, 100_000e6), liquidity, 0.00001e18); // 0.01%
+            } else if (i == currentLower) {
+                assertEq(0, liquidity);
+            } else {
+                assertApproxEqRel(pool.singleLiqRight(i, 10 ether), liquidity, 0.00001e18); // 0.01%
+            }
+        }
+    }
+
     function test_getTickFreeLiquidity_hasPositions_utilized() public {
         int24 currentLower = UniswapV3Helper.currentLower(pool);
 
@@ -251,7 +308,7 @@ contract TestInspectorWithV1_1 is WETH_USDC_Fixture, DealExtension {
         pool.useDopexPosition(
             address(0),
             currentLower + 10,
-            pool.freeLiquidityOfTick(address(0), currentLower + 10) - 1
+            pool.freeLiquidityOfTick(address(0), currentLower + 10) - 2
         );
 
         assertEq(
@@ -562,7 +619,7 @@ contract TestInspectorWithV1 is Fixture, DealExtension {
         pool.useDopexPosition(
             address(0),
             currentLower + 10,
-            pool.freeLiquidityOfTick(address(0), currentLower + 10) - 1
+            pool.freeLiquidityOfTick(address(0), currentLower + 10) - 2
         );
 
         assertEq(
@@ -570,6 +627,7 @@ contract TestInspectorWithV1 is Fixture, DealExtension {
             inspector.getTickFreeLiquidity(IOrangeStrykeLPAutomatorV1_1(address(automator)), currentLower - 10)
         );
 
+        // 1 of 2 liquidity is locked when the vault is the only liquidity provider
         assertEq(
             1,
             inspector.getTickFreeLiquidity(IOrangeStrykeLPAutomatorV1_1(address(automator)), currentLower + 10)

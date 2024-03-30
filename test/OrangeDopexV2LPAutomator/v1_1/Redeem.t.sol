@@ -130,7 +130,7 @@ contract TestOrangeStrykeLPAutomatorV1_1Redeem is WETH_USDC_Fixture {
         // alice locked shares = 69384723072291323 (automator's locked shares) * 1.3e18 (share of alice) / 2.3e18(automator total supply)
         assertEq(
             IERC6909(address(handlerV2)).balanceOf(alice, 51731724170277633442520037625677593345052024787730572352688588083216565283241), // prettier-ignore
-            39217452171295095
+            39217452171295096
         );
     }
 
@@ -237,7 +237,7 @@ contract TestOrangeStrykeLPAutomatorV1_1Redeem is WETH_USDC_Fixture {
         // part of the liquidity locked
         assertEq(1, _locked.length);
         // locked liquidity is equal to the minted liquidity first
-        assertEq(pool.singleLiqRight(cl + 10, 0.5 ether) - 1, _locked[0].shares);
+        assertEq(pool.singleLiqRight(cl + 10, 0.5 ether), _locked[0].shares);
     }
 
     function test_redeem_revertWhenMinAssetsNotReached() public {

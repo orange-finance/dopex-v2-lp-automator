@@ -23,6 +23,10 @@ library DopexV2Helper {
     IUniswapV3SingleTickLiquidityHandlerV2 public constant DOPEX_UNIV3_HANDLER =
         IUniswapV3SingleTickLiquidityHandlerV2(0x29BbF7EbB9C5146c98851e76A5529985E4052116);
 
+    function tokenId(IUniswapV3Pool pool, address hook, int24 tickLower) internal view returns (uint256) {
+        return _tokenId(pool, hook, tickLower);
+    }
+
     function balanceOfHandler(
         address account,
         IUniswapV3Pool pool,

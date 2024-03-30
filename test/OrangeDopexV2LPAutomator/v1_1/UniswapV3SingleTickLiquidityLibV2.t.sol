@@ -57,25 +57,24 @@ contract TestUniswapV3SingleTickLiquidityLibV2 is WETH_USDC_Fixture, DealExtensi
         _mintDopexPosition(_tickLower, _tickUpper, uint128(_liquidity));
         (, uint128 _redeemable, ) = handlerV2.positionDetail(address(this), _tokenId);
 
-        // NOTE: liquidity is rounded down when shares are converted to liquidity
-        assertEq(_redeemable, _liquidity - 1, "all liquidity redeemable (rounded down)");
+        assertEq(_redeemable, _liquidity - 2, "1 liquidity used by the user, 1 liquidity locked in the pool");
         IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory _tokenIdInfo = handlerV2.tokenIds(_tokenId);
 
         /*/////////////////////////////////////////////////////////////
                             case: shares partially used
         /////////////////////////////////////////////////////////////*/
 
-        _useDopexPosition(_tickLower, _tickUpper, 599999999);
+        _useDopexPosition(_tickLower, _tickUpper, 600000000);
         (, _redeemable, ) = handlerV2.positionDetail(address(this), _tokenId);
         _tokenIdInfo = handlerV2.tokenIds(_tokenId);
 
-        assertEq(_redeemable, _tokenIdInfo.totalLiquidity - _tokenIdInfo.liquidityUsed, "partial liquidity redeemable");
+        assertEq(_redeemable, 399999998, "partial liquidity redeemable");
 
         /*/////////////////////////////////////////////////////////////
                             case: shares fully used
         /////////////////////////////////////////////////////////////*/
 
-        _useDopexPosition(_tickLower, _tickUpper, 400000000);
+        _useDopexPosition(_tickLower, _tickUpper, 399999998);
         (, _redeemable, ) = handlerV2.positionDetail(address(this), _tokenId);
         _tokenIdInfo = handlerV2.tokenIds(_tokenId);
 
@@ -132,9 +131,9 @@ contract TestUniswapV3SingleTickLiquidityLibV2 is WETH_USDC_Fixture, DealExtensi
 
         // ! actual liquidity minted to the contract is 999999999
         _mintDopexPosition(_tickLower, _tickUpper, 1000e6);
-        (, , uint128 _locked) = handlerV2.positionDetail(address(this), _tokenId);
+        (uint128 all, uint128 free, uint128 _locked) = handlerV2.positionDetail(address(this), _tokenId);
         //
-        assertEq(_locked, 0, "no liquidity locked");
+        assertEq(_locked, 2, "1 liquidity used by the user, 1 liquidity locked in the pool");
 
         /*/////////////////////////////////////////////////////////////
                             case: shares partially used
@@ -142,25 +141,25 @@ contract TestUniswapV3SingleTickLiquidityLibV2 is WETH_USDC_Fixture, DealExtensi
 
         IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory _tokenIdInfo = handlerV2.tokenIds(_tokenId);
 
-        _useDopexPosition(_tickLower, _tickUpper, 599999999);
+        _useDopexPosition(_tickLower, _tickUpper, 600000000);
         (, , _locked) = handlerV2.positionDetail(address(this), _tokenId);
         _tokenIdInfo = handlerV2.tokenIds(_tokenId);
 
         assertEq(
             _locked,
-            999999999 - (_tokenIdInfo.totalLiquidity - _tokenIdInfo.liquidityUsed),
-            "partial liquidity locked (rounded down)"
+            600000002, // used by us + used by another user + 1 liquidity locked in the pool
+            "partial liquidity locked"
         );
 
         /*/////////////////////////////////////////////////////////////
                             case: shares fully used
         /////////////////////////////////////////////////////////////*/
 
-        _useDopexPosition(_tickLower, _tickUpper, 400000000);
+        _useDopexPosition(_tickLower, _tickUpper, 399999999);
         (, , _locked) = handlerV2.positionDetail(address(this), _tokenId);
         _tokenIdInfo = handlerV2.tokenIds(_tokenId);
 
-        assertEq(_locked, 999999999, "all liquidity locked (rounded down)");
+        assertEq(_locked, 1000e6, "all liquidity locked");
     }
 
     function test_lockedLiquidity_anotherMinterExists() public {
@@ -191,7 +190,7 @@ contract TestUniswapV3SingleTickLiquidityLibV2 is WETH_USDC_Fixture, DealExtensi
         _mintDopexPosition(_tickLower, _tickUpper, uint128(_liquidity));
         (, , uint128 _locked) = handlerV2.positionDetail(address(this), _tokenId);
 
-        assertEq(_locked, 0, "no liquidity locked");
+        assertEq(_locked, 2, "1 liquidity used by the user, 1 liquidity locked in the pool");
 
         IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory _tokenIdInfo = handlerV2.tokenIds(_tokenId);
 
@@ -239,7 +238,7 @@ contract TestUniswapV3SingleTickLiquidityLibV2 is WETH_USDC_Fixture, DealExtensi
         uint256 _expectLocked = handlerV2.convertToAssets(
             uint128(handlerV2.balanceOf(address(this), _tokenId)),
             _tokenId
-        ) - 1;
+        );
 
         (, , uint128 _locked) = handlerV2.positionDetail(address(this), _tokenId);
 
