@@ -6,6 +6,7 @@
     "test": "npm run test:foundry && npm run test:hardhat",
     "test:foundry": "forge test --no-match-test \"Skip\"",
     "test:hardhat": "npx hardhat test",
+    "coverage": "./coverage.sh",
     "fmt": "prettier --write 'contracts/**/*.sol'",
     "lint:sol": "solhint 'contracts/**/*.sol'",
     "prepare": "husky"
