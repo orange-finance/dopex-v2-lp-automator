@@ -26,14 +26,14 @@ contract TestOrangeStrykeLPAutomatorV2Rebalance is WETH_USDC_Fixture {
 
     function test_rebalance_flashLoanAndSwap_dynamic_Skip() public {
         super.setUp();
-        automator.deposit(100 ether, alice);
+        aHandler.deposit(100 ether, alice);
 
-        (address router, bytes memory swapCalldata) = _buildKyberswapData(address(automator.automator()), 50);
+        (address router, bytes memory swapCalldata) = _buildKyberswapData(address(automator), 50);
 
-        emit log_named_uint("vault weth balance before: ", WETH.balanceOf(address(automator.automator())));
-        emit log_named_uint("vault usdc balance before: ", USDC.balanceOf(address(automator.automator())));
+        emit log_named_uint("vault weth balance before: ", WETH.balanceOf(address(automator)));
+        emit log_named_uint("vault usdc balance before: ", USDC.balanceOf(address(automator)));
 
-        uint256 estUsdc = automator.automator().pool().getQuote(address(WETH), address(USDC), 50 ether);
+        uint256 estUsdc = automator.pool().getQuote(address(WETH), address(USDC), 50 ether);
 
         IOrangeSwapProxy.SwapInputRequest memory req = IOrangeSwapProxy.SwapInputRequest({
             provider: router,
@@ -51,10 +51,10 @@ contract TestOrangeStrykeLPAutomatorV2Rebalance is WETH_USDC_Fixture {
         uint256[] memory amounts = new uint256[](1);
         amounts[0] = estUsdc;
 
-        automator.rebalance("[]", "[]", address(kyberswapProxy), req, abi.encode(tokens, amounts, true));
+        aHandler.rebalance("[]", "[]", address(kyberswapProxy), req, abi.encode(tokens, amounts, true));
 
-        emit log_named_uint("vault weth balance after: ", WETH.balanceOf(address(automator.automator()))); // prettier-ignore
-        emit log_named_uint("vault usdc balance after: ", USDC.balanceOf(address(automator.automator()))); // prettier-ignore
+        emit log_named_uint("vault weth balance after: ", WETH.balanceOf(address(automator))); // prettier-ignore
+        emit log_named_uint("vault usdc balance after: ", USDC.balanceOf(address(automator))); // prettier-ignore
     }
 
     function _buildKyberswapData(
@@ -102,7 +102,7 @@ contract TestOrangeStrykeLPAutomatorV2Rebalance is WETH_USDC_Fixture {
         });
         bytes memory flashLoanCall = abi.encodeCall(
             IBalancerVault.flashLoan,
-            (IBalancerFlashLoanRecipient(address(automator.automator())), tokens, amounts, abi.encode(ud))
+            (IBalancerFlashLoanRecipient(address(automator)), tokens, amounts, abi.encode(ud))
         );
 
         emit log_named_bytes("expect call bytes", flashLoanCall);

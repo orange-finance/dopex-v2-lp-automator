@@ -22,58 +22,56 @@ contract TestOrangeStrykeLPAutomatorV2Redeem is WETH_USDC_Fixture, DealExtension
     // skipping this test on pre-commit
     function test_redeemWithAggregator_dynamic_Skip() public {
         super.setUp();
-        uint256 shares = automator.deposit(50 ether, alice);
-        uint256 usdc = automator.automator().pool().getQuote(address(WETH), address(USDC), 50 ether);
-        dealUsdc(address(automator.automator()), usdc);
+        uint256 shares = aHandler.deposit(50 ether, alice);
+        uint256 usdc = automator.pool().getQuote(address(WETH), address(USDC), 50 ether);
+        dealUsdc(address(automator), usdc);
 
-        // (address router, bytes memory swapCalldata) = _buildKyberswapData(address(automator.automator()), usdc);
-        (address router, bytes memory swapCalldata) = _buildKyberswapData(address(automator.automator()), usdc);
+        // (address router, bytes memory swapCalldata) = _buildKyberswapData(address(automator), usdc);
+        (address router, bytes memory swapCalldata) = _buildKyberswapData(address(automator), usdc);
 
-        emit log_named_uint("vault weth balance before: ", WETH.balanceOf(address(automator.automator())));
-        emit log_named_uint("vault usdc balance before: ", USDC.balanceOf(address(automator.automator())));
+        emit log_named_uint("vault weth balance before: ", WETH.balanceOf(address(automator)));
+        emit log_named_uint("vault usdc balance before: ", USDC.balanceOf(address(automator)));
         emit log_named_uint("alice weth before: ", WETH.balanceOf(alice));
 
         bytes memory redeemData = abi.encode(kyberswapProxy, router, swapCalldata);
 
-        automator.redeem(shares, redeemData, alice);
+        aHandler.redeem(shares, redeemData, alice);
 
-        emit log_named_uint("vault weth balance after: ", WETH.balanceOf(address(automator.automator()))); // prettier-ignore
-        emit log_named_uint("vault usdc balance after: ", USDC.balanceOf(address(automator.automator()))); // prettier-ignore
+        emit log_named_uint("vault weth balance after: ", WETH.balanceOf(address(automator))); // prettier-ignore
+        emit log_named_uint("vault usdc balance after: ", USDC.balanceOf(address(automator))); // prettier-ignore
         emit log_named_uint("alice weth after: ", WETH.balanceOf(alice));
 
-        uint256 expectedWeth = 50 ether +
-            automator.automator().pool().getQuote(address(USDC), address(WETH), uint128(usdc));
+        uint256 expectedWeth = 50 ether + automator.pool().getQuote(address(USDC), address(WETH), uint128(usdc));
 
         assertApproxEqRel(expectedWeth, WETH.balanceOf(alice), 0.001e18);
     }
 
     function test_redeemWithAggregator_hasPositions_dynamic_Skip() public {
         super.setUp();
-        uint256 shares = automator.deposit(50 ether, alice);
-        // uint256 usdc = automator.automator().pool().getQuote(address(WETH), address(USDC), 50 ether);
-        dealUsdc(address(automator.automator()), 100_000e6);
+        uint256 shares = aHandler.deposit(50 ether, alice);
+        // uint256 usdc = automator.pool().getQuote(address(WETH), address(USDC), 50 ether);
+        dealUsdc(address(automator), 100_000e6);
 
-        automator.rebalanceSingleLeft(pool.currentLower() - 10, 30_000e6);
-        automator.rebalanceSingleLeft(pool.currentLower() - 20, 30_000e6);
+        aHandler.rebalanceSingleLeft(pool.currentLower() - 10, 30_000e6);
+        aHandler.rebalanceSingleLeft(pool.currentLower() - 20, 30_000e6);
 
         // swap all free usdc when redeeming
-        (, uint256 free1) = inspector.freePoolPositionInToken01(automator.automator());
-        uint256 freeUsdc = USDC.balanceOf(address(automator.automator())) + free1;
-        (address router, bytes memory swapCalldata) = _buildKyberswapData(address(automator.automator()), freeUsdc);
+        (, uint256 free1) = inspector.freePoolPositionInToken01(automator);
+        uint256 freeUsdc = USDC.balanceOf(address(automator)) + free1;
+        (address router, bytes memory swapCalldata) = _buildKyberswapData(address(automator), freeUsdc);
 
-        emit log_named_uint("vault weth balance before: ", WETH.balanceOf(address(automator.automator())));
-        emit log_named_uint("vault usdc balance before: ", USDC.balanceOf(address(automator.automator())));
+        emit log_named_uint("vault weth balance before: ", WETH.balanceOf(address(automator)));
+        emit log_named_uint("vault usdc balance before: ", USDC.balanceOf(address(automator)));
         emit log_named_uint("alice weth before: ", WETH.balanceOf(alice));
 
         bytes memory redeemData = abi.encode(kyberswapProxy, router, swapCalldata);
 
-        automator.redeem(shares, redeemData, alice);
+        aHandler.redeem(shares, redeemData, alice);
 
-        uint256 expectedWeth = 50 ether +
-            automator.automator().pool().getQuote(address(USDC), address(WETH), uint128(freeUsdc));
+        uint256 expectedWeth = 50 ether + automator.pool().getQuote(address(USDC), address(WETH), uint128(freeUsdc));
 
-        emit log_named_uint("vault weth balance after: ", WETH.balanceOf(address(automator.automator()))); // prettier-ignore
-        emit log_named_uint("vault usdc balance after: ", USDC.balanceOf(address(automator.automator()))); // prettier-ignore
+        emit log_named_uint("vault weth balance after: ", WETH.balanceOf(address(automator))); // prettier-ignore
+        emit log_named_uint("vault usdc balance after: ", USDC.balanceOf(address(automator))); // prettier-ignore
         emit log_named_uint("alice weth after: ", WETH.balanceOf(alice));
 
         assertApproxEqRel(expectedWeth, WETH.balanceOf(alice), 0.001e18);

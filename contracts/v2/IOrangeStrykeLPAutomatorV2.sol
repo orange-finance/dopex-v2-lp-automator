@@ -68,6 +68,7 @@ interface IOrangeStrykeLPAutomatorV2 is IOrangeStrykeLPAutomatorState {
     error MinDepositAssetsTooSmall();
     error Unauthorized();
     error ProxyAlreadyWhitelisted();
+    error FlashLoan_Unauthorized();
 
     /**
      * @dev Returns the minimum deposit of assets.

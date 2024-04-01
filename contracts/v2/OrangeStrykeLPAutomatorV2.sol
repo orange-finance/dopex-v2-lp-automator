@@ -13,7 +13,8 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {Multicall} from "@openzeppelin/contracts/utils/Multicall.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import {IUniswapV3SingleTickLiquidityHandlerV2} from "../vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
@@ -30,12 +31,6 @@ import {IOrangeSwapProxy} from "./IOrangeSwapProxy.sol";
 
 import {IBalancerVault} from "../vendor/balancer/IBalancerVault.sol";
 import {IBalancerFlashLoanRecipient} from "../vendor/balancer/IBalancerFlashLoanRecipient.sol";
-
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
-
-interface IMulticallProvider {
-    function multicall(bytes[] calldata data) external returns (bytes[] memory results);
-}
 
 /**
  * @title OrangeStrykeLPAutomatorV1
@@ -106,8 +101,6 @@ contract OrangeStrykeLPAutomatorV2 is
                                                     Balancer
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
     IBalancerVault public balancer;
-
-    error FlashLoan_Unauthorized();
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                     Modifiers
@@ -612,8 +605,10 @@ contract OrangeStrykeLPAutomatorV2 is
         // if not, execute multicall directly
         else {
             // burn should be called before mint to receive the assets from the burned position
-            if (_burnCalldataBatch.length > 0) IMulticallProvider(address(manager)).multicall(_burnCalldataBatch);
-            if (_mintCalldataBatch.length > 0) IMulticallProvider(address(manager)).multicall(_mintCalldataBatch);
+            // if (_burnCalldataBatch.length > 0) IMulticallProvider(address(manager)).multicall(_burnCalldataBatch);
+            // if (_mintCalldataBatch.length > 0) IMulticallProvider(address(manager)).multicall(_mintCalldataBatch);
+            if (_burnCalldataBatch.length > 0) Multicall(address(manager)).multicall(_burnCalldataBatch);
+            if (_mintCalldataBatch.length > 0) Multicall(address(manager)).multicall(_mintCalldataBatch);
         }
 
         // finally, check if tick count is not exceeded
@@ -633,8 +628,8 @@ contract OrangeStrykeLPAutomatorV2 is
         FlashLoanUserData memory _ud = abi.decode(userData, (FlashLoanUserData));
 
         // burn should be called before mint to receive the assets from the burned position
-        if (_ud.burnCalldata.length > 0) IMulticallProvider(address(manager)).multicall(_ud.burnCalldata);
-        if (_ud.mintCalldata.length > 0) IMulticallProvider(address(manager)).multicall(_ud.mintCalldata);
+        if (_ud.burnCalldata.length > 0) Multicall(address(manager)).multicall(_ud.burnCalldata);
+        if (_ud.mintCalldata.length > 0) Multicall(address(manager)).multicall(_ud.mintCalldata);
 
         // we can directly pass the request as the user data is provided by the trusted strategist
         IOrangeSwapProxy(_ud.swapProxy).safeInputSwap(_ud.swapRequest);
