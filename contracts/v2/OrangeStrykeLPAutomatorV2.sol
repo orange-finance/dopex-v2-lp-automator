@@ -28,9 +28,8 @@ import {IOrangeStrykeLPAutomatorV2} from "./IOrangeStrykeLPAutomatorV2.sol";
 import {IOrangeStrykeLPAutomatorState} from "./../interfaces/IOrangeStrykeLPAutomatorState.sol";
 import {IOrangeSwapProxy} from "./IOrangeSwapProxy.sol";
 
-import {IBalancerVault} from "./../vendor/balancer/IBalancerVault.sol";
-
-import {BalancerFlashLoanRecipientUpgradeable} from "./../BalancerFlashLoanRecipientUpgradeable.sol";
+import {IBalancerVault} from "../vendor/balancer/IBalancerVault.sol";
+import {IBalancerFlashLoanRecipient} from "../vendor/balancer/IBalancerFlashLoanRecipient.sol";
 
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
@@ -45,9 +44,9 @@ interface IMulticallProvider {
  */
 contract OrangeStrykeLPAutomatorV2 is
     IOrangeStrykeLPAutomatorV2,
+    IBalancerFlashLoanRecipient,
     UUPSUpgradeable,
-    OrangeERC20Upgradeable,
-    BalancerFlashLoanRecipientUpgradeable
+    OrangeERC20Upgradeable
 {
     using FullMath for uint256;
     using SafeERC20 for IERC20;
@@ -107,6 +106,8 @@ contract OrangeStrykeLPAutomatorV2 is
                                                     Balancer
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
     IBalancerVault public balancer;
+
+    error FlashLoan_Unauthorized();
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                     Modifiers
@@ -168,7 +169,6 @@ contract OrangeStrykeLPAutomatorV2 is
         if (args.assetUsdFeed == address(0) || args.counterAssetUsdFeed == address(0)) revert AddressZero();
 
         __ERC20_init(args.name, args.symbol);
-        __BalancerFlashLoanRecipient_init(args.balancer);
 
         _decimals = IERC20Decimals(address(args.asset)).decimals();
 
@@ -205,8 +205,8 @@ contract OrangeStrykeLPAutomatorV2 is
     }
 
     // only for upgrade
-    function initializeV2() external reinitializer(2) {
-        __BalancerFlashLoanRecipient_init(balancer);
+    function initializeV2(IBalancerVault balancer_) external reinitializer(2) {
+        balancer = balancer_;
     }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -607,7 +607,7 @@ contract OrangeStrykeLPAutomatorV2 is
                 mintCalldata: _mintCalldataBatch,
                 burnCalldata: _burnCalldataBatch
             });
-            _makeFlashLoan(_tokens, _amounts, abi.encode(_userData));
+            balancer.flashLoan(IBalancerFlashLoanRecipient(this), _tokens, _amounts, abi.encode(_userData));
         }
         // if not, execute multicall directly
         else {
@@ -622,12 +622,14 @@ contract OrangeStrykeLPAutomatorV2 is
         emit Rebalance(msg.sender, ticksMint, ticksBurn);
     }
 
-    function _onFlashLoanReceived(
+    function receiveFlashLoan(
         IERC20[] memory tokens,
         uint256[] memory amounts,
         uint256[] memory feeAmounts,
         bytes memory userData
-    ) internal override {
+    ) external {
+        if (msg.sender != address(balancer)) revert FlashLoan_Unauthorized();
+
         FlashLoanUserData memory _ud = abi.decode(userData, (FlashLoanUserData));
 
         // burn should be called before mint to receive the assets from the burned position

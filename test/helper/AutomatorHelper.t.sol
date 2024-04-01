@@ -2,6 +2,8 @@
 
 pragma solidity 0.8.19;
 
+// solhint-disable custom-errors
+
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";

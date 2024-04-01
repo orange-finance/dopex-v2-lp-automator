@@ -11,6 +11,7 @@ import {ChainlinkQuoter} from "./../../../../contracts/ChainlinkQuoter.sol";
 import {StrykeVaultInspector} from "./../../../../contracts/periphery/StrykeVaultInspector.sol";
 import {OrangeKyberswapProxy} from "./../../../../contracts/v2/OrangeKyberswapProxy.sol";
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import {IBalancerVault} from "../../../../contracts/vendor/balancer/IBalancerVault.sol";
 import {IQuoter} from "@uniswap/v3-periphery/contracts/interfaces/IQuoter.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {FullMath} from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
@@ -37,8 +38,11 @@ contract BaseFixture is Test {
     address public managerOwner = 0x880C3cdCA73254D466f9c716248339dE88e4a97D;
 
     // Uniswap V3
-    // ISwapRouter public router = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
+    ISwapRouter public router = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
     IQuoter public quoter = IQuoter(0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6);
+
+    // Balancer
+    IBalancerVault public balancer = IBalancerVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
 
     // Kyberswap
     address public kyberswapRouter = 0x6131B5fae19EA4f9D964eAc0408E4408b66337b5;
