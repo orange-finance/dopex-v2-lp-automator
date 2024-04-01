@@ -10,7 +10,6 @@ import {IERC6909} from "../../../contracts/vendor/dopexV2/IERC6909.sol";
 import {IOrangeStrykeLPAutomatorV1_1} from "./../../../contracts/interfaces/IOrangeStrykeLPAutomatorV1_1.sol";
 import {IOrangeStrykeLPAutomatorState} from "./../../../contracts/interfaces/IOrangeStrykeLPAutomatorState.sol";
 import {IUniswapV3SingleTickLiquidityHandlerV2} from "./../../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
-import {OrangeDopexV2LPAutomatorV1} from "./../../../contracts/OrangeDopexV2LPAutomatorV1.sol";
 import {UniswapV3SingleTickLiquidityLib} from "./../../../contracts/lib/UniswapV3SingleTickLiquidityLib.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {FullMath} from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
@@ -246,7 +245,7 @@ contract TestOrangeStrykeLPAutomatorV1_1Redeem is WETH_USDC_Fixture {
 
         vm.startPrank(alice);
         vm.expectRevert(
-            abi.encodeWithSelector(OrangeDopexV2LPAutomatorV1.MinAssetsRequired.selector, 1.1 ether, 1 ether)
+            abi.encodeWithSelector(IOrangeStrykeLPAutomatorV1_1.MinAssetsRequired.selector, 1.1 ether, 1 ether)
         );
         automator.redeem(1 ether, 1.1 ether);
         vm.stopPrank();
@@ -266,7 +265,7 @@ contract TestOrangeStrykeLPAutomatorV1_1Redeem is WETH_USDC_Fixture {
         //
         // 1 * 1e18 / 2e18 = 0 shares
         vm.startPrank(alice);
-        vm.expectRevert(OrangeDopexV2LPAutomatorV1.SharesTooSmall.selector);
+        vm.expectRevert(IOrangeStrykeLPAutomatorV1_1.SharesTooSmall.selector);
         automator.redeem(1e18, 0);
         vm.stopPrank();
     }
