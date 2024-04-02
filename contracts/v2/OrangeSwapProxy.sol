@@ -17,6 +17,9 @@ abstract contract OrangeSwapProxy is IOrangeSwapProxy {
     error Unauthorized();
     error OutOfDelta();
 
+    event SetOwner(address indexed owner);
+    event SetTrustedProvider(address indexed provider, bool trusted);
+
     modifier onlyOwner() {
         if (msg.sender != owner) revert Unauthorized();
         _;
@@ -28,10 +31,13 @@ abstract contract OrangeSwapProxy is IOrangeSwapProxy {
 
     function setOwner(address _owner) external onlyOwner {
         owner = _owner;
+        emit SetOwner(_owner);
     }
 
     function setTrustedProvider(address provider, bool trusted) external onlyOwner {
         trustedProviders[provider] = trusted;
+
+        emit SetTrustedProvider(provider, trusted);
     }
 
     function safeInputSwap(SwapInputRequest memory request) external virtual;

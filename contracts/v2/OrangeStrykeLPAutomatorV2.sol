@@ -214,6 +214,8 @@ contract OrangeStrykeLPAutomatorV2 is
      */
     function setOwner(address user, bool approved) external onlyOwner {
         isOwner[user] = approved;
+
+        emit SetOwner(user, approved);
     }
 
     /**
@@ -223,6 +225,8 @@ contract OrangeStrykeLPAutomatorV2 is
      */
     function setStrategist(address user, bool approved) external onlyOwner {
         isStrategist[user] = approved;
+
+        emit SetStrategist(user, approved);
     }
 
     /**
@@ -232,7 +236,7 @@ contract OrangeStrykeLPAutomatorV2 is
     function setDepositCap(uint256 _depositCap) external onlyOwner {
         depositCap = _depositCap;
 
-        emit DepositCapSet(_depositCap);
+        emit SetDepositCap(_depositCap);
     }
 
     /**
@@ -247,7 +251,7 @@ contract OrangeStrykeLPAutomatorV2 is
         depositFeeRecipient = recipient;
         depositFeePips = pips;
 
-        emit DepositFeePipsSet(pips);
+        emit SetDepositFeePips(pips);
     }
 
     /**
@@ -265,6 +269,8 @@ contract OrangeStrykeLPAutomatorV2 is
             asset.forceApprove(swapProxy, 0);
             counterAsset.forceApprove(swapProxy, 0);
         }
+
+        emit SetProxyWhitelist(swapProxy, approve);
     }
 
     function decimals() public view override returns (uint8) {
