@@ -42,7 +42,11 @@ contract WETH_USDC_Fixture is BaseFixture {
                 minDepositAssets: 0.01 ether,
                 balancer: balancer,
                 depositCap: 5000 ether,
-                initialDeposit: 0
+                initialDeposit: 0,
+                kyberswapProxy: address(kyberswapProxy),
+                mockSwapProxy: address(mockSwapProxy),
+                inspector: inspector,
+                swapRouter: router
             })
         );
 
@@ -64,7 +68,11 @@ contract WETH_USDC_Fixture is BaseFixture {
                 minDepositAssets: 0.01 ether,
                 balancer: balancer,
                 depositCap: 5_000_000e6, // 5M USDC
-                initialDeposit: 0
+                initialDeposit: 0,
+                kyberswapProxy: address(kyberswapProxy),
+                mockSwapProxy: address(mockSwapProxy),
+                inspector: inspector,
+                swapRouter: router
             })
         );
 

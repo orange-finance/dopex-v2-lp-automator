@@ -219,7 +219,7 @@ contract TestOrangeStrykeLPAutomatorV1_1Redeem is WETH_USDC_Fixture {
         pool.useDopexPosition(address(0), cl + 10, pool.freeLiquidityOfTick(address(0), cl + 10), carol);
 
         // dave reserve to burn all his liquidity
-        pool.reserveDopexPosition(cl + 10, pool.singleLiqRight(cl + 10, 1 ether), dave);
+        pool.reserveDopexPosition(address(0), cl + 10, pool.singleLiqRight(cl + 10, 1 ether), dave);
 
         // total liquidity < liquidity used
         assertLt(pool.totalLiquidityOfTick(address(0), cl + 10), pool.usedLiquidityOfTick(address(0), cl + 10));

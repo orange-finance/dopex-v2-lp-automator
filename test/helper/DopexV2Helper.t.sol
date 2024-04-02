@@ -91,19 +91,17 @@ library DopexV2Helper {
 
     function reserveDopexPosition(
         IUniswapV3Pool pool,
+        address hook,
         int24 lowerTick,
         uint128 liquidityToReserve,
         address sender
     ) internal {
-        uint128 _shares = DOPEX_UNIV3_HANDLER.convertToShares(
-            liquidityToReserve,
-            _tokenId(pool, address(0), lowerTick)
-        );
+        uint128 _shares = DOPEX_UNIV3_HANDLER.convertToShares(liquidityToReserve, _tokenId(pool, hook, lowerTick));
 
         IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams
             memory _params = IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams({
                 pool: address(pool),
-                hook: address(0),
+                hook: hook,
                 tickLower: lowerTick,
                 tickUpper: lowerTick + pool.tickSpacing(),
                 shares: _shares

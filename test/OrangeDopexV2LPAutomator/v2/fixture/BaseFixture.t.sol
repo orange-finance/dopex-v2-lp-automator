@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 
+/* solhint-disable max-states-count */
+
 pragma solidity 0.8.19;
 
 import {Test, StdStorage, stdStorage} from "forge-std/Test.sol";
@@ -17,6 +19,7 @@ import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Po
 import {FullMath} from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 import {UniswapV3Helper} from "../../../helper/UniswapV3Helper.t.sol";
 import {DopexV2Helper} from "../../../helper/DopexV2Helper.t.sol";
+import {MockSwapProxy} from "../mock/MockSwapProxy.sol";
 
 contract BaseFixture is Test {
     using stdStorage for StdStorage;
@@ -52,12 +55,21 @@ contract BaseFixture is Test {
     StrykeVaultInspector public inspector;
     OrangeKyberswapProxy public kyberswapProxy;
 
+    // mock contracts
+    MockSwapProxy public mockSwapProxy;
+
     // solhint-disable-next-line no-empty-blocks
     function setUp() public virtual {
         chainlinkQuoter = new ChainlinkQuoter(address(0xFdB631F5EE196F0ed6FAa767959853A9F217697D));
-        inspector = new StrykeVaultInspector();
-        kyberswapProxy = new OrangeKyberswapProxy();
 
+        inspector = new StrykeVaultInspector();
+
+        kyberswapProxy = new OrangeKyberswapProxy();
         kyberswapProxy.setTrustedProvider(kyberswapRouter, true);
+
+        mockSwapProxy = new MockSwapProxy();
+
+        vm.prank(managerOwner);
+        manager.updateWhitelistHandlerWithApp(address(handlerV2), address(this), true);
     }
 }

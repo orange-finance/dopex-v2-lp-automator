@@ -4,102 +4,139 @@
 
 pragma solidity 0.8.19;
 
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {UniswapV3Helper} from "../../helper/UniswapV3Helper.t.sol";
+import {DopexV2Helper} from "../../helper/DopexV2Helper.t.sol";
 import {WETH_USDC_Fixture} from "./fixture/WETH_USDC_Fixture.t.sol";
-import {DealExtension} from "../../helper/DealExtension.t.sol";
+import {IUniswapV3SingleTickLiquidityHandlerV2} from "../../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 
-contract TestOrangeStrykeLPAutomatorV2Redeem is WETH_USDC_Fixture, DealExtension {
+contract TestOrangeStrykeLPAutomatorV2Redeem is WETH_USDC_Fixture {
     using UniswapV3Helper for IUniswapV3Pool;
-
-    uint256 public arbFork;
+    using DopexV2Helper for IUniswapV3Pool;
 
     function setUp() public override {
-        arbFork = vm.createSelectFork("arb");
-    }
-
-    // skipping this test on pre-commit
-    function test_redeemWithAggregator_dynamic_Skip() public {
+        vm.createSelectFork("arb", 196444430);
         super.setUp();
-        uint256 shares = aHandler.deposit(50 ether, alice);
-        uint256 usdc = automator.pool().getQuote(address(WETH), address(USDC), 50 ether);
-        dealUsdc(address(automator), usdc);
-
-        // (address router, bytes memory swapCalldata) = _buildKyberswapData(address(automator), usdc);
-        (address router, bytes memory swapCalldata) = _buildKyberswapData(address(automator), usdc);
-
-        emit log_named_uint("vault weth balance before: ", WETH.balanceOf(address(automator)));
-        emit log_named_uint("vault usdc balance before: ", USDC.balanceOf(address(automator)));
-        emit log_named_uint("alice weth before: ", WETH.balanceOf(alice));
-
-        bytes memory redeemData = abi.encode(kyberswapProxy, router, swapCalldata);
-
-        aHandler.redeem(shares, redeemData, alice);
-
-        emit log_named_uint("vault weth balance after: ", WETH.balanceOf(address(automator))); // prettier-ignore
-        emit log_named_uint("vault usdc balance after: ", USDC.balanceOf(address(automator))); // prettier-ignore
-        emit log_named_uint("alice weth after: ", WETH.balanceOf(alice));
-
-        uint256 expectedWeth = 50 ether + automator.pool().getQuote(address(USDC), address(WETH), uint128(usdc));
-
-        assertApproxEqRel(expectedWeth, WETH.balanceOf(alice), 0.001e18);
     }
 
-    function test_redeemWithAggregator_hasPositions_dynamic_Skip() public {
-        super.setUp();
-        uint256 shares = aHandler.deposit(50 ether, alice);
-        // uint256 usdc = automator.pool().getQuote(address(WETH), address(USDC), 50 ether);
-        dealUsdc(address(automator), 100_000e6);
+    function test_redeem_noPositions() public {
+        aHandler.deposit(100 ether, alice);
 
-        aHandler.rebalanceSingleLeft(pool.currentLower() - 10, 30_000e6);
-        aHandler.rebalanceSingleLeft(pool.currentLower() - 20, 30_000e6);
+        assertEq(automator.balanceOf(alice), 100 ether - 1e15);
+        assertEq(WETH.balanceOf(alice), 0);
 
-        // swap all free usdc when redeeming
-        (, uint256 free1) = inspector.freePoolPositionInToken01(automator);
-        uint256 freeUsdc = USDC.balanceOf(address(automator)) + free1;
-        (address router, bytes memory swapCalldata) = _buildKyberswapData(address(automator), freeUsdc);
+        aHandler.redeem(100 ether - 1e15, "", alice);
 
-        emit log_named_uint("vault weth balance before: ", WETH.balanceOf(address(automator)));
-        emit log_named_uint("vault usdc balance before: ", USDC.balanceOf(address(automator)));
-        emit log_named_uint("alice weth before: ", WETH.balanceOf(alice));
-
-        bytes memory redeemData = abi.encode(kyberswapProxy, router, swapCalldata);
-
-        aHandler.redeem(shares, redeemData, alice);
-
-        uint256 expectedWeth = 50 ether + automator.pool().getQuote(address(USDC), address(WETH), uint128(freeUsdc));
-
-        emit log_named_uint("vault weth balance after: ", WETH.balanceOf(address(automator))); // prettier-ignore
-        emit log_named_uint("vault usdc balance after: ", USDC.balanceOf(address(automator))); // prettier-ignore
-        emit log_named_uint("alice weth after: ", WETH.balanceOf(alice));
-
-        assertApproxEqRel(expectedWeth, WETH.balanceOf(alice), 0.001e18);
+        assertEq(automator.balanceOf(alice), 0);
+        assertEq(WETH.balanceOf(alice), 100 ether - 1e15);
     }
 
-    function _buildKyberswapData(
-        address sender,
-        uint256 amountUsdc
-    ) internal returns (address router, bytes memory swapCalldata) {
-        string[] memory buildSwapData = new string[](12);
-        buildSwapData[0] = "node";
-        buildSwapData[1] = "test/OrangeDopexV2LPAutomator/v2/kyberswap.mjs";
-        buildSwapData[2] = "-i";
-        buildSwapData[3] = "usdc";
-        buildSwapData[4] = "-o";
-        buildSwapData[5] = "weth";
-        buildSwapData[6] = "-u";
-        buildSwapData[7] = "wei";
-        buildSwapData[8] = "-a";
-        buildSwapData[9] = Strings.toString(amountUsdc);
-        buildSwapData[10] = "-s";
-        buildSwapData[11] = Strings.toHexString(uint256(uint160(sender)));
+    function test_redeem_hasCounterAssets() public {
+        aHandler.deposit(100 ether, alice);
 
-        bytes memory swapData = vm.ffi(buildSwapData);
-        (router, swapCalldata) = abi.decode(swapData, (address, bytes));
+        assertEq(automator.balanceOf(alice), 100 ether - 1e15);
+        assertEq(WETH.balanceOf(alice), 0);
 
-        emit log_named_uint("block: ", block.number);
-        emit log_named_string("buildSwapData.amountUsdc: ", Strings.toString(amountUsdc));
-        emit log_named_bytes("swapCalldata: ", swapCalldata);
+        deal(address(USDC), address(automator), 1_000_000e6);
+
+        aHandler.redeemWithMockSwap(100 ether - 1e15, alice);
+
+        assertEq(automator.balanceOf(alice), 0);
+        assertApproxEqRel(
+            WETH.balanceOf(alice),
+            100 ether - 1e15 + pool.getQuote(address(USDC), address(WETH), 1_000_000e6),
+            0.005e18
+        );
+    }
+
+    function test_redeem_hasPositions() public {
+        aHandler.deposit(100 ether, alice);
+
+        assertEq(automator.balanceOf(alice), 100 ether - 1e15);
+        assertEq(WETH.balanceOf(alice), 0);
+
+        deal(address(USDC), address(automator), 1_000_000e6);
+
+        int24 ct = pool.currentLower();
+
+        aHandler.rebalanceSingleLeft(ct - 20, 250_000e6);
+        aHandler.rebalanceSingleLeft(ct - 10, 250_000e6);
+        aHandler.rebalanceSingleRight(ct + 20, 25 ether);
+        aHandler.rebalanceSingleRight(ct + 30, 25 ether);
+
+        aHandler.redeemWithMockSwap(100 ether - 1e15, alice);
+
+        assertEq(automator.balanceOf(alice), 0);
+        assertApproxEqRel(
+            WETH.balanceOf(alice),
+            100 ether - 1e15 + pool.getQuote(address(USDC), address(WETH), 1_000_000e6),
+            0.005e18
+        );
+    }
+
+    function test_redeem_hasLockedPositions() public {
+        aHandler.deposit(100 ether, alice);
+
+        assertEq(automator.balanceOf(alice), 100 ether - 1e15);
+        assertEq(WETH.balanceOf(alice), 0);
+
+        deal(address(USDC), address(automator), 1_000_000e6);
+
+        int24 ct = pool.currentLower();
+
+        aHandler.rebalanceSingleLeft(ct - 20, 250_000e6);
+        aHandler.rebalanceSingleLeft(ct - 10, 250_000e6);
+        aHandler.rebalanceSingleRight(ct + 20, 25 ether);
+        aHandler.rebalanceSingleRight(ct + 30, 25 ether);
+
+        pool.useDopexPosition(address(0), ct - 20, pool.freeLiquidityOfTick(address(0), ct - 20));
+        pool.useDopexPosition(address(0), ct + 30, pool.freeLiquidityOfTick(address(0), ct + 30));
+
+        aHandler.redeemWithMockSwap(100 ether - 1e15, alice);
+
+        assertEq(automator.balanceOf(alice), 0);
+        assertApproxEqRel(
+            WETH.balanceOf(alice),
+            75 ether + pool.getQuote(address(USDC), address(WETH), 750_000e6),
+            0.005e18
+        );
+    }
+
+    function test_redeem_hasReservedPositions() public {
+        aHandler.deposit(100 ether, alice);
+
+        assertEq(automator.balanceOf(alice), 100 ether - 1e15);
+        assertEq(WETH.balanceOf(alice), 0);
+
+        deal(address(USDC), address(automator), 1_000_000e6);
+
+        int24 ct = pool.currentLower();
+
+        aHandler.rebalanceSingleLeft(ct - 20, 250_000e6);
+        aHandler.rebalanceSingleLeft(ct - 10, 250_000e6);
+        aHandler.rebalanceSingleRight(ct + 20, 25 ether);
+        aHandler.rebalanceSingleRight(ct + 30, 25 ether);
+
+        // mint new positions by bob
+        deal(address(USDC), bob, 5_000_000e6);
+        vm.prank(bob);
+        USDC.approve(address(manager), 5_000_000e6);
+        pool.mintDopexPosition(address(0), ct - 20, pool.singleLiqLeft(ct - 20, 5_000_000e6), bob);
+        // use positions
+        pool.useDopexPosition(address(0), ct - 20, pool.freeLiquidityOfTick(address(0), ct - 20));
+        // bob reserves positions to burn
+        pool.reserveDopexPosition(address(0), ct - 20, pool.singleLiqLeft(ct - 20, 4_000_000e6), bob);
+        // now total liquidity is less than used liquidity. possible to underflow
+        assertLt(pool.totalLiquidityOfTick(address(0), ct - 20), pool.usedLiquidityOfTick(address(0), ct - 20));
+
+        // check if redeem works
+        aHandler.redeemWithMockSwap(100 ether - 1e15, alice);
+
+        assertEq(automator.balanceOf(alice), 0);
+        assertApproxEqRel(
+            WETH.balanceOf(alice),
+            100 ether + pool.getQuote(address(USDC), address(WETH), 750_000e6),
+            0.005e18
+        );
     }
 }

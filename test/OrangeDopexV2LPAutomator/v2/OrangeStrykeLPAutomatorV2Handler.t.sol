@@ -12,9 +12,11 @@ import {IOrangeSwapProxy} from "./../../../contracts/v2/IOrangeSwapProxy.sol";
 import {OrangeStrykeLPAutomatorV2} from "../../../contracts/v2/OrangeStrykeLPAutomatorV2.sol";
 import {ChainlinkQuoter} from "../../../contracts/ChainlinkQuoter.sol";
 import {IBalancerVault} from "../../../contracts/vendor/balancer/IBalancerVault.sol";
+import {StrykeVaultInspector} from "../../../contracts/periphery/StrykeVaultInspector.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
 import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
+import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
 import {ERC1967Proxy} from "@openzeppelin/contracts//proxy/ERC1967/ERC1967Proxy.sol";
 
@@ -22,8 +24,12 @@ import {parseTicks} from "./helper.t.sol";
 
 contract OrangeStrykeLPAutomatorV2Handler is Test {
     OrangeStrykeLPAutomatorV2 public automator;
+    StrykeVaultInspector public inspector;
+    ISwapRouter public swapRouter;
     address public automatorOwner;
     address public strategist;
+    address public kyberswapProxy;
+    address public mockSwapProxy;
 
     struct InitArgs {
         string name;
@@ -43,6 +49,10 @@ contract OrangeStrykeLPAutomatorV2Handler is Test {
         address strategist;
         address dopexV2ManagerOwner;
         uint256 initialDeposit;
+        address kyberswapProxy;
+        address mockSwapProxy;
+        StrykeVaultInspector inspector;
+        ISwapRouter swapRouter;
     }
 
     constructor(InitArgs memory args) {
@@ -71,6 +81,10 @@ contract OrangeStrykeLPAutomatorV2Handler is Test {
         automator = OrangeStrykeLPAutomatorV2(proxy);
         automatorOwner = args.admin;
         strategist = args.strategist;
+        inspector = new StrykeVaultInspector();
+        swapRouter = args.swapRouter;
+        kyberswapProxy = args.kyberswapProxy;
+        mockSwapProxy = args.mockSwapProxy;
 
         vm.startPrank(args.admin);
         automator.setDepositCap(args.depositCap);
@@ -89,6 +103,11 @@ contract OrangeStrykeLPAutomatorV2Handler is Test {
             automator.deposit(args.initialDeposit);
             vm.stopPrank();
         }
+
+        vm.startPrank(args.admin);
+        automator.setProxyWhitelist(args.kyberswapProxy, true);
+        automator.setProxyWhitelist(args.mockSwapProxy, true);
+        vm.stopPrank();
     }
 
     function deposit(uint256 assets, address depositor) external returns (uint256 shares) {
@@ -101,9 +120,41 @@ contract OrangeStrykeLPAutomatorV2Handler is Test {
     }
 
     function redeem(uint256 shares, bytes memory redeemData, address redeemer) external {
-        (address swapProxy, , ) = abi.decode(redeemData, (address, address, bytes));
-        vm.prank(automatorOwner);
-        automator.setProxyWhitelist(swapProxy, true);
+        if (redeemData.length != 0) {
+            (address swapProxy, , ) = abi.decode(redeemData, (address, address, bytes));
+            vm.prank(automatorOwner);
+            automator.setProxyWhitelist(swapProxy, true);
+        }
+
+        vm.prank(redeemer);
+        automator.redeem(shares, redeemData);
+    }
+
+    function redeemWithMockSwap(uint256 shares, address redeemer) external {
+        (uint256 token0, uint256 token1) = inspector.convertSharesToPairAssets(automator, shares);
+        uint256 tokenIn;
+
+        if (automator.pool().token0() == address(automator.asset())) {
+            tokenIn = token1;
+        } else {
+            tokenIn = token0;
+        }
+
+        bytes memory uniswapCalldata = abi.encodeWithSelector(
+            ISwapRouter.exactInputSingle.selector,
+            ISwapRouter.ExactInputSingleParams({
+                tokenIn: address(automator.counterAsset()),
+                tokenOut: address(automator.asset()),
+                fee: automator.pool().fee(),
+                recipient: address(automator),
+                deadline: block.timestamp + 300,
+                amountIn: tokenIn,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0
+            })
+        );
+
+        bytes memory redeemData = abi.encode(mockSwapProxy, swapRouter, uniswapCalldata);
 
         vm.prank(redeemer);
         automator.redeem(shares, redeemData);
@@ -156,7 +207,7 @@ contract OrangeStrykeLPAutomatorV2Handler is Test {
     function rebalanceSingleRight(int24 lowerTick, uint256 amount0) external {
         uint128 liquidity = LiquidityAmounts.getLiquidityForAmount0(
             TickMath.getSqrtRatioAtTick(lowerTick),
-            TickMath.getSqrtRatioAtTick(automator.poolTickSpacing()),
+            TickMath.getSqrtRatioAtTick(lowerTick + automator.poolTickSpacing()),
             amount0
         );
 
