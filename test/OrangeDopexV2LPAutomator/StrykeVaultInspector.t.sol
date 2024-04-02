@@ -59,6 +59,30 @@ contract TestInspectorWithV1_1 is WETH_USDC_Fixture, DealExtension {
         assertApproxEqRel(300_000e6, token1, 0.00001e18); // 0.01%
     }
 
+    function test_freePoolPositionInToken01_noFreePositionsWhenHandlerPaused() public {
+        int24 currentLower = UniswapV3Helper.currentLower(pool);
+
+        deal(address(WETH), address(automator), 100 ether);
+        dealUsdc(address(automator), 1_000_000e6);
+
+        _rebalanceMintSingle(currentLower - 10, pool.singleLiqLeft(currentLower - 10, 100_000e6));
+        _rebalanceMintSingle(currentLower - 20, pool.singleLiqLeft(currentLower - 20, 100_000e6));
+        _rebalanceMintSingle(currentLower - 30, pool.singleLiqLeft(currentLower - 30, 100_000e6));
+
+        _rebalanceMintSingle(currentLower + 10, pool.singleLiqRight(currentLower + 10, 10 ether));
+        _rebalanceMintSingle(currentLower + 20, pool.singleLiqRight(currentLower + 20, 10 ether));
+        _rebalanceMintSingle(currentLower + 30, pool.singleLiqRight(currentLower + 30, 10 ether));
+
+        vm.mockCall(address(handlerV2), abi.encodeWithSignature("paused()"), abi.encode(true));
+
+        (uint256 token0, uint256 token1) = inspector.freePoolPositionInToken01(
+            IOrangeStrykeLPAutomatorV1_1(address(automator))
+        );
+
+        assertEq(token0, 0);
+        assertEq(token1, 0);
+    }
+
     function test_freeAssets_noPositions() public {
         deal(address(WETH), address(automator), 100 ether);
         dealUsdc(address(automator), 1_000_000e6);

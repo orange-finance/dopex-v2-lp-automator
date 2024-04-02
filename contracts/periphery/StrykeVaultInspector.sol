@@ -37,8 +37,11 @@ contract StrykeVaultInspector {
     function freePoolPositionInToken01(
         IOrangeStrykeLPAutomatorState automator
     ) public view returns (uint256 sumAmount0, uint256 sumAmount1) {
-        IUniswapV3Pool _pool = automator.pool();
         IUniswapV3SingleTickLiquidityHandlerV2 _handler = automator.handler();
+        // when handler is paused, no liquidity can be withdrawn
+        if (_handler.paused()) return (0, 0);
+
+        IUniswapV3Pool _pool = automator.pool();
         address _handlerHook = automator.handlerHook();
         int24[] memory _ticks = automator.getActiveTicks();
         int24 _spacing = automator.poolTickSpacing();

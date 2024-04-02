@@ -138,4 +138,50 @@ contract TestOrangeStrykeLPAutomatorV2Redeem is WETH_USDC_Fixture {
             0.005e18
         );
     }
+
+    function test_redeem_handlerPaused() public {
+        aHandler.deposit(100 ether, alice);
+
+        deal(address(USDC), address(automator), 1_000_000e6);
+
+        int24 ct = pool.currentLower();
+
+        aHandler.rebalanceSingleLeft(ct - 20, 250_000e6);
+        aHandler.rebalanceSingleLeft(ct - 10, 250_000e6);
+        aHandler.rebalanceSingleRight(ct + 20, 25 ether);
+        aHandler.rebalanceSingleRight(ct + 30, 25 ether);
+
+        vm.mockCall(address(handlerV2), abi.encodeWithSignature("paused()"), abi.encode(true));
+
+        aHandler.redeemWithMockSwap(100 ether - 1e15, alice);
+
+        // receive half of the assets
+        assertApproxEqRel(
+            WETH.balanceOf(alice),
+            50 ether - 1e15 + pool.getQuote(address(USDC), address(WETH), 500_000e6),
+            0.005e18
+        );
+
+        // remaining positions are transferred to the user directly
+        assertApproxEqRel(
+            handlerV2.balanceOf(alice, pool.tokenId(address(0), ct - 20)),
+            handlerV2.convertToShares(pool.singleLiqLeft(ct - 20, 250_000e6), pool.tokenId(address(0), ct - 20)),
+            0.001e18
+        );
+        assertApproxEqRel(
+            handlerV2.balanceOf(alice, pool.tokenId(address(0), ct - 10)),
+            handlerV2.convertToShares(pool.singleLiqLeft(ct - 10, 250_000e6), pool.tokenId(address(0), ct - 10)),
+            0.001e18
+        );
+        assertApproxEqRel(
+            handlerV2.balanceOf(alice, pool.tokenId(address(0), ct + 20)),
+            handlerV2.convertToShares(pool.singleLiqRight(ct + 20, 25 ether), pool.tokenId(address(0), ct + 20)),
+            0.001e18
+        );
+        assertApproxEqRel(
+            handlerV2.balanceOf(alice, pool.tokenId(address(0), ct + 30)),
+            handlerV2.convertToShares(pool.singleLiqRight(ct + 30, 25 ether), pool.tokenId(address(0), ct + 30)),
+            0.001e18
+        );
+    }
 }
