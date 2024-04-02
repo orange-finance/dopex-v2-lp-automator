@@ -24,7 +24,7 @@ contract TestUniswapV3SingleTickLiquidityLib is WETH_USDC_Fixture, DealExtension
         manager.updateWhitelistHandlerWithApp(address(handlerV2), address(this), true);
     }
 
-    function test_tokenId() public {
+    function test_tokenId() public view {
         (, int24 _currentTick, , , , , ) = pool.slot0();
         int24 _spacing = pool.tickSpacing();
 

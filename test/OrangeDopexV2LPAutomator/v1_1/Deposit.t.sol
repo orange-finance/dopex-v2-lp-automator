@@ -6,8 +6,8 @@ pragma solidity 0.8.19;
 import {WETH_USDC_Fixture} from "./fixture/WETH_USDC_Fixture.t.sol";
 import {auto11} from "../../helper/AutomatorHelperV1_1.t.sol";
 import {ChainlinkQuoter} from "./../../../contracts/ChainlinkQuoter.sol";
-import {OrangeStrykeLPAutomatorV1_1} from "./../../../contracts/OrangeStrykeLPAutomatorV1_1.sol";
-import {IOrangeStrykeLPAutomatorV1_1} from "./../../../contracts/interfaces/IOrangeStrykeLPAutomatorV1_1.sol";
+import {OrangeStrykeLPAutomatorV1_1} from "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol";
+import {IOrangeStrykeLPAutomatorV1_1} from "contracts/v1_1/IOrangeStrykeLPAutomatorV1_1.sol";
 import {IERC20} from "@openzeppelin/contracts//interfaces/IERC20.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts//proxy/ERC1967/ERC1967Proxy.sol";
 

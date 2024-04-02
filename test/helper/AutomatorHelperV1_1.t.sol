@@ -13,14 +13,14 @@ import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/Liquid
 
 import {ERC1967Proxy} from "@openzeppelin/contracts//proxy/ERC1967/ERC1967Proxy.sol";
 
-import {IDopexV2PositionManager} from "../../contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
-import {IUniswapV3SingleTickLiquidityHandlerV2} from "../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
+import {IDopexV2PositionManager} from "contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
+import {IUniswapV3SingleTickLiquidityHandlerV2} from "contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 
-import {OrangeStrykeLPAutomatorV1_1} from "./../../contracts/OrangeStrykeLPAutomatorV1_1.sol";
-import {IOrangeStrykeLPAutomatorV1_1} from "./../../contracts/interfaces/IOrangeStrykeLPAutomatorV1_1.sol";
-import {IOrangeStrykeLPAutomatorState} from "./../../contracts/interfaces/IOrangeStrykeLPAutomatorState.sol";
+import {OrangeStrykeLPAutomatorV1_1} from "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol";
+import {IOrangeStrykeLPAutomatorV1_1} from "contracts/v1_1/IOrangeStrykeLPAutomatorV1_1.sol";
+import {IOrangeStrykeLPAutomatorState} from "contracts/interfaces/IOrangeStrykeLPAutomatorState.sol";
 
-import {ChainlinkQuoter} from "../../contracts/ChainlinkQuoter.sol";
+import {ChainlinkQuoter} from "contracts/ChainlinkQuoter.sol";
 
 import {Vm} from "forge-std/Test.sol";
 

@@ -17,15 +17,15 @@ import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-import {IUniswapV3SingleTickLiquidityHandlerV2} from "./vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
-import {IDopexV2PositionManager} from "./vendor/dopexV2/IDopexV2PositionManager.sol";
+import {IUniswapV3SingleTickLiquidityHandlerV2} from "../vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
+import {IDopexV2PositionManager} from "../vendor/dopexV2/IDopexV2PositionManager.sol";
 
-import {ChainlinkQuoter} from "./ChainlinkQuoter.sol";
-import {UniswapV3SingleTickLiquidityLibV2} from "./lib/UniswapV3SingleTickLiquidityLibV2.sol";
-import {OrangeERC20Upgradeable} from "./OrangeERC20Upgradeable.sol";
-import {IERC20Decimals} from "./interfaces/IERC20Extended.sol";
-import {IOrangeStrykeLPAutomatorV1_1} from "./interfaces/IOrangeStrykeLPAutomatorV1_1.sol";
-import {IOrangeStrykeLPAutomatorState} from "./interfaces/IOrangeStrykeLPAutomatorState.sol";
+import {ChainlinkQuoter} from "../ChainlinkQuoter.sol";
+import {UniswapV3SingleTickLiquidityLibV2} from "../lib/UniswapV3SingleTickLiquidityLibV2.sol";
+import {OrangeERC20Upgradeable} from "../OrangeERC20Upgradeable.sol";
+import {IERC20Decimals} from "../interfaces/IERC20Extended.sol";
+import {IOrangeStrykeLPAutomatorV1_1} from "./IOrangeStrykeLPAutomatorV1_1.sol";
+import {IOrangeStrykeLPAutomatorState} from "../interfaces/IOrangeStrykeLPAutomatorState.sol";
 
 interface IMulticallProvider {
     function multicall(bytes[] calldata data) external returns (bytes[] memory results);

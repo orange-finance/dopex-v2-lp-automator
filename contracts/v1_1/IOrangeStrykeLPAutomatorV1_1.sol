@@ -6,7 +6,7 @@ pragma solidity 0.8.19;
 
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import {ChainlinkQuoter} from "./../ChainlinkQuoter.sol";
-import {IOrangeStrykeLPAutomatorState} from "./IOrangeStrykeLPAutomatorState.sol";
+import {IOrangeStrykeLPAutomatorState} from "../interfaces/IOrangeStrykeLPAutomatorState.sol";
 
 /**
  * @title IOrangeDopexV2LPAutomatorV1

@@ -6,7 +6,7 @@ pragma solidity 0.8.19;
 /* solhint-disable func-name-mixedcase */
 import {WETH_USDC_Fixture} from "./v1_1/fixture/WETH_USDC_Fixture.t.sol";
 import {StrykeVaultInspector} from "./../../contracts/periphery/StrykeVaultInspector.sol";
-import {IOrangeStrykeLPAutomatorV1_1} from "./../../contracts/interfaces/IOrangeStrykeLPAutomatorV1_1.sol";
+import {IOrangeStrykeLPAutomatorV1_1} from "contracts/v1_1/IOrangeStrykeLPAutomatorV1_1.sol";
 import {IOrangeStrykeLPAutomatorState} from "./../../contracts/interfaces/IOrangeStrykeLPAutomatorState.sol";
 import {DopexV2Helper} from "../helper/DopexV2Helper.t.sol";
 import {UniswapV3Helper} from "../helper/UniswapV3Helper.t.sol";
