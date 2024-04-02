@@ -3,7 +3,6 @@
 pragma solidity 0.8.19;
 
 import {WETH_USDC_Fixture} from "./fixture/WETH_USDC_Fixture.t.sol";
-import {IOrangeStrykeLPAutomatorV2} from "../../../contracts/v2/IOrangeStrykeLPAutomatorV2.sol";
 import {UniswapV3Helper} from "../../helper/UniswapV3Helper.t.sol";
 import {DopexV2Helper} from "../../helper/DopexV2Helper.t.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
@@ -18,6 +17,10 @@ contract TestAutomatorV2State is WETH_USDC_Fixture {
         super.setUp();
     }
 
+    function test_decimals() public view {
+        assertEq(automator.decimals(), 18);
+    }
+
     function test_totalAssets_noDopexPosition() public {
         uint256 _balanceWETH = 1.3 ether;
         uint256 _balanceUSDC = 1200e6;
@@ -28,6 +31,17 @@ contract TestAutomatorV2State is WETH_USDC_Fixture {
         uint256 _expected = _balanceWETH + pool.getQuote(address(USDC), address(WETH), uint128(_balanceUSDC));
 
         assertApproxEqRel(automator.totalAssets(), _expected, 0.0001e18);
+    }
+
+    function test_totalAssets_reversed() public {
+        deal(address(WETH), address(rAutomator), 1.3 ether);
+        deal(address(USDC), address(rAutomator), 1200e6);
+
+        assertApproxEqRel(
+            rAutomator.totalAssets(),
+            1200e6 + pool.getQuote(address(WETH), address(USDC), 1.3 ether),
+            0.0001e18
+        );
     }
 
     function test_totalAssets_hasDopexPositions() public {
