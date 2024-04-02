@@ -9,7 +9,9 @@
     "coverage": "./coverage.sh",
     "fmt": "prettier --write 'contracts/**/*.sol'",
     "lint:sol": "solhint 'contracts/**/*.sol'",
-    "prepare": "husky"
+    "prepare": "husky",
+    "slither": "slither . 2>slither.info",
+    "slither:readable": "slither . --print human-summary"
   },
   "lint-staged": {
     "*.{sol,js,ts,json,yml,yaml,md}": "prettier --write",
