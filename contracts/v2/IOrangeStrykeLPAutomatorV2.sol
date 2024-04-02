@@ -32,11 +32,6 @@ interface IOrangeStrykeLPAutomatorV2 is IOrangeStrykeLPAutomatorState {
         uint128 liquidity;
     }
 
-    struct RebalanceShortage {
-        IERC20 token;
-        uint256 shortage;
-    }
-
     struct FlashLoanUserData {
         address swapProxy;
         IOrangeSwapProxy.SwapInputRequest swapRequest;

@@ -54,7 +54,7 @@ function _bytesToUint(bytes memory b) pure returns (uint256) {
 }
 
 contract TestAutomatorV2Helper is Test {
-    function test_parseRebalanceTicksJson() public {
+    function test_parseRebalanceTicksJson() public pure {
         // solhint-disable-next-line quotes
         string memory ticks = '[{"tick": -887220, "liquidity": "0x5f5e100"}, {"tick": -887200, "liquidity": "0x5f5e100"}]'; // prettier-ignore
         IOrangeStrykeLPAutomatorV2.RebalanceTick[] memory rebalanceTicks = parseTicks(ticks);
@@ -66,7 +66,7 @@ contract TestAutomatorV2Helper is Test {
         assertEq(rebalanceTicks[1].liquidity, 0x5f5e100);
     }
 
-    function test_parseRebalanceTicksJson_empty() public {
+    function test_parseRebalanceTicksJson_empty() public pure {
         // solhint-disable-next-line quotes
         string memory ticks = "[]";
         IOrangeStrykeLPAutomatorV2.RebalanceTick[] memory rebalanceTicks = parseTicks(ticks);
