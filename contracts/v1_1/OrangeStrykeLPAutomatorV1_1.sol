@@ -2,100 +2,118 @@
 
 pragma solidity 0.8.19;
 
-import {IOrangeDopexV2LPAutomatorV1} from "./interfaces/IOrangeDopexV2LPAutomatorV1.sol";
+/* solhint-disable contract-name-camelcase, max-states-count */
+
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import {FullMath} from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
-
 import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import {AccessControlEnumerable} from "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
-import {ERC20} from "solmate/src/tokens/ERC20.sol";
-import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 
-import {ChainlinkQuoter} from "./ChainlinkQuoter.sol";
-import {IUniswapV3SingleTickLiquidityHandlerV2} from "./vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
-import {UniswapV3SingleTickLiquidityLib} from "./lib/UniswapV3SingleTickLiquidityLib.sol";
-import {UniswapV3PoolLib} from "./lib/UniswapV3PoolLib.sol";
-import {IDopexV2PositionManager} from "./vendor/dopexV2/IDopexV2PositionManager.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-import {IERC20Decimals} from "./interfaces/IERC20Extended.sol";
+import {IUniswapV3SingleTickLiquidityHandlerV2} from "../vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
+import {IDopexV2PositionManager} from "../vendor/dopexV2/IDopexV2PositionManager.sol";
+
+import {ChainlinkQuoter} from "../ChainlinkQuoter.sol";
+import {UniswapV3SingleTickLiquidityLibV2} from "../lib/UniswapV3SingleTickLiquidityLibV2.sol";
+import {OrangeERC20Upgradeable} from "../OrangeERC20Upgradeable.sol";
+import {IERC20Decimals} from "../interfaces/IERC20Extended.sol";
+import {IOrangeStrykeLPAutomatorV1_1} from "./IOrangeStrykeLPAutomatorV1_1.sol";
+import {IOrangeStrykeLPAutomatorState} from "../interfaces/IOrangeStrykeLPAutomatorState.sol";
 
 interface IMulticallProvider {
     function multicall(bytes[] calldata data) external returns (bytes[] memory results);
 }
 
 /**
- * @title OrangeDopexV2LPAutomatorV1
- * @dev Automate liquidity provision for Dopex V2 contract
+ * @title OrangeStrykeLPAutomatorV1
+ * @dev Automate liquidity provision of Stryke CLAMM
  * @author Orange Finance
  */
-contract OrangeDopexV2LPAutomatorV1 is IOrangeDopexV2LPAutomatorV1, ERC20, AccessControlEnumerable {
-    using FixedPointMathLib for uint256;
+contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgradeable, OrangeERC20Upgradeable {
     using FullMath for uint256;
     using SafeERC20 for IERC20;
     using SafeCast for uint256;
     using EnumerableSet for EnumerableSet.UintSet;
     using TickMath for int24;
-    using UniswapV3PoolLib for IUniswapV3Pool;
-    using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandlerV2;
+    using UniswapV3SingleTickLiquidityLibV2 for IUniswapV3SingleTickLiquidityHandlerV2;
 
-    bytes32 public constant STRATEGIST_ROLE = keccak256("STRATEGIST_ROLE");
-    uint24 constant MAX_TICKS = 120;
+    /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                    Vault params
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
+    uint24 private constant _MAX_TICKS = 150;
     /// @notice max deposit fee percentage is 1% (hundredth of 1e6)
-    uint24 constant MAX_PERF_FEE_PIPS = 10_000;
+    uint24 private constant _MAX_PERF_FEE_PIPS = 10_000;
 
-    IDopexV2PositionManager public immutable manager;
-    IUniswapV3SingleTickLiquidityHandlerV2 public immutable handler;
-    address public immutable handlerHook;
+    IERC20 public asset;
+    IERC20 public counterAsset;
 
-    ChainlinkQuoter public immutable quoter;
-    address public immutable assetUsdFeed;
-    address public immutable counterAssetUsdFeed;
-
-    IUniswapV3Pool public immutable pool;
-    ISwapRouter public immutable router;
-
-    IERC20 public immutable asset;
-    IERC20 public immutable counterAsset;
-
-    int24 public immutable poolTickSpacing;
-
-    uint256 public immutable minDepositAssets;
-
+    uint256 public minDepositAssets;
     uint256 public depositCap;
 
     /// @notice deposit fee percentage, hundredths of a bip (1 pip = 0.0001%)
     uint24 public depositFeePips;
     address public depositFeeRecipient;
 
-    EnumerableSet.UintSet activeTicks;
+    mapping(address => bool) public isOwner;
+    mapping(address => bool) public isStrategist;
 
-    event Deposit(address indexed sender, uint256 assets, uint256 sharesMinted);
-    event Redeem(address indexed sender, uint256 shares, uint256 assetsWithdrawn);
-    event Rebalance(address indexed sender, RebalanceTickInfo[] ticksMint, RebalanceTickInfo[] ticksBurn);
+    EnumerableSet.UintSet internal _activeTicks;
 
-    event DepositCapSet(uint256 depositCap);
-    event DepositFeePipsSet(uint24 depositFeePips);
+    uint8 private _decimals;
 
-    error AddressZero();
-    error AmountZero();
-    error MaxTicksReached();
-    error InvalidRebalanceParams();
-    error MinAssetsRequired(uint256 minAssets, uint256 actualAssets);
-    error TokenAddressMismatch();
-    error TokenNotPermitted();
-    error DepositTooSmall();
-    error DepositCapExceeded();
-    error SharesTooSmall();
-    error FeePipsTooHigh();
-    error UnsupportedDecimals();
-    error MinDepositAssetsTooSmall();
+    /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                    Stryke
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
+    IDopexV2PositionManager public manager;
+    IUniswapV3SingleTickLiquidityHandlerV2 public handler;
+    address public handlerHook;
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                    Chainlink
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
+    ChainlinkQuoter public quoter;
+    address public assetUsdFeed;
+    address public counterAssetUsdFeed;
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                    Uniswap
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
+    IUniswapV3Pool public pool;
+    ISwapRouter public router;
+    int24 public poolTickSpacing;
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                    Modifiers
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
+
+    modifier onlyOwner() {
+        if (!isOwner[msg.sender]) revert OnlyOwner();
+        _;
+    }
+
+    modifier onlyStrategist() {
+        if (!isStrategist[msg.sender]) revert OnlyOwner();
+        _;
+    }
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                    Upgradeable functions
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    // solhint-disable-next-line no-empty-blocks
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 
     /**
      * @dev Constructor arguments for OrangeDopexV2LPAutomatorV1 contract.
@@ -125,10 +143,14 @@ contract OrangeDopexV2LPAutomatorV1 is IOrangeDopexV2LPAutomatorV1, ERC20, Acces
         uint256 minDepositAssets;
     }
 
-    constructor(InitArgs memory args) ERC20(args.name, args.symbol, IERC20Decimals(address(args.asset)).decimals()) {
+    function initialize(InitArgs memory args) public initializer {
         if (args.asset != IERC20(args.pool.token0()) && args.asset != IERC20(args.pool.token1()))
             revert TokenAddressMismatch();
         if (args.assetUsdFeed == address(0) || args.counterAssetUsdFeed == address(0)) revert AddressZero();
+
+        __ERC20_init(args.name, args.symbol);
+
+        _decimals = IERC20Decimals(address(args.asset)).decimals();
 
         quoter = args.quoter;
         assetUsdFeed = args.assetUsdFeed;
@@ -145,12 +167,11 @@ contract OrangeDopexV2LPAutomatorV1 is IOrangeDopexV2LPAutomatorV1, ERC20, Acces
             : IERC20(args.pool.token0());
         poolTickSpacing = args.pool.tickSpacing();
 
-        if (IERC20Decimals(address(args.asset)).decimals() < 3) revert UnsupportedDecimals();
+        if (_decimals < 3) revert UnsupportedDecimals();
         if (IERC20Decimals(address(counterAsset)).decimals() < 3) revert UnsupportedDecimals();
 
         // The minimum deposit must be set to greater than 0.1% of the asset's value, otherwise, the transaction will result in zero shares being allocated.
-        if (args.minDepositAssets <= (10 ** IERC20Decimals(address(args.asset)).decimals() / 1000))
-            revert MinDepositAssetsTooSmall();
+        if (args.minDepositAssets <= (10 ** _decimals / 1000)) revert MinDepositAssetsTooSmall();
         // The minimum deposit should be set to 1e6 (equivalent to 100% in pip units). Failing to do so will result in a zero deposit fee for the recipient.
         if (args.minDepositAssets < 1e6) revert MinDepositAssetsTooSmall();
 
@@ -162,12 +183,20 @@ contract OrangeDopexV2LPAutomatorV1 is IOrangeDopexV2LPAutomatorV1, ERC20, Acces
         counterAsset.safeIncreaseAllowance(address(args.manager), type(uint256).max);
         counterAsset.safeIncreaseAllowance(address(args.router), type(uint256).max);
 
-        _grantRole(DEFAULT_ADMIN_ROLE, args.admin);
+        isOwner[args.admin] = true;
     }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                     ADMIN FUNCTIONS
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
+
+    function setOwner(address user, bool approved) external onlyOwner {
+        isOwner[user] = approved;
+    }
+
+    function setStrategist(address user, bool approved) external onlyOwner {
+        isStrategist[user] = approved;
+    }
 
     /**
      * @dev Sets the deposit cap for the automator.
@@ -175,7 +204,7 @@ contract OrangeDopexV2LPAutomatorV1 is IOrangeDopexV2LPAutomatorV1, ERC20, Acces
      * Requirements:
      * - Caller must have the DEFAULT_ADMIN_ROLE.
      */
-    function setDepositCap(uint256 _depositCap) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setDepositCap(uint256 _depositCap) external onlyOwner {
         depositCap = _depositCap;
 
         emit DepositCapSet(_depositCap);
@@ -190,9 +219,9 @@ contract OrangeDopexV2LPAutomatorV1 is IOrangeDopexV2LPAutomatorV1, ERC20, Acces
      * - Recipient address must not be zero.
      * - deposit fee pips must not exceed MAX_PERF_FEE_PIPS.
      */
-    function setDepositFeePips(address recipient, uint24 pips) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setDepositFeePips(address recipient, uint24 pips) external onlyOwner {
         if (recipient == address(0)) revert AddressZero();
-        if (pips > MAX_PERF_FEE_PIPS) revert FeePipsTooHigh();
+        if (pips > _MAX_PERF_FEE_PIPS) revert FeePipsTooHigh();
 
         depositFeeRecipient = recipient;
         depositFeePips = pips;
@@ -200,47 +229,18 @@ contract OrangeDopexV2LPAutomatorV1 is IOrangeDopexV2LPAutomatorV1, ERC20, Acces
         emit DepositFeePipsSet(pips);
     }
 
+    function decimals() public view override returns (uint8) {
+        return _decimals;
+    }
+
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                     VAULT STATE DERIVATION FUNCTIONS
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
-    /// @inheritdoc IOrangeDopexV2LPAutomatorV1
-    function getAutomatorPositions()
-        external
-        view
-        returns (uint256 balanceDepositAsset, uint256 balanceCounterAsset, RebalanceTickInfo[] memory ticks)
-    {
-        int24 _spacing = poolTickSpacing;
-
-        // 1. calculate the total assets in Dopex pools
-        uint256 _length = activeTicks.length();
-        uint256 _tid;
-        uint128 _liquidity;
-        (int24 _lt, int24 _ut) = (0, 0);
-
-        ticks = new RebalanceTickInfo[](_length);
-
-        for (uint256 i = 0; i < _length; ) {
-            _lt = int24(uint24(activeTicks.at(i)));
-            _ut = _lt + _spacing;
-            _tid = handler.tokenId(address(pool), handlerHook, _lt, _ut);
-
-            _liquidity = handler.convertToAssets((handler.balanceOf(address(this), _tid)).toUint128(), _tid);
-
-            ticks[i] = RebalanceTickInfo({tick: _lt, liquidity: _liquidity});
-
-            unchecked {
-                i++;
-            }
-        }
-
-        return (asset.balanceOf(address(this)), counterAsset.balanceOf(address(this)), ticks);
-    }
-
-    /// @inheritdoc IOrangeDopexV2LPAutomatorV1
+    /// @inheritdoc IOrangeStrykeLPAutomatorState
     function totalAssets() public view returns (uint256) {
         // 1. calculate the total assets in Dopex pools
-        uint256 _length = activeTicks.length();
+        uint256 _length = _activeTicks.length();
         uint256 _tid;
         uint128 _liquidity;
         (int24 _lt, int24 _ut) = (0, 0);
@@ -250,7 +250,7 @@ contract OrangeDopexV2LPAutomatorV1 is IOrangeDopexV2LPAutomatorV1, ERC20, Acces
         (uint160 _sqrtRatioX96, , , , , , ) = pool.slot0();
 
         for (uint256 i = 0; i < _length; ) {
-            _lt = int24(uint24(activeTicks.at(i)));
+            _lt = int24(uint24(_activeTicks.at(i)));
             _ut = _lt + poolTickSpacing;
             _tid = handler.tokenId(address(pool), handlerHook, _lt, _ut);
 
@@ -295,121 +295,36 @@ contract OrangeDopexV2LPAutomatorV1 is IOrangeDopexV2LPAutomatorV1, ERC20, Acces
             );
     }
 
-    /// @inheritdoc IOrangeDopexV2LPAutomatorV1
-    function freeAssets() public view returns (uint256) {
-        // 1. calculate the free assets in Dopex pools
-        uint256 _length = activeTicks.length();
-        uint256 _tid;
-        uint128 _liquidity;
-        (int24 _lt, int24 _ut) = (0, 0);
-        (uint256 _sum0, uint256 _sum1) = (0, 0);
-        (uint256 _a0, uint256 _a1) = (0, 0);
-
-        (uint160 _sqrtRatioX96, , , , , , ) = pool.slot0();
-
-        for (uint256 i = 0; i < _length; ) {
-            _lt = int24(uint24(activeTicks.at(i)));
-            _ut = _lt + poolTickSpacing;
-            _tid = handler.tokenId(address(pool), handlerHook, _lt, _ut);
-
-            _liquidity = handler.redeemableLiquidity(address(this), _tid).toUint128();
-
-            (_a0, _a1) = LiquidityAmounts.getAmountsForLiquidity(
-                _sqrtRatioX96,
-                _lt.getSqrtRatioAtTick(),
-                _ut.getSqrtRatioAtTick(),
-                _liquidity
-            );
-
-            _sum0 += _a0;
-            _sum1 += _a1;
-
-            unchecked {
-                i++;
-            }
-        }
-
-        // 2. merge into the total assets in the automator
-        (uint256 _base, uint256 _quote) = (counterAsset.balanceOf(address(this)), asset.balanceOf(address(this)));
-
-        if (address(asset) == pool.token0()) {
-            _base += _sum1;
-            _quote += _sum0;
-        } else {
-            _base += _sum0;
-            _quote += _sum1;
-        }
-
-        return
-            _quote +
-            quoter.getQuote(
-                ChainlinkQuoter.QuoteRequest({
-                    baseToken: address(counterAsset),
-                    quoteToken: address(asset),
-                    baseAmount: _base,
-                    baseUsdFeed: counterAssetUsdFeed,
-                    quoteUsdFeed: assetUsdFeed
-                })
-            );
-    }
-
-    /// @inheritdoc IOrangeDopexV2LPAutomatorV1
+    /// @inheritdoc IOrangeStrykeLPAutomatorState
     function convertToShares(uint256 assets) external view returns (uint256) {
         // NOTE: no need to check total supply as it is checked in deposit function.
-        return assets.mulDivDown(totalSupply, totalAssets());
+        return assets.mulDiv(totalSupply(), totalAssets());
     }
 
-    /// @inheritdoc IOrangeDopexV2LPAutomatorV1
+    /// @inheritdoc IOrangeStrykeLPAutomatorState
     function convertToAssets(uint256 shares) public view returns (uint256) {
-        uint256 _supply = totalSupply;
+        uint256 _supply = totalSupply();
 
-        return _supply == 0 ? shares : shares.mulDivDown(totalAssets(), _supply);
+        return _supply == 0 ? shares : shares.mulDiv(totalAssets(), _supply);
     }
 
-    /// @inheritdoc IOrangeDopexV2LPAutomatorV1
-    function getTickAllLiquidity(int24 tick) external view returns (uint128) {
-        uint256 _share = handler.balanceOf(
-            address(this),
-            handler.tokenId(address(pool), handlerHook, tick, tick + poolTickSpacing)
-        );
-
-        if (_share == 0) return 0;
-
-        return
-            handler.convertToAssets(
-                _share.toUint128(),
-                handler.tokenId(address(pool), handlerHook, tick, tick + poolTickSpacing)
-            );
-    }
-
-    /// @inheritdoc IOrangeDopexV2LPAutomatorV1
-    function getTickFreeLiquidity(int24 tick) external view returns (uint128) {
-        return
-            handler
-                .redeemableLiquidity(
-                    address(this),
-                    handler.tokenId(address(pool), handlerHook, tick, tick + poolTickSpacing)
-                )
-                .toUint128();
-    }
-
-    /// @inheritdoc IOrangeDopexV2LPAutomatorV1
+    /// @inheritdoc IOrangeStrykeLPAutomatorState
     function getActiveTicks() external view returns (int24[] memory) {
-        uint256[] memory _tempTicks = activeTicks.values();
-        int24[] memory _activeTicks = new int24[](_tempTicks.length);
+        uint256[] memory _tempTicks = _activeTicks.values();
+        int24[] memory __activeTicks = new int24[](_tempTicks.length);
 
         for (uint256 i; i < _tempTicks.length; i++) {
-            _activeTicks[i] = int24(uint24(_tempTicks[i]));
+            __activeTicks[i] = int24(uint24(_tempTicks[i]));
         }
 
-        return _activeTicks;
+        return __activeTicks;
     }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                     USER ACTIONS
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
-    /// @inheritdoc IOrangeDopexV2LPAutomatorV1
+    /// @inheritdoc IOrangeStrykeLPAutomatorV1_1
     function deposit(uint256 assets) external returns (uint256 shares) {
         if (assets == 0) revert AmountZero();
         if (assets < minDepositAssets) revert DepositTooSmall();
@@ -424,11 +339,11 @@ contract OrangeDopexV2LPAutomatorV1 is IOrangeDopexV2LPAutomatorV1, ERC20, Acces
 
         asset.safeTransferFrom(msg.sender, address(this), assets);
 
-        if (totalSupply == 0) {
+        if (totalSupply() == 0) {
             uint256 _dead;
             // this cannot overflow as we ensure that the decimals is at least 3 in the constructor
             unchecked {
-                _dead = 10 ** decimals / 1000;
+                _dead = 10 ** _decimals / 1000;
             }
 
             // NOTE: mint small amount of shares to avoid sandwich attack on the first deposit
@@ -440,10 +355,10 @@ contract OrangeDopexV2LPAutomatorV1 is IOrangeDopexV2LPAutomatorV1, ERC20, Acces
             }
         } else {
             // NOTE: Assets are already transferred before calculation, so we can use the total assets before deposit
-            shares = assets.mulDivDown(totalSupply, _beforeTotalAssets);
+            shares = assets.mulDiv(totalSupply(), _beforeTotalAssets);
         }
 
-        uint256 _fee = shares.mulDivDown(depositFeePips, 1e6);
+        uint256 _fee = shares.mulDiv(depositFeePips, 1e6);
         // NOTE: no possibility of minting to the zero address as we can't set zero address with fee pips
         if (_fee > 0) {
             _mint(depositFeeRecipient, _fee);
@@ -465,7 +380,7 @@ contract OrangeDopexV2LPAutomatorV1 is IOrangeDopexV2LPAutomatorV1, ERC20, Acces
         uint256 lockedShareIndex;
     }
 
-    /// @inheritdoc IOrangeDopexV2LPAutomatorV1
+    /// @inheritdoc IOrangeStrykeLPAutomatorV1_1
     function redeem(
         uint256 shares,
         uint256 minAssets
@@ -473,7 +388,7 @@ contract OrangeDopexV2LPAutomatorV1 is IOrangeDopexV2LPAutomatorV1, ERC20, Acces
         if (shares == 0) revert AmountZero();
         if (convertToAssets(shares) == 0) revert SharesTooSmall();
 
-        uint256 _tsBeforeBurn = totalSupply;
+        uint256 _tsBeforeBurn = totalSupply();
 
         // To avoid any reentrancy, we burn the shares first
         _burn(msg.sender, shares);
@@ -482,22 +397,26 @@ contract OrangeDopexV2LPAutomatorV1 is IOrangeDopexV2LPAutomatorV1, ERC20, Acces
         uint256 _preQuote = asset.balanceOf(address(this));
 
         RedeemLoopCache memory c;
-        uint256 _length = activeTicks.length();
+        uint256 _length = _activeTicks.length();
 
         LockedDopexShares[] memory _tempShares = new LockedDopexShares[](_length);
 
         for (uint256 i = 0; i < _length; ) {
-            c.lowerTick = int24(uint24(activeTicks.at(i)));
+            c.lowerTick = int24(uint24(_activeTicks.at(i)));
 
             c.tokenId = handler.tokenId(address(pool), handlerHook, c.lowerTick, c.lowerTick + poolTickSpacing);
 
+            (, uint128 _redeemableLiquidity, uint128 _lockedLiquidity) = handler.positionDetail(
+                address(this),
+                c.tokenId
+            );
+
             // total supply before burn is used to calculate the precise share
-            c.shareRedeemable = uint256(
-                handler.convertToShares(handler.redeemableLiquidity(address(this), c.tokenId).toUint128(), c.tokenId)
-            ).mulDivDown(shares, _tsBeforeBurn);
-            c.shareLocked = uint256(
-                handler.convertToShares(handler.lockedLiquidity(address(this), c.tokenId).toUint128(), c.tokenId)
-            ).mulDivDown(shares, _tsBeforeBurn);
+            c.shareRedeemable = uint256(handler.convertToShares(_redeemableLiquidity, c.tokenId)).mulDiv(
+                shares,
+                _tsBeforeBurn
+            );
+            c.shareLocked = uint256(handler.convertToShares(_lockedLiquidity, c.tokenId)).mulDiv(shares, _tsBeforeBurn);
 
             // locked share is transferred to the user
             if (c.shareLocked > 0) {
@@ -532,16 +451,15 @@ contract OrangeDopexV2LPAutomatorV1 is IOrangeDopexV2LPAutomatorV1, ERC20, Acces
         }
 
         /**
-         * 1. shares.mulDivDown(_preBase, _totalSupply) means the portion of idle base asset
+         * 1. shares.mulDiv(_preBase, _totalSupply()) means the portion of idle base asset
          * 2. counterAsset.balanceOf(address(this)) - _preBase means the base asset from redeemed positions
          */
-        uint256 _payBase = shares.mulDivDown(_preBase, _tsBeforeBurn) +
-            counterAsset.balanceOf(address(this)) -
-            _preBase;
+        uint256 _payBase = shares.mulDiv(_preBase, _tsBeforeBurn) + counterAsset.balanceOf(address(this)) - _preBase;
 
         if (_payBase > 0) _swapToRedeemAssets(_payBase);
 
-        assets = shares.mulDivDown(_preQuote, _tsBeforeBurn) + asset.balanceOf(address(this)) - _preQuote;
+        // solhint-disable-next-line reentrancy
+        assets = shares.mulDiv(_preQuote, _tsBeforeBurn) + asset.balanceOf(address(this)) - _preQuote;
 
         if (assets < minAssets) revert MinAssetsRequired(minAssets, assets);
 
@@ -584,7 +502,7 @@ contract OrangeDopexV2LPAutomatorV1 is IOrangeDopexV2LPAutomatorV1, ERC20, Acces
      * @dev withdraw pooled assets from the automator. This is used when the automator is rewarded by protocols with another token to prevent lock up.
      * @param token The address of the ERC20 token to withdraw.
      */
-    function withdraw(IERC20 token) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function withdraw(IERC20 token) external onlyOwner {
         if (token == asset) revert TokenNotPermitted();
         if (token == counterAsset) revert TokenNotPermitted();
         token.safeTransfer(msg.sender, token.balanceOf(address(this)));
@@ -594,13 +512,13 @@ contract OrangeDopexV2LPAutomatorV1 is IOrangeDopexV2LPAutomatorV1, ERC20, Acces
                                                     STRATEGIST ACTIONS
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
-    /// @inheritdoc IOrangeDopexV2LPAutomatorV1
+    /// @inheritdoc IOrangeStrykeLPAutomatorV1_1
     function rebalance(
         RebalanceTickInfo[] calldata ticksMint,
         RebalanceTickInfo[] calldata ticksBurn,
         RebalanceSwapParams calldata swapParams
-    ) external onlyRole(STRATEGIST_ROLE) {
-        if (ticksMint.length + activeTicks.length() > MAX_TICKS) revert MaxTicksReached();
+    ) external onlyStrategist {
+        if (ticksMint.length + _activeTicks.length() > _MAX_TICKS) revert MaxTicksReached();
 
         bytes[] memory _burnCalldataBatch = _createBurnCalldataBatch(ticksBurn);
         // NOTE: burn should be called before mint to receive the assets from the burned position
@@ -674,7 +592,7 @@ contract OrangeDopexV2LPAutomatorV1 is IOrangeDopexV2LPAutomatorV1, ERC20, Acces
 
             // If the position is not active, push it to the active ticks
             _tid = handler.tokenId(address(pool), handlerHook, _lt, _ut);
-            if (handler.balanceOf(address(this), _tid) == 0) activeTicks.add(uint256(uint24(_lt)));
+            if (handler.balanceOf(address(this), _tid) == 0) _activeTicks.add(uint256(uint24(_lt)));
 
             unchecked {
                 i++;
@@ -697,7 +615,7 @@ contract OrangeDopexV2LPAutomatorV1 is IOrangeDopexV2LPAutomatorV1, ERC20, Acces
         uint256 _providedLength = ticksMint.length;
         mintLength = _providedLength;
 
-        int24 _ct = pool.currentTick();
+        (, int24 _ct, , , , , ) = pool.slot0();
         int24 _spacing = poolTickSpacing;
 
         // current lower tick is calculated by rounding down the current tick to the nearest tick spacing
@@ -740,7 +658,7 @@ contract OrangeDopexV2LPAutomatorV1 is IOrangeDopexV2LPAutomatorV1, ERC20, Acces
             burnCalldataBatch[i] = _createBurnCalldata(_lt, _ut, _shares.toUint128());
 
             // if all shares will be burned, pop the active tick
-            if (handler.balanceOf(address(this), _tid) - _shares == 0) activeTicks.remove(uint256(uint24(_lt)));
+            if (handler.balanceOf(address(this), _tid) - _shares == 0) _activeTicks.remove(uint256(uint24(_lt)));
 
             unchecked {
                 i++;

@@ -12,10 +12,10 @@ node_modules
 # solidity-coverage files
 /coverage
 /coverage.json
+/report
 
 # foundry files
 /cache_forge
 /out
 
-report
-lcov.info
+*lcov.info

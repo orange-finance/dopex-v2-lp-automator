@@ -43,9 +43,12 @@ library UniswapV3SingleTickLiquidityLibV2 {
         // Starting from handler v2, totalLiquidity might be less than liquidityUsed because reservedLiquidity has been introduced.
         // Therefore, if totalLiquidity is less than liquidityUsed, we should return 0 to avoid underflow.
         uint128 freePool = _tki.totalLiquidity < _tki.liquidityUsed ? 0 : _tki.totalLiquidity - _tki.liquidityUsed;
-        uint128 maxRedeem = all - 1;
+        // If the vault is an only liquidity provider in the pool, 1 liquidity is locked in the pool.
+        // because when first stryke mint, the liquidity calculation result is less by 1 than from second mint.
+        // first mint does not use "convertToAssets" function, and not round up the result.
+        if (all > _tki.totalLiquidity && freePool > 0) freePool -= 1;
+        locked = all > freePool ? all - freePool : 0;
 
-        locked = maxRedeem > freePool ? maxRedeem - freePool : 0;
-        redeemable = maxRedeem - locked;
+        redeemable = all - locked;
     }
 }
