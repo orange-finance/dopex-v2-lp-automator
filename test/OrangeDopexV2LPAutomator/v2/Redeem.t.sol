@@ -8,7 +8,6 @@ import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Po
 import {UniswapV3Helper} from "../../helper/UniswapV3Helper.t.sol";
 import {DopexV2Helper} from "../../helper/DopexV2Helper.t.sol";
 import {WETH_USDC_Fixture} from "./fixture/WETH_USDC_Fixture.t.sol";
-import {IUniswapV3SingleTickLiquidityHandlerV2} from "../../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 
 contract TestOrangeStrykeLPAutomatorV2Redeem is WETH_USDC_Fixture {
     using UniswapV3Helper for IUniswapV3Pool;

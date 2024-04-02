@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 
-// solhint-disable-next-line one-contract-per-file
+// solhint-disable one-contract-per-file, custom-errors
 pragma solidity 0.8.19;
 
 import {Test} from "forge-std/Test.sol";
@@ -16,6 +16,7 @@ import {StrykeVaultInspector} from "../../../contracts/periphery/StrykeVaultInsp
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
 import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
+import {FullMath} from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
 import {ERC1967Proxy} from "@openzeppelin/contracts//proxy/ERC1967/ERC1967Proxy.sol";
@@ -53,6 +54,13 @@ contract OrangeStrykeLPAutomatorV2Handler is Test {
         address mockSwapProxy;
         StrykeVaultInspector inspector;
         ISwapRouter swapRouter;
+    }
+
+    struct SwapParams {
+        address tokenIn;
+        address tokenOut;
+        uint256 maxAmountIn;
+        uint256 amountOut;
     }
 
     constructor(InitArgs memory args) {
@@ -229,5 +237,117 @@ contract OrangeStrykeLPAutomatorV2Handler is Test {
             }),
             abi.encode(new IERC20[](0), new uint256[](0), false)
         );
+    }
+
+    function rebalanceWithMockSwap(
+        IOrangeStrykeLPAutomatorV2.RebalanceTick[] memory mintTicks,
+        IOrangeStrykeLPAutomatorV2.RebalanceTick[] memory burnTicks
+    ) external {
+        SwapParams memory swapParams = calculateSwapParamsInRebalance(mintTicks, burnTicks);
+
+        ISwapRouter.ExactInputSingleParams memory exactSingle = ISwapRouter.ExactInputSingleParams({
+            tokenIn: swapParams.tokenIn,
+            tokenOut: swapParams.tokenOut,
+            fee: automator.pool().fee(),
+            recipient: address(automator),
+            deadline: block.timestamp + 300,
+            amountIn: swapParams.maxAmountIn,
+            amountOutMinimum: swapParams.amountOut,
+            sqrtPriceLimitX96: 0
+        });
+
+        vm.prank(strategist);
+        IOrangeSwapProxy.SwapInputRequest memory swapRequest = IOrangeSwapProxy.SwapInputRequest({
+            provider: address(swapRouter),
+            swapCalldata: abi.encodeWithSelector(ISwapRouter.exactInputSingle.selector, exactSingle),
+            expectTokenIn: IERC20(swapParams.tokenIn),
+            expectTokenOut: IERC20(swapParams.tokenOut),
+            expectAmountIn: swapParams.maxAmountIn,
+            inputDelta: 10
+        });
+
+        address[] memory tokens = new address[](1);
+        uint256[] memory amounts = new uint256[](1);
+
+        tokens[0] = swapParams.tokenOut;
+        amounts[0] = swapParams.amountOut;
+
+        bool execFlashLoan = swapParams.maxAmountIn > 0;
+
+        bytes memory flashLoanData = abi.encode(tokens, amounts, execFlashLoan);
+
+        automator.rebalance(mintTicks, burnTicks, mockSwapProxy, swapRequest, flashLoanData);
+    }
+
+    function calculateSwapParamsInRebalance(
+        IOrangeStrykeLPAutomatorV2.RebalanceTick[] memory ticksMint,
+        IOrangeStrykeLPAutomatorV2.RebalanceTick[] memory ticksBurn
+    ) internal view returns (SwapParams memory swapParams) {
+        uint256 _mintAssets;
+        uint256 _mintCAssets;
+        uint256 _burnAssets;
+        uint256 _burnCAssets;
+
+        if (automator.pool().token0() == address(automator.asset())) {
+            (_mintAssets, _mintCAssets) = estimateTotalTokensFromPositions(automator.pool(), ticksMint);
+            (_burnAssets, _burnCAssets) = estimateTotalTokensFromPositions(automator.pool(), ticksBurn);
+        } else {
+            (_mintCAssets, _mintAssets) = estimateTotalTokensFromPositions(automator.pool(), ticksMint);
+            (_burnCAssets, _burnAssets) = estimateTotalTokensFromPositions(automator.pool(), ticksBurn);
+        }
+
+        uint256 _freeAssets = _burnAssets + automator.asset().balanceOf(address(automator));
+        uint256 _freeCAssets = _burnCAssets + automator.counterAsset().balanceOf(address(automator));
+
+        uint256 _assetsShortage;
+        if (_mintAssets > _freeAssets) _assetsShortage = _mintAssets - _freeAssets;
+
+        uint256 _counterAssetsShortage;
+        if (_mintCAssets > _freeCAssets) _counterAssetsShortage = _mintCAssets - _freeCAssets;
+
+        if (_assetsShortage > 0 && _counterAssetsShortage > 0) revert("Liquidity too large");
+
+        if (_assetsShortage > 0) {
+            swapParams.tokenIn = address(automator.counterAsset());
+            swapParams.tokenOut = address(automator.asset());
+            swapParams.maxAmountIn = _freeCAssets - _mintCAssets;
+            swapParams.amountOut = _assetsShortage;
+        }
+
+        if (_counterAssetsShortage > 0) {
+            swapParams.tokenIn = address(automator.asset());
+            swapParams.tokenOut = address(automator.counterAsset());
+            swapParams.maxAmountIn = _freeAssets - _mintAssets;
+            swapParams.amountOut = _counterAssetsShortage;
+        }
+
+        // we need to add buffer for price error when swapping and minting positions.
+        // swap fee applied to the receiving token.
+        // more counter assets will be used to mint stryke positions.
+        swapParams.amountOut = FullMath.mulDiv(swapParams.amountOut, 1e6 + 5e3, 1e6);
+    }
+
+    function estimateTotalTokensFromPositions(
+        IUniswapV3Pool pool,
+        IOrangeStrykeLPAutomatorV2.RebalanceTick[] memory positions
+    ) internal view returns (uint256 totalAmount0, uint256 totalAmount1) {
+        uint256 _a0;
+        uint256 _a1;
+
+        (, int24 _ct, , , , , ) = pool.slot0();
+        int24 _spacing = pool.tickSpacing();
+
+        uint256 _pLen = positions.length;
+        for (uint256 i = 0; i < _pLen; i++) {
+            (_a0, _a1) = LiquidityAmounts.getAmountsForLiquidity(
+                TickMath.getSqrtRatioAtTick(_ct),
+                TickMath.getSqrtRatioAtTick(positions[i].tick),
+                TickMath.getSqrtRatioAtTick(positions[i].tick + _spacing),
+                positions[i].liquidity
+            );
+
+            totalAmount0 += _a0;
+            totalAmount1 += _a1;
+        }
     }
 }
