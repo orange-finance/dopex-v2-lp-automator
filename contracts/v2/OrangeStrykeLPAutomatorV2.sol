@@ -54,7 +54,7 @@ contract OrangeStrykeLPAutomatorV2 is
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                     Vault params
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
-    uint24 private constant _MAX_TICKS = 120;
+    uint24 private constant _MAX_TICKS = 150;
     /// @notice max deposit fee percentage is 1% (hundredth of 1e6)
     uint24 private constant _MAX_PERF_FEE_PIPS = 10_000;
 
