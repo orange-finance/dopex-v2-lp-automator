@@ -33,8 +33,8 @@ import {IBalancerVault} from "../vendor/balancer/IBalancerVault.sol";
 import {IBalancerFlashLoanRecipient} from "../vendor/balancer/IBalancerFlashLoanRecipient.sol";
 
 /**
- * @title OrangeStrykeLPAutomatorV1
- * @dev Automate liquidity provision of Stryke CLAMM
+ * @title OrangeStrykeLPAutomatorV2
+ * @dev Automate liquidity provision to Stryke CLAMM
  * @author Orange Finance
  */
 contract OrangeStrykeLPAutomatorV2 is
@@ -93,7 +93,7 @@ contract OrangeStrykeLPAutomatorV2 is
                                                     Uniswap
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
     IUniswapV3Pool public pool;
-    /// @dev previously used as Uniswap Router, now used as own router
+    /// @dev vestigial variable previously used for swapping. keep for upgrade compatibility
     address public router;
     int24 public poolTickSpacing;
 
@@ -125,6 +125,7 @@ contract OrangeStrykeLPAutomatorV2 is
         _disableInitializers();
     }
 
+    // @inheritdoc UUPSUpgradeable
     // solhint-disable-next-line no-empty-blocks
     function _authorizeUpgrade(address) internal override onlyOwner {}
 
@@ -197,8 +198,8 @@ contract OrangeStrykeLPAutomatorV2 is
         isOwner[args.admin] = true;
     }
 
-    // only for upgrade
-    function initializeV2(IBalancerVault balancer_) external reinitializer(2) {
+    /// @dev used for upgrade from v1 to v2. This is a one-time operation.
+    function initializeV2(IBalancerVault balancer_) external reinitializer(2) onlyOwner {
         balancer = balancer_;
     }
 
@@ -206,10 +207,20 @@ contract OrangeStrykeLPAutomatorV2 is
                                                     ADMIN FUNCTIONS
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
+    /**
+     * @dev Sets the owner of the automator.
+     * @param user The address of the user.
+     * @param approved The approval status of the user.
+     */
     function setOwner(address user, bool approved) external onlyOwner {
         isOwner[user] = approved;
     }
 
+    /**
+     * @dev Sets the strategist of the automator.
+     * @param user The address of the user.
+     * @param approved The approval status of the user.
+     */
     function setStrategist(address user, bool approved) external onlyOwner {
         isStrategist[user] = approved;
     }
@@ -217,8 +228,6 @@ contract OrangeStrykeLPAutomatorV2 is
     /**
      * @dev Sets the deposit cap for the automator.
      * @param _depositCap The new deposit cap value.
-     * Requirements:
-     * - Caller must have the DEFAULT_ADMIN_ROLE.
      */
     function setDepositCap(uint256 _depositCap) external onlyOwner {
         depositCap = _depositCap;
@@ -230,10 +239,6 @@ contract OrangeStrykeLPAutomatorV2 is
      * @dev Sets the deposit fee pips for a recipient.
      * @param recipient The address of the recipient.
      * @param pips The new deposit fee pips value.
-     * Requirements:
-     * - Caller must have the DEFAULT_ADMIN_ROLE.
-     * - Recipient address must not be zero.
-     * - deposit fee pips must not exceed MAX_PERF_FEE_PIPS.
      */
     function setDepositFeePips(address recipient, uint24 pips) external onlyOwner {
         if (recipient == address(0)) revert AddressZero();
@@ -245,6 +250,11 @@ contract OrangeStrykeLPAutomatorV2 is
         emit DepositFeePipsSet(pips);
     }
 
+    /**
+     * @dev Sets the proxy whitelist for the automator.
+     * @param swapProxy The address of the swap proxy.
+     * @param approve The approval status of the swap proxy.
+     */
     function setProxyWhitelist(address swapProxy, bool approve) external onlyOwner {
         if (approve) {
             // check if already approved to avoid reusing allowance by the router
@@ -448,6 +458,12 @@ contract OrangeStrykeLPAutomatorV2 is
         emit Redeem(msg.sender, shares, assets);
     }
 
+    /**
+     * @dev Burns the stryke positions and returns the assets and counter assets received.
+     * This function is used in redeem function to burn the stryke positions and receive the assets and counter assets.
+     * @param shares The number of shares to burn.
+     * @param totalSupply The total supply of shares before the burn automator shares.
+     */
     function _burnStrykePositions(
         uint256 shares,
         uint256 totalSupply
@@ -533,6 +549,14 @@ contract OrangeStrykeLPAutomatorV2 is
         );
     }
 
+    /**
+     * @dev Swaps the counter asset with the aggregator via swap proxy.
+     * Since we use aggregator for swapping, the user must create swap calldata off-chain
+     * and pass it to the redeem function.
+     * To prevent malicious swap by the user, we bypass the swap calldata to the proxy and validate the swap.
+     * @param swapIn The amount of counter asset to swap in.
+     * @param redeemData The redeem data passed by the user from the redeem function.
+     */
     function _swapCounterWithProxy(uint256 swapIn, bytes memory redeemData) internal returns (uint256 swapOut) {
         // decode swap proxy and swap provider from redeem data
         (address _swapProxy, address _swapProvider, bytes memory _swapCalldata) = abi.decode(

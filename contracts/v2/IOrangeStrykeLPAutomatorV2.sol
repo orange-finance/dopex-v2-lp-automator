@@ -2,7 +2,6 @@
 
 pragma solidity 0.8.19;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IOrangeStrykeLPAutomatorState} from "./../interfaces/IOrangeStrykeLPAutomatorState.sol";
 import {IOrangeSwapProxy} from "./IOrangeSwapProxy.sol";
 
@@ -32,6 +31,13 @@ interface IOrangeStrykeLPAutomatorV2 is IOrangeStrykeLPAutomatorState {
         uint128 liquidity;
     }
 
+    /**
+     * @dev Struct representing user data for flash loans.
+     * @param swapProxy The address of the OrangeSwapProxy contract.
+     * @param swapRequest The swap detail sent to the OrangeSwapProxy contract.
+     * @param mintCalldata The calldata for minting Stryke positions.
+     * @param burnCalldata The calldata for burning Stryke positions.
+     */
     struct FlashLoanUserData {
         address swapProxy;
         IOrangeSwapProxy.SwapInputRequest swapRequest;

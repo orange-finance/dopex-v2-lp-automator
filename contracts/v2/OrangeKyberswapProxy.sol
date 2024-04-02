@@ -9,6 +9,10 @@ import {OrangeSwapProxy} from "./OrangeSwapProxy.sol";
 import {FullMath} from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 import {Decoder} from "./../lib/Decoder.sol";
 
+/**
+ * @title OrangeKyberswapProxy
+ * @dev A contract that acts as a proxy for executing swaps on the KyberSwap platform.
+ */
 contract OrangeKyberswapProxy is OrangeSwapProxy {
     using Address for address;
     using SafeERC20 for IERC20;
@@ -45,6 +49,10 @@ contract OrangeKyberswapProxy is OrangeSwapProxy {
         owner = msg.sender;
     }
 
+    /**
+     * @dev Executes a safe input swap on the KyberSwap platform.
+     * @param request The swap request parameters.
+     */
     function safeInputSwap(SwapInputRequest memory request) external override {
         // authorize router
         if (!trustedProviders[request.provider]) revert Unauthorized();

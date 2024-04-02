@@ -4,6 +4,10 @@ pragma solidity 0.8.19;
 
 import {IOrangeSwapProxy} from "./IOrangeSwapProxy.sol";
 
+/**
+ * @title OrangeSwapProxy
+ * @dev A base contract implementation that acts as a proxy for executing swaps on various platforms.
+ */
 abstract contract OrangeSwapProxy is IOrangeSwapProxy {
     // solhint-disable-next-line const-name-snakecase
     uint256 public constant deltaScale = 10000;
