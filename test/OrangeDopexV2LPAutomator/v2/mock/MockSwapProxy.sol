@@ -14,10 +14,6 @@ contract MockSwapProxy is IOrangeSwapProxy {
         (, bytes memory data) = Decoder.calldataDecode(request.swapCalldata);
         ISwapRouter.ExactInputSingleParams memory params = abi.decode(data, (ISwapRouter.ExactInputSingleParams));
 
-        // amount in calculated by the automator is slightly larger than the pre-calculated amount in the swap calldata
-        // because of receiving some extra tokens from burnt positions
-        if (request.expectAmountIn > params.amountIn) params.amountIn = request.expectAmountIn;
-
         IERC20(params.tokenIn).approve(request.provider, params.amountIn);
 
         IERC20(params.tokenIn).transferFrom(msg.sender, address(this), params.amountIn);

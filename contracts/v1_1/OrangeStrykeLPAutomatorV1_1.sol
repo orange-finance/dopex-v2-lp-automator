@@ -406,7 +406,7 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
 
             c.tokenId = handler.tokenId(address(pool), handlerHook, c.lowerTick, c.lowerTick + poolTickSpacing);
 
-            (, uint128 _redeemableLiquidity, uint128 _lockedLiquidity) = handler.positionDetail(
+            (, uint128 _redeemableLiquidity, uint128 _lockedLiquidity, , ) = handler.positionDetail(
                 address(this),
                 c.tokenId
             );
