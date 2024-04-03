@@ -290,15 +290,17 @@ contract OrangeStrykeLPAutomatorV2 is
         (int24 _lt, int24 _ut) = (0, 0);
         (uint256 _sum0, uint256 _sum1) = (0, 0);
         (uint256 _a0, uint256 _a1) = (0, 0);
+        (uint256 _fee0, uint256 _fee1) = (0, 0);
 
         (uint160 _sqrtRatioX96, , , , , , ) = pool.slot0();
 
+        // convert all positions and swap fees to assets
         for (uint256 i = 0; i < _length; ) {
             _lt = int24(uint24(_activeTicks.at(i)));
             _ut = _lt + poolTickSpacing;
             _tid = handler.tokenId(address(pool), handlerHook, _lt, _ut);
 
-            _liquidity = handler.convertToAssets((handler.balanceOf(address(this), _tid)).toUint128(), _tid);
+            (_liquidity, , , _fee0, _fee1) = handler.positionDetail(address(this), _tid);
 
             (_a0, _a1) = LiquidityAmounts.getAmountsForLiquidity(
                 _sqrtRatioX96,
@@ -307,8 +309,8 @@ contract OrangeStrykeLPAutomatorV2 is
                 _liquidity
             );
 
-            _sum0 += _a0;
-            _sum1 += _a1;
+            _sum0 += (_a0 + _fee0);
+            _sum1 += (_a1 + _fee1);
 
             unchecked {
                 i++;
