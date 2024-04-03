@@ -18,7 +18,7 @@ import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/Liquid
 import {OracleLibrary} from "@uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol";
 import {UniswapV3Helper} from "../../helper/UniswapV3Helper.t.sol";
 import {DopexV2Helper} from "../../helper/DopexV2Helper.t.sol";
-import {IERC20} from "@openzeppelin/contracts//interfaces/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 
 contract TestOrangeStrykeLPAutomatorV1_1Redeem is WETH_USDC_Fixture {
     using stdStorage for StdStorage;

@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 /* solhint-disable contract-name-camelcase */
 
 import {BaseFixture} from "./BaseFixture.t.sol";
-import {IERC20} from "@openzeppelin/contracts//interfaces/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {OrangeStrykeLPAutomatorV1_1} from "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol";
 import {auto11} from "../../../helper/AutomatorHelperV1_1.t.sol";

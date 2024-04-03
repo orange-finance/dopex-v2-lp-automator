@@ -8,8 +8,8 @@ import {auto11} from "../../helper/AutomatorHelperV1_1.t.sol";
 import {ChainlinkQuoter} from "./../../../contracts/ChainlinkQuoter.sol";
 import {OrangeStrykeLPAutomatorV1_1} from "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol";
 import {IOrangeStrykeLPAutomatorV1_1} from "contracts/v1_1/IOrangeStrykeLPAutomatorV1_1.sol";
-import {IERC20} from "@openzeppelin/contracts//interfaces/IERC20.sol";
-import {ERC1967Proxy} from "@openzeppelin/contracts//proxy/ERC1967/ERC1967Proxy.sol";
+import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract TestOrangeStrykeLPAutomatorV1_1Deposit is WETH_USDC_Fixture {
     function setUp() public override {

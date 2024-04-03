@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 
 /* solhint-disable func-name-mixedcase, contract-name-camelcase */
 import {WETH_USDC_Fixture} from "./fixture/WETH_USDC_Fixture.t.sol";
-import {IERC20} from "@openzeppelin/contracts//interfaces/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import {IOrangeStrykeLPAutomatorV1_1} from "contracts/v1_1/IOrangeStrykeLPAutomatorV1_1.sol";
 
 contract TestOrangeStrykeLPAutomatorV1_1Withdraw is WETH_USDC_Fixture {
