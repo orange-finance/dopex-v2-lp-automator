@@ -101,7 +101,7 @@ contract OrangeStrykeLPAutomatorV2 is
                                                     V2 States
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
     IBalancerVault public balancer;
-    uint256 public swapInputDelta = 10;
+    uint256 public swapInputDelta;
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                     Modifiers
@@ -192,6 +192,7 @@ contract OrangeStrykeLPAutomatorV2 is
         minDepositAssets = args.minDepositAssets;
 
         balancer = args.balancer;
+        swapInputDelta = 10; // initial delta is 10 (allow +-0.1% diff to the input amount)
 
         args.asset.safeIncreaseAllowance(address(args.manager), type(uint256).max);
         counterAsset.safeIncreaseAllowance(address(args.manager), type(uint256).max);
