@@ -733,7 +733,6 @@ contract OrangeStrykeLPAutomatorV2 is
 
             tid = handler.tokenId(address(pool), handlerHook, lt, ut);
             shares = handler.convertToShares(ticksBurn[i].liquidity, tid);
-            // burnCalldataBatch[i] = _createBurnCalldata(lt, ut, _shares.toUint128());
             burnCalldataBatch[i] = abi.encodeWithSelector(
                 IDopexV2PositionManager.burnPosition.selector,
                 handler,
