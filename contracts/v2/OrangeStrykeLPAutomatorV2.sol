@@ -642,8 +642,6 @@ contract OrangeStrykeLPAutomatorV2 is
         // if not, execute multicall directly
         else {
             // burn should be called before mint to receive the assets from the burned position
-            // if (_burnCalldataBatch.length > 0) IMulticallProvider(address(manager)).multicall(_burnCalldataBatch);
-            // if (_mintCalldataBatch.length > 0) IMulticallProvider(address(manager)).multicall(_mintCalldataBatch);
             if (_burnCalldataBatch.length > 0) Multicall(address(manager)).multicall(_burnCalldataBatch);
             if (_mintCalldataBatch.length > 0) Multicall(address(manager)).multicall(_mintCalldataBatch);
         }
