@@ -54,6 +54,7 @@ interface IOrangeStrykeLPAutomatorV2 is IOrangeStrykeLPAutomatorState {
     event SetDepositCap(uint256 depositCap);
     event SetDepositFeePips(uint24 depositFeePips);
     event SetProxyWhitelist(address indexed proxy, bool approved);
+    event SetSwapInputDelta(uint256 swapInputDelta);
 
     error AddressZero();
     error AmountZero();

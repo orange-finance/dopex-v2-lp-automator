@@ -98,9 +98,10 @@ contract OrangeStrykeLPAutomatorV2 is
     int24 public poolTickSpacing;
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                                                    Balancer
+                                                    V2 States
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
     IBalancerVault public balancer;
+    uint256 public swapInputDelta = 10;
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                     Modifiers
@@ -271,6 +272,10 @@ contract OrangeStrykeLPAutomatorV2 is
         }
 
         emit SetProxyWhitelist(swapProxy, approve);
+    }
+
+    function setSwapInputDelta(uint256 delta) external onlyOwner {
+        swapInputDelta = delta;
     }
 
     function decimals() public view override returns (uint8) {
@@ -585,7 +590,7 @@ contract OrangeStrykeLPAutomatorV2 is
                 expectTokenIn: counterAsset,
                 expectTokenOut: asset,
                 expectAmountIn: swapIn,
-                inputDelta: 10 // 0.01% slippage
+                inputDelta: swapInputDelta
             })
         );
 
