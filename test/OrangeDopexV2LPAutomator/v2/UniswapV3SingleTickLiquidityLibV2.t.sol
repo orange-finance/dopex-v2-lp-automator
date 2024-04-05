@@ -9,6 +9,8 @@ import {IUniswapV3SingleTickLiquidityHandlerV2} from "contracts/vendor/dopexV2/I
 import {UniswapV3Helper} from "test/helper/UniswapV3Helper.t.sol";
 import {DopexV2Helper} from "test/helper/DopexV2Helper.t.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract TestUniswapV3SingleTickLiquidityLibV2 is WETH_USDC_Fixture {
     using UniswapV3Helper for IUniswapV3Pool;
@@ -53,7 +55,7 @@ contract TestUniswapV3SingleTickLiquidityLibV2 is WETH_USDC_Fixture {
         /////////////////////////////////////////////////////////////*/
 
         pool.mintDopexPosition(address(0), cl - 20, pool.singleLiqLeft(cl - 20, 100_000e6), address(this));
-        (, uint128 redeemable, ) = UniswapV3SingleTickLiquidityLibV2.positionDetail(
+        (, uint128 redeemable, , , ) = UniswapV3SingleTickLiquidityLibV2.positionDetail(
             handlerV2,
             address(this),
             pool.tokenId(address(0), cl - 20)
@@ -66,7 +68,7 @@ contract TestUniswapV3SingleTickLiquidityLibV2 is WETH_USDC_Fixture {
         /////////////////////////////////////////////////////////////*/
 
         pool.useDopexPosition(address(0), cl - 20, pool.freeLiquidityOfTick(address(0), cl - 20) - 1000e6);
-        (, redeemable, ) = UniswapV3SingleTickLiquidityLibV2.positionDetail(
+        (, redeemable, , , ) = UniswapV3SingleTickLiquidityLibV2.positionDetail(
             handlerV2,
             address(this),
             pool.tokenId(address(0), cl - 20)
@@ -79,7 +81,7 @@ contract TestUniswapV3SingleTickLiquidityLibV2 is WETH_USDC_Fixture {
         /////////////////////////////////////////////////////////////*/
 
         pool.useDopexPosition(address(0), cl - 20, 1000e6);
-        (, redeemable, ) = UniswapV3SingleTickLiquidityLibV2.positionDetail(
+        (, redeemable, , , ) = UniswapV3SingleTickLiquidityLibV2.positionDetail(
             handlerV2,
             address(this),
             pool.tokenId(address(0), cl - 20)
@@ -107,7 +109,7 @@ contract TestUniswapV3SingleTickLiquidityLibV2 is WETH_USDC_Fixture {
         // then totalLiquidity < liquidityUsed = reservedLiquidity
         pool.reserveDopexPosition(address(0), cl - 20, _twoThirdOfFreeLiquidity, address(this));
 
-        (, uint128 _redeemable, ) = UniswapV3SingleTickLiquidityLibV2.positionDetail(
+        (, uint128 _redeemable, , , ) = UniswapV3SingleTickLiquidityLibV2.positionDetail(
             handlerV2,
             address(this),
             pool.tokenId(address(0), cl - 20)
@@ -130,7 +132,7 @@ contract TestUniswapV3SingleTickLiquidityLibV2 is WETH_USDC_Fixture {
         /////////////////////////////////////////////////////////////*/
 
         pool.mintDopexPosition(address(0), cl - 20, pool.singleLiqLeft(cl - 20, 100_000e6), address(this));
-        (, , uint128 _locked) = UniswapV3SingleTickLiquidityLibV2.positionDetail(
+        (, , uint128 _locked, , ) = UniswapV3SingleTickLiquidityLibV2.positionDetail(
             handlerV2,
             address(this),
             pool.tokenId(address(0), cl - 20)
@@ -143,7 +145,7 @@ contract TestUniswapV3SingleTickLiquidityLibV2 is WETH_USDC_Fixture {
         /////////////////////////////////////////////////////////////*/
 
         pool.useDopexPosition(address(0), cl - 20, pool.freeLiquidityOfTick(address(0), cl - 20) - 1000e6);
-        (, , _locked) = UniswapV3SingleTickLiquidityLibV2.positionDetail(
+        (, , _locked, , ) = UniswapV3SingleTickLiquidityLibV2.positionDetail(
             handlerV2,
             address(this),
             pool.tokenId(address(0), cl - 20)
@@ -163,7 +165,7 @@ contract TestUniswapV3SingleTickLiquidityLibV2 is WETH_USDC_Fixture {
         /////////////////////////////////////////////////////////////*/
 
         pool.useDopexPosition(address(0), cl - 20, 1000e6);
-        (, , _locked) = UniswapV3SingleTickLiquidityLibV2.positionDetail(
+        (, , _locked, , ) = UniswapV3SingleTickLiquidityLibV2.positionDetail(
             handlerV2,
             address(this),
             pool.tokenId(address(0), cl - 20)
@@ -209,8 +211,91 @@ contract TestUniswapV3SingleTickLiquidityLibV2 is WETH_USDC_Fixture {
             _tokenId
         );
 
-        (, , uint128 _locked) = UniswapV3SingleTickLiquidityLibV2.positionDetail(handlerV2, address(this), _tokenId);
+        (, , uint128 _locked, , ) = UniswapV3SingleTickLiquidityLibV2.positionDetail(
+            handlerV2,
+            address(this),
+            _tokenId
+        );
 
         assertEq(_expectLocked, _locked);
+    }
+
+    function test_positionDetail_reflectSwapFee0() public {
+        deal(address(WETH), address(this), 10000 ether);
+        deal(address(USDC), address(this), 10_000_000e6);
+
+        int24 cl = pool.currentLower();
+
+        WETH.approve(address(manager), type(uint256).max);
+        USDC.approve(address(manager), type(uint256).max);
+        pool.mintDopexPosition(address(0), cl + 10, pool.singleLiqRight(cl + 10, 1000 ether), address(this));
+
+        (, , , uint256 swapFee0Before, uint256 swapFee1Before) = UniswapV3SingleTickLiquidityLibV2.positionDetail(
+            handlerV2,
+            address(this),
+            pool.tokenId(address(0), cl + 10)
+        );
+
+        _swap(USDC, WETH, 5_000_000e6);
+
+        // burn little bit to reflect swap fee
+        pool.burnDopexPosition(address(0), cl + 10, 1, address(this));
+
+        (, , , uint256 swapFee0After, uint256 swapFee1After) = UniswapV3SingleTickLiquidityLibV2.positionDetail(
+            handlerV2,
+            address(this),
+            pool.tokenId(address(0), cl + 10)
+        );
+
+        assertGt(swapFee1After, swapFee1Before, "swap fee 1 should increase");
+        assertEq(swapFee0After, swapFee0Before, "swap fee 0 should not change");
+    }
+
+    function test_positionDetail_reflectSwapFee1() public {
+        deal(address(WETH), address(this), 10000 ether);
+        deal(address(USDC), address(this), 1_000_000e6);
+
+        int24 cl = pool.currentLower();
+
+        WETH.approve(address(manager), type(uint256).max);
+        USDC.approve(address(manager), type(uint256).max);
+        pool.mintDopexPosition(address(0), cl - 10, pool.singleLiqLeft(cl - 10, 100_000e6), address(this));
+
+        (, , , uint256 swapFee0Before, uint256 swapFee1Before) = UniswapV3SingleTickLiquidityLibV2.positionDetail(
+            handlerV2,
+            address(this),
+            pool.tokenId(address(0), cl - 10)
+        );
+
+        _swap(WETH, USDC, 1000 ether);
+
+        // burn little bit to reflect swap fee
+        pool.burnDopexPosition(address(0), cl - 10, 1, address(this));
+
+        (, , , uint256 swapFee0After, uint256 swapFee1After) = UniswapV3SingleTickLiquidityLibV2.positionDetail(
+            handlerV2,
+            address(this),
+            pool.tokenId(address(0), cl - 10)
+        );
+
+        // swap fee is reflected in tokenOwed0
+        assertGt(swapFee0After, swapFee0Before, "swap fee 0 should increase");
+        assertEq(swapFee1After, swapFee1Before, "swap fee 1 should not change");
+    }
+
+    function _swap(IERC20 tokenIn, IERC20 tokenOut, uint256 amountIn) internal {
+        tokenIn.approve(address(router), type(uint256).max);
+        router.exactInputSingle(
+            ISwapRouter.ExactInputSingleParams({
+                tokenIn: address(tokenIn),
+                tokenOut: address(tokenOut),
+                fee: pool.fee(),
+                recipient: address(this),
+                deadline: type(uint256).max,
+                amountIn: amountIn,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0
+            })
+        );
     }
 }

@@ -56,6 +56,28 @@ library DopexV2Helper {
         DOPEX_V2_POSITION_MANAGER.mintPosition(DOPEX_UNIV3_HANDLER, abi.encode(_params));
     }
 
+    function burnDopexPosition(
+        IUniswapV3Pool pool,
+        address hook,
+        int24 tickLower,
+        uint128 liquidityToBurn,
+        address burner
+    ) internal {
+        uint128 _shares = DOPEX_UNIV3_HANDLER.convertToShares(liquidityToBurn, _tokenId(pool, hook, tickLower));
+
+        IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams
+            memory _params = IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams({
+                pool: address(pool),
+                hook: hook,
+                tickLower: tickLower,
+                tickUpper: tickLower + pool.tickSpacing(),
+                shares: _shares
+            });
+
+        vm.prank(burner);
+        DOPEX_V2_POSITION_MANAGER.burnPosition(DOPEX_UNIV3_HANDLER, abi.encode(_params));
+    }
+
     function useDopexPosition(IUniswapV3Pool pool, address hook, int24 tickLower, uint128 liquidityToUse) internal {
         IUniswapV3SingleTickLiquidityHandlerV2.UsePositionParams memory _params = IUniswapV3SingleTickLiquidityHandlerV2
             .UsePositionParams({

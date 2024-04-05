@@ -15,7 +15,7 @@ import {DealExtension} from "../../helper/DealExtension.t.sol";
 import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
 import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import {OracleLibrary} from "@uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol";
-import {IERC20} from "@openzeppelin/contracts//interfaces/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 
 contract TestOrangeStrykeLPAutomatorV1_1State is WETH_USDC_Fixture, DealExtension {
     using UniswapV3SingleTickLiquidityLib for IUniswapV3SingleTickLiquidityHandlerV2;

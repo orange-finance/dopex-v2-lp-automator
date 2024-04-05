@@ -6,14 +6,14 @@ pragma solidity 0.8.19;
 
 import {OrangeStrykeLPAutomatorV1_1} from "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {ERC1967Proxy} from "@openzeppelin/contracts//proxy/ERC1967/ERC1967Proxy.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {Vm} from "forge-std/Vm.sol";
 import {ChainlinkQuoter} from "contracts/ChainlinkQuoter.sol";
 import {IDopexV2PositionManager} from "contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import {IUniswapV3SingleTickLiquidityHandlerV2} from "contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import {IERC20} from "@openzeppelin/contracts//interfaces/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 
 Vm constant vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
 

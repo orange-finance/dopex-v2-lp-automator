@@ -49,10 +49,12 @@ interface IOrangeStrykeLPAutomatorV2 is IOrangeStrykeLPAutomatorState {
     event Redeem(address indexed sender, uint256 shares, uint256 assetsWithdrawn);
     event Rebalance(address indexed sender, RebalanceTick[] ticksMint, RebalanceTick[] ticksBurn);
 
-    event SetOwner(address user, bool approved);
-    event SetStrategist(address user, bool approved);
-    event DepositCapSet(uint256 depositCap);
-    event DepositFeePipsSet(uint24 depositFeePips);
+    event SetOwner(address indexed user, bool approved);
+    event SetStrategist(address indexed user, bool approved);
+    event SetDepositCap(uint256 depositCap);
+    event SetDepositFeePips(uint24 depositFeePips);
+    event SetProxyWhitelist(address indexed proxy, bool approved);
+    event SetSwapInputDelta(uint256 swapInputDelta);
 
     error AddressZero();
     error AmountZero();

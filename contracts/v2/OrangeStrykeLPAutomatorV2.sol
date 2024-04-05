@@ -54,7 +54,7 @@ contract OrangeStrykeLPAutomatorV2 is
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                     Vault params
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
-    uint24 private constant _MAX_TICKS = 120;
+    uint24 private constant _MAX_TICKS = 150;
     /// @notice max deposit fee percentage is 1% (hundredth of 1e6)
     uint24 private constant _MAX_PERF_FEE_PIPS = 10_000;
 
@@ -98,9 +98,10 @@ contract OrangeStrykeLPAutomatorV2 is
     int24 public poolTickSpacing;
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                                                    Balancer
+                                                    V2 States
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
     IBalancerVault public balancer;
+    uint256 public swapInputDelta;
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                     Modifiers
@@ -191,6 +192,7 @@ contract OrangeStrykeLPAutomatorV2 is
         minDepositAssets = args.minDepositAssets;
 
         balancer = args.balancer;
+        swapInputDelta = 10; // initial delta is 10 (allow +-0.1% diff to the input amount)
 
         args.asset.safeIncreaseAllowance(address(args.manager), type(uint256).max);
         counterAsset.safeIncreaseAllowance(address(args.manager), type(uint256).max);
@@ -214,6 +216,8 @@ contract OrangeStrykeLPAutomatorV2 is
      */
     function setOwner(address user, bool approved) external onlyOwner {
         isOwner[user] = approved;
+
+        emit SetOwner(user, approved);
     }
 
     /**
@@ -223,6 +227,8 @@ contract OrangeStrykeLPAutomatorV2 is
      */
     function setStrategist(address user, bool approved) external onlyOwner {
         isStrategist[user] = approved;
+
+        emit SetStrategist(user, approved);
     }
 
     /**
@@ -232,7 +238,7 @@ contract OrangeStrykeLPAutomatorV2 is
     function setDepositCap(uint256 _depositCap) external onlyOwner {
         depositCap = _depositCap;
 
-        emit DepositCapSet(_depositCap);
+        emit SetDepositCap(_depositCap);
     }
 
     /**
@@ -247,7 +253,7 @@ contract OrangeStrykeLPAutomatorV2 is
         depositFeeRecipient = recipient;
         depositFeePips = pips;
 
-        emit DepositFeePipsSet(pips);
+        emit SetDepositFeePips(pips);
     }
 
     /**
@@ -265,6 +271,12 @@ contract OrangeStrykeLPAutomatorV2 is
             asset.forceApprove(swapProxy, 0);
             counterAsset.forceApprove(swapProxy, 0);
         }
+
+        emit SetProxyWhitelist(swapProxy, approve);
+    }
+
+    function setSwapInputDelta(uint256 delta) external onlyOwner {
+        swapInputDelta = delta;
     }
 
     function decimals() public view override returns (uint8) {
@@ -284,15 +296,17 @@ contract OrangeStrykeLPAutomatorV2 is
         (int24 _lt, int24 _ut) = (0, 0);
         (uint256 _sum0, uint256 _sum1) = (0, 0);
         (uint256 _a0, uint256 _a1) = (0, 0);
+        (uint256 _fee0, uint256 _fee1) = (0, 0);
 
         (uint160 _sqrtRatioX96, , , , , , ) = pool.slot0();
 
+        // convert all positions and swap fees to assets
         for (uint256 i = 0; i < _length; ) {
             _lt = int24(uint24(_activeTicks.at(i)));
             _ut = _lt + poolTickSpacing;
             _tid = handler.tokenId(address(pool), handlerHook, _lt, _ut);
 
-            _liquidity = handler.convertToAssets((handler.balanceOf(address(this), _tid)).toUint128(), _tid);
+            (_liquidity, , , _fee0, _fee1) = handler.positionDetail(address(this), _tid);
 
             (_a0, _a1) = LiquidityAmounts.getAmountsForLiquidity(
                 _sqrtRatioX96,
@@ -301,8 +315,8 @@ contract OrangeStrykeLPAutomatorV2 is
                 _liquidity
             );
 
-            _sum0 += _a0;
-            _sum1 += _a1;
+            _sum0 += (_a0 + _fee0);
+            _sum1 += (_a1 + _fee1);
 
             unchecked {
                 i++;
@@ -484,7 +498,7 @@ contract OrangeStrykeLPAutomatorV2 is
 
             c.tokenId = handler.tokenId(address(pool), handlerHook, c.lowerTick, c.lowerTick + poolTickSpacing);
 
-            (, uint128 _redeemableLiquidity, uint128 _lockedLiquidity) = handler.positionDetail(
+            (, uint128 _redeemableLiquidity, uint128 _lockedLiquidity, , ) = handler.positionDetail(
                 address(this),
                 c.tokenId
             );
@@ -577,7 +591,7 @@ contract OrangeStrykeLPAutomatorV2 is
                 expectTokenIn: counterAsset,
                 expectTokenOut: asset,
                 expectAmountIn: swapIn,
-                inputDelta: 10 // 0.01% slippage
+                inputDelta: swapInputDelta
             })
         );
 
@@ -629,8 +643,6 @@ contract OrangeStrykeLPAutomatorV2 is
         // if not, execute multicall directly
         else {
             // burn should be called before mint to receive the assets from the burned position
-            // if (_burnCalldataBatch.length > 0) IMulticallProvider(address(manager)).multicall(_burnCalldataBatch);
-            // if (_mintCalldataBatch.length > 0) IMulticallProvider(address(manager)).multicall(_mintCalldataBatch);
             if (_burnCalldataBatch.length > 0) Multicall(address(manager)).multicall(_burnCalldataBatch);
             if (_mintCalldataBatch.length > 0) Multicall(address(manager)).multicall(_mintCalldataBatch);
         }
@@ -721,7 +733,6 @@ contract OrangeStrykeLPAutomatorV2 is
 
             tid = handler.tokenId(address(pool), handlerHook, lt, ut);
             shares = handler.convertToShares(ticksBurn[i].liquidity, tid);
-            // burnCalldataBatch[i] = _createBurnCalldata(lt, ut, _shares.toUint128());
             burnCalldataBatch[i] = abi.encodeWithSelector(
                 IDopexV2PositionManager.burnPosition.selector,
                 handler,

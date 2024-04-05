@@ -25,6 +25,8 @@ contract StrykeVaultInspector {
         int24 upperTick;
         uint256 amount0;
         uint256 amount1;
+        uint256 swapFee0;
+        uint256 swapFee1;
         uint160 sqrtRatioX96;
     }
 
@@ -55,7 +57,7 @@ contract StrykeVaultInspector {
             _cache.lowerTick = _ticks[i];
             _cache.upperTick = _cache.lowerTick + _spacing;
 
-            (, _cache.liquidity, ) = _handler.positionDetail(
+            (, _cache.liquidity, , _cache.swapFee0, _cache.swapFee1) = _handler.positionDetail(
                 address(automator),
                 _handler.tokenId(address(_pool), _handlerHook, _cache.lowerTick, _cache.upperTick)
             );
@@ -67,8 +69,8 @@ contract StrykeVaultInspector {
                 _cache.liquidity
             );
 
-            sumAmount0 += _cache.amount0;
-            sumAmount1 += _cache.amount1;
+            sumAmount0 += (_cache.amount0 + _cache.swapFee0);
+            sumAmount1 += (_cache.amount1 + _cache.swapFee1);
 
             unchecked {
                 i++;
@@ -115,7 +117,7 @@ contract StrykeVaultInspector {
         address _handlerHook = automator.handlerHook();
         int24 _spacing = automator.poolTickSpacing();
 
-        (, freeLiquidity, ) = _handler.positionDetail(
+        (, freeLiquidity, , , ) = _handler.positionDetail(
             address(automator),
             _handler.tokenId(address(_pool), _handlerHook, tick, tick + _spacing)
         );

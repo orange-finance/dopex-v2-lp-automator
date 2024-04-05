@@ -3,13 +3,15 @@
   "description": "The contract to automate Dopex V2 position management. Deposited funds are automatically allocated to the best performing ticks.",
   "scripts": {
     "compile": "forge build",
-    "test": "npm run test:foundry && npm run test:hardhat",
-    "test:foundry": "forge test --no-match-test \"Skip\"",
+    "test": "npm run test:forge && npm run test:hardhat",
+    "test:forge": "forge test --no-match-test \"Skip\"",
     "test:hardhat": "npx hardhat test",
     "coverage": "./coverage.sh",
     "fmt": "prettier --write 'contracts/**/*.sol'",
     "lint:sol": "solhint 'contracts/**/*.sol'",
-    "prepare": "husky"
+    "prepare": "husky",
+    "slither": "slither . 2>slither.info",
+    "slither:readable": "slither . --print human-summary"
   },
   "lint-staged": {
     "*.{sol,js,ts,json,yml,yaml,md}": "prettier --write",

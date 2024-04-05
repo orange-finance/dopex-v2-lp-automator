@@ -3,6 +3,7 @@
 pragma solidity 0.8.19;
 
 import {IUniswapV3SingleTickLiquidityHandlerV2} from "../vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
+import {FullMath} from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 
 /**
  * @title UniswapV3SingleTickLiquidityLib
@@ -28,13 +29,27 @@ library UniswapV3SingleTickLiquidityLibV2 {
         return uint256(keccak256(abi.encode(handler, pool, hook, tickLower, tickUpper)));
     }
 
+    /**
+     * @dev Get the position detail of a given owner and token ID.
+     * @dev option fee is already added in the liquidity via UniswapV3SingleTickLiquidityHandlerV2.donateToLiquidity function
+     * @param handler The instance of the UniswapV3SingleTickLiquidityHandlerV2 contract.
+     * @param owner The address of the position owner.
+     * @param tokenId_ The ID of the token.
+     * @return all The total amount of liquidity the owner has.
+     * @return redeemable The amount of liquidity that can be redeemed.
+     * @return locked The amount of liquidity that is locked.
+     * @return swapFee0 The amount of UniswapV3 Pool swap fee in token0.
+     * @return swapFee1 The amount of UniswapV3 Pool swap fee in token1.
+     * @notice swap fee (TokenIdInfo.tokenOwed0/1) is updated when the position is modified (mint/burn/use/unusePosition is called)
+     * Automator modifies position when rebalance/redeem is called. Therefore, swap fee might be outdated in between these operations.
+     */
     function positionDetail(
         IUniswapV3SingleTickLiquidityHandlerV2 handler,
         address owner,
         uint256 tokenId_
-    ) internal view returns (uint128 all, uint128 redeemable, uint128 locked) {
+    ) internal view returns (uint128 all, uint128 redeemable, uint128 locked, uint256 swapFee0, uint256 swapFee1) {
         uint256 _shares = handler.balanceOf(owner, tokenId_);
-        if (_shares == 0) return (0, 0, 0);
+        if (_shares == 0) return (0, 0, 0, 0, 0);
 
         IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory _tki = handler.tokenIds(tokenId_);
 
@@ -50,5 +65,8 @@ library UniswapV3SingleTickLiquidityLibV2 {
         locked = all > freePool ? all - freePool : 0;
 
         redeemable = all - locked;
+
+        swapFee0 = FullMath.mulDiv(_tki.tokensOwed0, redeemable, _tki.totalLiquidity);
+        swapFee1 = FullMath.mulDiv(_tki.tokensOwed1, redeemable, _tki.totalLiquidity);
     }
 }
