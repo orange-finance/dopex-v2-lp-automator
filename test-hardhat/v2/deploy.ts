@@ -68,6 +68,7 @@ describe('OrangeStrykeLPAutomatorV2', () => {
 
     // v2 state should be assigned
     assert.equal(await v2.balancer(), balancer)
+    assert.equal(await v2.swapInputDelta(), 10n)
   })
 
   it('should upgrade to v3', async () => {
