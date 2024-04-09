@@ -203,6 +203,7 @@ contract OrangeStrykeLPAutomatorV2 is
     /// @dev used for upgrade from v1 to v2. This is a one-time operation.
     function initializeV2(IBalancerVault balancer_) external reinitializer(2) onlyOwner {
         balancer = balancer_;
+        swapInputDelta = 10; // initial delta is 10 (allow +-0.1% diff to the input amount)
     }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
