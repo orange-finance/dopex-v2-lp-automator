@@ -200,6 +200,7 @@ contract TestOrangeStrykeLPAutomatorV2Rebalance is WETH_USDC_Fixture {
         );
 
         vm.expectRevert(IOrangeStrykeLPAutomatorV2.FlashLoan_Unauthorized.selector);
+        vm.prank(address(balancer));
         automator.receiveFlashLoan(tokens, amounts, feeAmounts, userData);
     }
 
