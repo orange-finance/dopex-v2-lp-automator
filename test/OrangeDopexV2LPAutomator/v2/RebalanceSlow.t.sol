@@ -25,7 +25,6 @@ contract TestOrangeStrykeLPAutomatorV2RebalanceSlow is WETH_USDC_Fixture {
     }
 
     function test_rebalance_flashLoanAndSwap_dynamic_Skip() public {
-        super.setUp();
         aHandler.deposit(100 ether, alice);
 
         (address router, bytes memory swapCalldata) = _buildKyberswapData(address(automator), 50);
