@@ -722,6 +722,7 @@ contract OrangeStrykeLPAutomatorV2 is
     function _createBurnCalldataBatch(
         RebalanceTick[] calldata ticksBurn
     ) internal returns (bytes[] memory burnCalldataBatch) {
+        int24 spacing = poolTickSpacing;
         int24 lt;
         int24 ut;
         uint256 tid;
@@ -730,7 +731,7 @@ contract OrangeStrykeLPAutomatorV2 is
         burnCalldataBatch = new bytes[](burnLength);
         for (uint256 i = 0; i < burnLength; ) {
             lt = ticksBurn[i].tick;
-            ut = lt + poolTickSpacing;
+            ut = lt + spacing;
 
             tid = handler.tokenId(address(pool), handlerHook, lt, ut);
             shares = handler.convertToShares(ticksBurn[i].liquidity, tid);
