@@ -45,10 +45,6 @@ contract OrangeKyberswapProxy is OrangeSwapProxy {
     error DstTokenDoesNotMatch();
     error ReceiverIsNotSender();
 
-    constructor() {
-        owner = msg.sender;
-    }
-
     /**
      * @dev Executes a safe input swap on the KyberSwap platform.
      * @param request The swap request parameters.
