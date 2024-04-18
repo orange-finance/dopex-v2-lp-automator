@@ -175,8 +175,10 @@ contract OrangeStrykeLPAutomatorV2Handler is Test {
         IOrangeSwapProxy.SwapInputRequest memory swapRequest,
         bytes memory flashLoanData
     ) external {
-        vm.prank(automatorOwner);
-        automator.setProxyWhitelist(swapProxy, true);
+        if (automator.asset().allowance(address(automator), swapProxy) == 0) {
+            vm.prank(automatorOwner);
+            automator.setProxyWhitelist(swapProxy, true);
+        }
 
         IOrangeStrykeLPAutomatorV2.RebalanceTick[] memory mintTicks = parseTicks(ticksMint);
         IOrangeStrykeLPAutomatorV2.RebalanceTick[] memory burnTicks = parseTicks(ticksBurn);

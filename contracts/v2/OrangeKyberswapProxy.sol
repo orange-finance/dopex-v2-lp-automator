@@ -83,11 +83,6 @@ contract OrangeKyberswapProxy is OrangeSwapProxy {
             request.expectTokenIn.forceApprove(request.provider, type(uint256).max);
         }
 
-        // we also need to approve expectTokenOut because in some cases, part of the output may be taken as fee
-        if (request.expectTokenOut.allowance(address(this), request.provider) == 0) {
-            request.expectTokenOut.forceApprove(request.provider, type(uint256).max);
-        }
-
         // execute swap
         // output is directly sent to msg.sender
         request.provider.functionCall(request.swapCalldata, "OrangeKyberSwapProxy: low-level call failed");
