@@ -101,7 +101,6 @@ contract OrangeStrykeLPAutomatorV2 is
                                                     V2 States
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
     IBalancerVault public balancer;
-    bytes32 private _flashLoanHash;
     uint256 public swapInputDelta;
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -115,16 +114,6 @@ contract OrangeStrykeLPAutomatorV2 is
 
     modifier onlyStrategist() {
         if (!isStrategist[msg.sender]) revert Unauthorized();
-        _;
-    }
-
-    modifier validateFlashLoan(bytes memory userData) {
-        // check if flash loan request is made by this contract
-        bytes32 _givenHash = keccak256(userData);
-        if (_flashLoanHash == bytes32(0) || _flashLoanHash != _givenHash) revert FlashLoan_Unauthorized();
-
-        // clear hash to avoid reentrancy
-        _flashLoanHash = bytes32(0);
         _;
     }
 
@@ -650,7 +639,6 @@ contract OrangeStrykeLPAutomatorV2 is
                 mintCalldata: _mintCalldataBatch,
                 burnCalldata: _burnCalldataBatch
             });
-            _flashLoanHash = keccak256(abi.encode(_userData));
             balancer.flashLoan(IBalancerFlashLoanRecipient(this), _tokens, _amounts, abi.encode(_userData));
         }
         // if not, execute multicall directly
@@ -671,7 +659,7 @@ contract OrangeStrykeLPAutomatorV2 is
         uint256[] memory amounts,
         uint256[] memory feeAmounts,
         bytes memory userData
-    ) external validateFlashLoan(userData) {
+    ) external {
         if (msg.sender != address(balancer)) revert FlashLoan_Unauthorized();
 
         FlashLoanUserData memory _ud = abi.decode(userData, (FlashLoanUserData));

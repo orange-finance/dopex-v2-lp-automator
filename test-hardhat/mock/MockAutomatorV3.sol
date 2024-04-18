@@ -71,7 +71,6 @@ contract MockAutomatorV3 is UUPSUpgradeable {
                                                     Balancer
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
     address public balancer;
-    bytes32 private _flashLoanHash;
 
     uint256 public swapInputDelta;
 
