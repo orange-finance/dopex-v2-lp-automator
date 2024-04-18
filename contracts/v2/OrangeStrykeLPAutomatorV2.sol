@@ -661,7 +661,7 @@ contract OrangeStrykeLPAutomatorV2 is
         }
 
         // finally, check if tick count is not exceeded
-        if (ticksMint.length + _activeTicks.length() > _MAX_TICKS) revert MaxTicksReached();
+        if (_activeTicks.length() > _MAX_TICKS) revert MaxTicksReached();
 
         emit Rebalance(msg.sender, ticksMint, ticksBurn);
     }

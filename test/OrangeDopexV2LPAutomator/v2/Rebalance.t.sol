@@ -204,6 +204,20 @@ contract TestOrangeStrykeLPAutomatorV2Rebalance is WETH_USDC_Fixture {
         automator.receiveFlashLoan(tokens, amounts, feeAmounts, userData);
     }
 
+    function test_rebalance_revert_maxTickReached() public {
+        int24 tick = pool.currentLower() + 10;
+
+        deal(address(WETH), address(automator), 200 ether);
+
+        for (uint256 i = 0; i < 150; i++) {
+            aHandler.rebalanceSingleRight(tick, 1 ether);
+            tick += 10;
+        }
+
+        vm.expectRevert(IOrangeStrykeLPAutomatorV2.MaxTicksReached.selector);
+        aHandler.rebalanceSingleRight(tick, 1 ether);
+    }
+
     function _tickInit(
         int24 tickLower,
         uint256 amount0,
