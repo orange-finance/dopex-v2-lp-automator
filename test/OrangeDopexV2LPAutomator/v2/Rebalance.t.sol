@@ -177,6 +177,47 @@ contract TestOrangeStrykeLPAutomatorV2Rebalance is WETH_USDC_Fixture {
         );
     }
 
+    function test_receiveFlashLoan_revertUnauthorized() public {
+        IERC20[] memory tokens = new IERC20[](1);
+        uint256[] memory amounts = new uint256[](1);
+        uint256[] memory feeAmounts = new uint256[](1);
+        bytes[] memory mintCalldata = new bytes[](1);
+        bytes[] memory burnCalldata = new bytes[](1);
+        bytes memory userData = abi.encode(
+            IOrangeStrykeLPAutomatorV2.FlashLoanUserData({
+                swapProxy: address(0),
+                swapRequest: IOrangeSwapProxy.SwapInputRequest({
+                    provider: address(0),
+                    swapCalldata: "",
+                    expectTokenIn: USDC,
+                    expectTokenOut: WETH,
+                    expectAmountIn: 1_000_000e6,
+                    inputDelta: 0
+                }),
+                mintCalldata: mintCalldata,
+                burnCalldata: burnCalldata
+            })
+        );
+
+        vm.expectRevert(IOrangeStrykeLPAutomatorV2.FlashLoan_Unauthorized.selector);
+        vm.prank(address(balancer));
+        automator.receiveFlashLoan(tokens, amounts, feeAmounts, userData);
+    }
+
+    function test_rebalance_revert_maxTickReached() public {
+        int24 tick = pool.currentLower() + 10;
+
+        deal(address(WETH), address(automator), 200 ether);
+
+        for (uint256 i = 0; i < 150; i++) {
+            aHandler.rebalanceSingleRight(tick, 1 ether);
+            tick += 10;
+        }
+
+        vm.expectRevert(IOrangeStrykeLPAutomatorV2.MaxTicksReached.selector);
+        aHandler.rebalanceSingleRight(tick, 1 ether);
+    }
+
     function _tickInit(
         int24 tickLower,
         uint256 amount0,

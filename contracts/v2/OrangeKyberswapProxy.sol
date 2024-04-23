@@ -45,10 +45,6 @@ contract OrangeKyberswapProxy is OrangeSwapProxy {
     error DstTokenDoesNotMatch();
     error ReceiverIsNotSender();
 
-    constructor() {
-        owner = msg.sender;
-    }
-
     /**
      * @dev Executes a safe input swap on the KyberSwap platform.
      * @param request The swap request parameters.
@@ -85,11 +81,6 @@ contract OrangeKyberswapProxy is OrangeSwapProxy {
         // approve kyberswap router to spend expectTokenIn
         if (request.expectTokenIn.allowance(address(this), request.provider) == 0) {
             request.expectTokenIn.forceApprove(request.provider, type(uint256).max);
-        }
-
-        // we also need to approve expectTokenOut because in some cases, part of the output may be taken as fee
-        if (request.expectTokenOut.allowance(address(this), request.provider) == 0) {
-            request.expectTokenOut.forceApprove(request.provider, type(uint256).max);
         }
 
         // execute swap
