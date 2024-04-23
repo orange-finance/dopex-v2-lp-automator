@@ -4,20 +4,20 @@ pragma solidity 0.8.19;
 
 /* solhint-disable const-name-snakecase */
 
-import {OrangeStrykeLPAutomatorV1_1} from "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol";
+import {OrangeStrykeLPAutomatorV2} from "../../../contracts/v2/OrangeStrykeLPAutomatorV2.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {Vm} from "forge-std/Vm.sol";
-import {ChainlinkQuoter} from "contracts/ChainlinkQuoter.sol";
-import {IDopexV2PositionManager} from "contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
-import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
-import {IUniswapV3SingleTickLiquidityHandlerV2} from "contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
+import {ChainlinkQuoter} from "../../../contracts/ChainlinkQuoter.sol";
+import {IDopexV2PositionManager} from "../../../contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
+import {IUniswapV3SingleTickLiquidityHandlerV2} from "../../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
+import {IBalancerVault} from "../../../contracts/vendor/balancer/IBalancerVault.sol";
 
 Vm constant vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
 
-contract AutomatorHarness is OrangeStrykeLPAutomatorV1_1 {
+contract OrangeStrykeLPAutomatorV2Harness is OrangeStrykeLPAutomatorV2 {
     function pushActiveTick(int24 tick) external {
         EnumerableSet.add(_activeTicks, uint256(uint24(tick)));
     }
@@ -33,7 +33,7 @@ struct DeployArgs {
     address assetUsdFeed;
     address counterAssetUsdFeed;
     IDopexV2PositionManager manager;
-    ISwapRouter router;
+    IBalancerVault balancer;
     IUniswapV3SingleTickLiquidityHandlerV2 handler;
     address handlerHook;
     IUniswapV3Pool pool;
@@ -42,30 +42,30 @@ struct DeployArgs {
     uint256 depositCap;
 }
 
-function deployAutomatorHarness(DeployArgs memory args) returns (AutomatorHarness harness) {
-    address impl = address(new AutomatorHarness());
+function deployAutomatorHarness(DeployArgs memory args) returns (OrangeStrykeLPAutomatorV2Harness harness) {
+    address impl = address(new OrangeStrykeLPAutomatorV2Harness());
     bytes memory initCall = abi.encodeCall(
-        OrangeStrykeLPAutomatorV1_1.initialize,
-        OrangeStrykeLPAutomatorV1_1.InitArgs({
+        OrangeStrykeLPAutomatorV2.initialize,
+        OrangeStrykeLPAutomatorV2.InitArgs({
             name: args.name,
             symbol: args.symbol,
             admin: args.admin,
             manager: args.manager,
             handler: args.handler,
             handlerHook: args.handlerHook,
-            router: args.router,
             pool: args.pool,
             asset: args.asset,
             quoter: args.quoter,
             assetUsdFeed: args.assetUsdFeed,
             counterAssetUsdFeed: args.counterAssetUsdFeed,
-            minDepositAssets: args.minDepositAssets
+            minDepositAssets: args.minDepositAssets,
+            balancer: args.balancer
         })
     );
 
     address proxy = address(new ERC1967Proxy(impl, initCall));
 
-    harness = AutomatorHarness(proxy);
+    harness = OrangeStrykeLPAutomatorV2Harness(proxy);
 
     vm.startPrank(args.admin);
     harness.setDepositCap(args.depositCap);

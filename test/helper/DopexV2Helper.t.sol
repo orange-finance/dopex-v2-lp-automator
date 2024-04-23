@@ -23,6 +23,10 @@ library DopexV2Helper {
     IUniswapV3SingleTickLiquidityHandlerV2 public constant DOPEX_UNIV3_HANDLER =
         IUniswapV3SingleTickLiquidityHandlerV2(0x29BbF7EbB9C5146c98851e76A5529985E4052116);
 
+    function tokenId(IUniswapV3Pool pool, address hook, int24 tickLower) internal view returns (uint256) {
+        return _tokenId(pool, hook, tickLower);
+    }
+
     function balanceOfHandler(
         address account,
         IUniswapV3Pool pool,
@@ -50,6 +54,28 @@ library DopexV2Helper {
 
         vm.prank(minter);
         DOPEX_V2_POSITION_MANAGER.mintPosition(DOPEX_UNIV3_HANDLER, abi.encode(_params));
+    }
+
+    function burnDopexPosition(
+        IUniswapV3Pool pool,
+        address hook,
+        int24 tickLower,
+        uint128 liquidityToBurn,
+        address burner
+    ) internal {
+        uint128 _shares = DOPEX_UNIV3_HANDLER.convertToShares(liquidityToBurn, _tokenId(pool, hook, tickLower));
+
+        IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams
+            memory _params = IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams({
+                pool: address(pool),
+                hook: hook,
+                tickLower: tickLower,
+                tickUpper: tickLower + pool.tickSpacing(),
+                shares: _shares
+            });
+
+        vm.prank(burner);
+        DOPEX_V2_POSITION_MANAGER.burnPosition(DOPEX_UNIV3_HANDLER, abi.encode(_params));
     }
 
     function useDopexPosition(IUniswapV3Pool pool, address hook, int24 tickLower, uint128 liquidityToUse) internal {
@@ -87,19 +113,17 @@ library DopexV2Helper {
 
     function reserveDopexPosition(
         IUniswapV3Pool pool,
+        address hook,
         int24 lowerTick,
         uint128 liquidityToReserve,
         address sender
     ) internal {
-        uint128 _shares = DOPEX_UNIV3_HANDLER.convertToShares(
-            liquidityToReserve,
-            _tokenId(pool, address(0), lowerTick)
-        );
+        uint128 _shares = DOPEX_UNIV3_HANDLER.convertToShares(liquidityToReserve, _tokenId(pool, hook, lowerTick));
 
         IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams
             memory _params = IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams({
                 pool: address(pool),
-                hook: address(0),
+                hook: hook,
                 tickLower: lowerTick,
                 tickUpper: lowerTick + pool.tickSpacing(),
                 shares: _shares

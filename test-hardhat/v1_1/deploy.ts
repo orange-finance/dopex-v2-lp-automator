@@ -5,11 +5,11 @@ import {
   MockAutomatorV2,
   MockBadAutomatorV2,
   OrangeStrykeLPAutomatorV1_1,
-} from '../typechain-types'
+} from '../../typechain-types'
 import { baseSetupFixture } from './fixture'
-import { ensureForkNetwork } from './utils'
+import { ensureForkNetwork } from '../utils'
 
-describe('Update OrangeStrykeLPAutomatorV1_1', () => {
+describe('OrangeStrykeLPAutomatorV1_1', () => {
   before(async () => {
     ensureForkNetwork()
   })

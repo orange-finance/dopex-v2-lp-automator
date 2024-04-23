@@ -1,2 +1,5 @@
 # ignore existing file
 contracts/OrangeDopexV2LPAutomatorV1.sol
+
+# external contracts
+lib

@@ -7,41 +7,49 @@ pragma solidity 0.8.19;
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import {FullMath} from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
-import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {Multicall} from "@openzeppelin/contracts/utils/Multicall.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-import {IUniswapV3SingleTickLiquidityHandlerV2} from "./vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
-import {IDopexV2PositionManager} from "./vendor/dopexV2/IDopexV2PositionManager.sol";
+import {IUniswapV3SingleTickLiquidityHandlerV2} from "../vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
+import {IDopexV2PositionManager} from "../vendor/dopexV2/IDopexV2PositionManager.sol";
 
-import {ChainlinkQuoter} from "./ChainlinkQuoter.sol";
-import {UniswapV3SingleTickLiquidityLibV2} from "./lib/UniswapV3SingleTickLiquidityLibV2.sol";
-import {OrangeERC20Upgradeable} from "./OrangeERC20Upgradeable.sol";
-import {IERC20Decimals} from "./interfaces/IERC20Extended.sol";
-import {IOrangeStrykeLPAutomatorV1_1} from "./interfaces/IOrangeStrykeLPAutomatorV1_1.sol";
+import {ChainlinkQuoter} from "../ChainlinkQuoter.sol";
+import {UniswapV3SingleTickLiquidityLibV2} from "../lib/UniswapV3SingleTickLiquidityLibV2.sol";
+import {OrangeERC20Upgradeable} from "../OrangeERC20Upgradeable.sol";
+import {IERC20Decimals} from "../interfaces/IERC20Extended.sol";
 
-interface IMulticallProvider {
-    function multicall(bytes[] calldata data) external returns (bytes[] memory results);
-}
+import {IOrangeStrykeLPAutomatorV2} from "./IOrangeStrykeLPAutomatorV2.sol";
+import {IOrangeStrykeLPAutomatorState} from "./../interfaces/IOrangeStrykeLPAutomatorState.sol";
+import {IOrangeSwapProxy} from "./IOrangeSwapProxy.sol";
+
+import {IBalancerVault} from "../vendor/balancer/IBalancerVault.sol";
+import {IBalancerFlashLoanRecipient} from "../vendor/balancer/IBalancerFlashLoanRecipient.sol";
 
 /**
- * @title OrangeStrykeLPAutomatorV1
- * @dev Automate liquidity provision of Stryke CLAMM
+ * @title OrangeStrykeLPAutomatorV2
+ * @dev Automate liquidity provision to Stryke CLAMM
  * @author Orange Finance
  */
-contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgradeable, OrangeERC20Upgradeable {
+contract OrangeStrykeLPAutomatorV2 is
+    IOrangeStrykeLPAutomatorV2,
+    IBalancerFlashLoanRecipient,
+    UUPSUpgradeable,
+    OrangeERC20Upgradeable
+{
     using FullMath for uint256;
     using SafeERC20 for IERC20;
     using SafeCast for uint256;
     using EnumerableSet for EnumerableSet.UintSet;
     using TickMath for int24;
     using UniswapV3SingleTickLiquidityLibV2 for IUniswapV3SingleTickLiquidityHandlerV2;
+    using Address for address;
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                     Vault params
@@ -85,20 +93,38 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
                                                     Uniswap
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
     IUniswapV3Pool public pool;
-    ISwapRouter public router;
+    /// @dev vestigial variable previously used for swapping. keep for upgrade compatibility
+    address public router;
     int24 public poolTickSpacing;
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                    V2 States
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
+    IBalancerVault public balancer;
+    bytes32 private _flashLoanHash;
+    uint256 public swapInputDelta;
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                     Modifiers
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
     modifier onlyOwner() {
-        if (!isOwner[msg.sender]) revert OnlyOwner();
+        if (!isOwner[msg.sender]) revert Unauthorized();
         _;
     }
 
     modifier onlyStrategist() {
-        if (!isStrategist[msg.sender]) revert OnlyOwner();
+        if (!isStrategist[msg.sender]) revert Unauthorized();
+        _;
+    }
+
+    modifier validateFlashLoan(bytes memory userData) {
+        // check if flash loan request is made by this contract
+        bytes32 _givenHash = keccak256(userData);
+        if (_flashLoanHash == bytes32(0) || _flashLoanHash != _givenHash) revert FlashLoan_Unauthorized();
+
+        // clear hash to avoid reentrancy
+        _flashLoanHash = bytes32(0);
         _;
     }
 
@@ -111,6 +137,7 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
         _disableInitializers();
     }
 
+    // @inheritdoc UUPSUpgradeable
     // solhint-disable-next-line no-empty-blocks
     function _authorizeUpgrade(address) internal override onlyOwner {}
 
@@ -133,13 +160,13 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
         IDopexV2PositionManager manager;
         IUniswapV3SingleTickLiquidityHandlerV2 handler;
         address handlerHook;
-        ISwapRouter router;
         IUniswapV3Pool pool;
         IERC20 asset;
         ChainlinkQuoter quoter;
         address assetUsdFeed;
         address counterAssetUsdFeed;
         uint256 minDepositAssets;
+        IBalancerVault balancer;
     }
 
     function initialize(InitArgs memory args) public initializer {
@@ -158,7 +185,6 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
         manager = args.manager;
         handler = args.handler;
         handlerHook = args.handlerHook;
-        router = args.router;
         pool = args.pool;
         asset = args.asset;
         counterAsset = args.pool.token0() == address(args.asset)
@@ -176,47 +202,61 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
 
         minDepositAssets = args.minDepositAssets;
 
-        args.asset.safeIncreaseAllowance(address(args.manager), type(uint256).max);
-        args.asset.safeIncreaseAllowance(address(args.router), type(uint256).max);
+        balancer = args.balancer;
+        swapInputDelta = 10; // initial delta is 10 (allow +-0.1% diff to the input amount)
 
+        args.asset.safeIncreaseAllowance(address(args.manager), type(uint256).max);
         counterAsset.safeIncreaseAllowance(address(args.manager), type(uint256).max);
-        counterAsset.safeIncreaseAllowance(address(args.router), type(uint256).max);
 
         isOwner[args.admin] = true;
+    }
+
+    /// @dev used for upgrade from v1 to v2. This is a one-time operation.
+    function initializeV2(IBalancerVault balancer_) external reinitializer(2) onlyOwner {
+        balancer = balancer_;
+        swapInputDelta = 10; // initial delta is 10 (allow +-0.1% diff to the input amount)
     }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                     ADMIN FUNCTIONS
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
+    /**
+     * @dev Sets the owner of the automator.
+     * @param user The address of the user.
+     * @param approved The approval status of the user.
+     */
     function setOwner(address user, bool approved) external onlyOwner {
         isOwner[user] = approved;
+
+        emit SetOwner(user, approved);
     }
 
+    /**
+     * @dev Sets the strategist of the automator.
+     * @param user The address of the user.
+     * @param approved The approval status of the user.
+     */
     function setStrategist(address user, bool approved) external onlyOwner {
         isStrategist[user] = approved;
+
+        emit SetStrategist(user, approved);
     }
 
     /**
      * @dev Sets the deposit cap for the automator.
      * @param _depositCap The new deposit cap value.
-     * Requirements:
-     * - Caller must have the DEFAULT_ADMIN_ROLE.
      */
     function setDepositCap(uint256 _depositCap) external onlyOwner {
         depositCap = _depositCap;
 
-        emit DepositCapSet(_depositCap);
+        emit SetDepositCap(_depositCap);
     }
 
     /**
      * @dev Sets the deposit fee pips for a recipient.
      * @param recipient The address of the recipient.
      * @param pips The new deposit fee pips value.
-     * Requirements:
-     * - Caller must have the DEFAULT_ADMIN_ROLE.
-     * - Recipient address must not be zero.
-     * - deposit fee pips must not exceed MAX_PERF_FEE_PIPS.
      */
     function setDepositFeePips(address recipient, uint24 pips) external onlyOwner {
         if (recipient == address(0)) revert AddressZero();
@@ -225,7 +265,30 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
         depositFeeRecipient = recipient;
         depositFeePips = pips;
 
-        emit DepositFeePipsSet(pips);
+        emit SetDepositFeePips(pips);
+    }
+
+    /**
+     * @dev Sets the proxy whitelist for the automator.
+     * @param swapProxy The address of the swap proxy.
+     * @param approve The approval status of the swap proxy.
+     */
+    function setProxyWhitelist(address swapProxy, bool approve) external onlyOwner {
+        if (approve) {
+            // check if already approved to avoid reusing allowance by the router
+            if (asset.allowance(address(this), swapProxy) > 0) revert ProxyAlreadyWhitelisted();
+            asset.forceApprove(swapProxy, type(uint256).max);
+            counterAsset.forceApprove(swapProxy, type(uint256).max);
+        } else {
+            asset.forceApprove(swapProxy, 0);
+            counterAsset.forceApprove(swapProxy, 0);
+        }
+
+        emit SetProxyWhitelist(swapProxy, approve);
+    }
+
+    function setSwapInputDelta(uint256 delta) external onlyOwner {
+        swapInputDelta = delta;
     }
 
     function decimals() public view override returns (uint8) {
@@ -236,7 +299,7 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
                                                     VAULT STATE DERIVATION FUNCTIONS
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
-    /// @inheritdoc IOrangeStrykeLPAutomatorV1_1
+    /// @inheritdoc IOrangeStrykeLPAutomatorState
     function totalAssets() public view returns (uint256) {
         // 1. calculate the total assets in Dopex pools
         uint256 _length = _activeTicks.length();
@@ -245,15 +308,17 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
         (int24 _lt, int24 _ut) = (0, 0);
         (uint256 _sum0, uint256 _sum1) = (0, 0);
         (uint256 _a0, uint256 _a1) = (0, 0);
+        (uint256 _fee0, uint256 _fee1) = (0, 0);
 
         (uint160 _sqrtRatioX96, , , , , , ) = pool.slot0();
 
+        // convert all positions and swap fees to assets
         for (uint256 i = 0; i < _length; ) {
             _lt = int24(uint24(_activeTicks.at(i)));
             _ut = _lt + poolTickSpacing;
             _tid = handler.tokenId(address(pool), handlerHook, _lt, _ut);
 
-            _liquidity = handler.convertToAssets((handler.balanceOf(address(this), _tid)).toUint128(), _tid);
+            (_liquidity, , , _fee0, _fee1) = handler.positionDetail(address(this), _tid);
 
             (_a0, _a1) = LiquidityAmounts.getAmountsForLiquidity(
                 _sqrtRatioX96,
@@ -262,8 +327,8 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
                 _liquidity
             );
 
-            _sum0 += _a0;
-            _sum1 += _a1;
+            _sum0 += (_a0 + _fee0);
+            _sum1 += (_a1 + _fee1);
 
             unchecked {
                 i++;
@@ -294,20 +359,20 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
             );
     }
 
-    /// @inheritdoc IOrangeStrykeLPAutomatorV1_1
+    /// @inheritdoc IOrangeStrykeLPAutomatorState
     function convertToShares(uint256 assets) external view returns (uint256) {
         // NOTE: no need to check total supply as it is checked in deposit function.
         return assets.mulDiv(totalSupply(), totalAssets());
     }
 
-    /// @inheritdoc IOrangeStrykeLPAutomatorV1_1
+    /// @inheritdoc IOrangeStrykeLPAutomatorState
     function convertToAssets(uint256 shares) public view returns (uint256) {
         uint256 _supply = totalSupply();
 
         return _supply == 0 ? shares : shares.mulDiv(totalAssets(), _supply);
     }
 
-    /// @inheritdoc IOrangeStrykeLPAutomatorV1_1
+    /// @inheritdoc IOrangeStrykeLPAutomatorState
     function getActiveTicks() external view returns (int24[] memory) {
         uint256[] memory _tempTicks = _activeTicks.values();
         int24[] memory __activeTicks = new int24[](_tempTicks.length);
@@ -323,7 +388,7 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
                                                     USER ACTIONS
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
-    /// @inheritdoc IOrangeStrykeLPAutomatorV1_1
+    /// @inheritdoc IOrangeStrykeLPAutomatorV2
     function deposit(uint256 assets) external returns (uint256 shares) {
         if (assets == 0) revert AmountZero();
         if (assets < minDepositAssets) revert DepositTooSmall();
@@ -379,33 +444,73 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
         uint256 lockedShareIndex;
     }
 
-    /// @inheritdoc IOrangeStrykeLPAutomatorV1_1
+    /// @inheritdoc IOrangeStrykeLPAutomatorV2
     function redeem(
         uint256 shares,
-        uint256 minAssets
-    ) external returns (uint256 assets, LockedDopexShares[] memory lockedDopexShares) {
+        bytes calldata redeemData
+    ) external returns (uint256 assets, LockedDopexShares[] memory lockedShares) {
         if (shares == 0) revert AmountZero();
         if (convertToAssets(shares) == 0) revert SharesTooSmall();
 
-        uint256 _tsBeforeBurn = totalSupply();
+        // cache total supply for precise share calculation
+        uint256 tsBeforeBurn = totalSupply();
 
         // To avoid any reentrancy, we burn the shares first
         _burn(msg.sender, shares);
 
-        uint256 _preBase = counterAsset.balanceOf(address(this));
-        uint256 _preQuote = asset.balanceOf(address(this));
+        // calculate the redeemable assets and counter assets from the vault
+        uint256 initialRedeemableAssets = asset.balanceOf(address(this)).mulDiv(shares, tsBeforeBurn);
+        uint256 initialRedeemableCounterAssets = counterAsset.balanceOf(address(this)).mulDiv(shares, tsBeforeBurn);
+
+        // burn stryke positions, and receive the assets and counter assets.
+        // locked shares are transferred to the user
+        (
+            uint256 assetsReceived,
+            uint256 counterAssetsReceived,
+            LockedDopexShares[] memory lockedSharesSent
+        ) = _burnStrykePositions(shares, tsBeforeBurn);
+
+        lockedShares = lockedSharesSent;
+
+        // execute swap with aggregator via swap proxy
+        // we cannot call swap calldata directly as it can be manipulated by the user
+        uint256 swapIn = initialRedeemableCounterAssets + counterAssetsReceived;
+        if (swapIn > 0) assetsReceived += _swapCounterWithProxy(swapIn, redeemData);
+
+        assets = initialRedeemableAssets + assetsReceived;
+
+        asset.safeTransfer(msg.sender, assets);
+
+        emit Redeem(msg.sender, shares, assets);
+    }
+
+    /**
+     * @dev Burns the stryke positions and returns the assets and counter assets received.
+     * This function is used in redeem function to burn the stryke positions and receive the assets and counter assets.
+     * @param shares The number of shares to burn.
+     * @param totalSupply The total supply of shares before the burn automator shares.
+     */
+    function _burnStrykePositions(
+        uint256 shares,
+        uint256 totalSupply
+    )
+        internal
+        returns (uint256 assetsReceived, uint256 counterAssetsReceived, LockedDopexShares[] memory lockedShares)
+    {
+        uint256 preAssets = asset.balanceOf(address(this));
+        uint256 preCounters = counterAsset.balanceOf(address(this));
 
         RedeemLoopCache memory c;
-        uint256 _length = _activeTicks.length();
+        uint256 ticks = _activeTicks.length();
 
-        LockedDopexShares[] memory _tempShares = new LockedDopexShares[](_length);
+        LockedDopexShares[] memory _tempShares = new LockedDopexShares[](ticks);
 
-        for (uint256 i = 0; i < _length; ) {
+        for (uint256 i = 0; i < ticks; ) {
             c.lowerTick = int24(uint24(_activeTicks.at(i)));
 
             c.tokenId = handler.tokenId(address(pool), handlerHook, c.lowerTick, c.lowerTick + poolTickSpacing);
 
-            (, uint128 _redeemableLiquidity, uint128 _lockedLiquidity) = handler.positionDetail(
+            (, uint128 _redeemableLiquidity, uint128 _lockedLiquidity, , ) = handler.positionDetail(
                 address(this),
                 c.tokenId
             );
@@ -413,9 +518,9 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
             // total supply before burn is used to calculate the precise share
             c.shareRedeemable = uint256(handler.convertToShares(_redeemableLiquidity, c.tokenId)).mulDiv(
                 shares,
-                _tsBeforeBurn
+                totalSupply
             );
-            c.shareLocked = uint256(handler.convertToShares(_lockedLiquidity, c.tokenId)).mulDiv(shares, _tsBeforeBurn);
+            c.shareLocked = uint256(handler.convertToShares(_lockedLiquidity, c.tokenId)).mulDiv(shares, totalSupply);
 
             // locked share is transferred to the user
             if (c.shareLocked > 0) {
@@ -440,31 +545,19 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
         }
 
         // copy to exact size array
-        lockedDopexShares = new LockedDopexShares[](c.lockedShareIndex);
+        lockedShares = new LockedDopexShares[](c.lockedShareIndex);
         for (uint256 i = 0; i < c.lockedShareIndex; ) {
-            lockedDopexShares[i] = _tempShares[i];
+            lockedShares[i] = _tempShares[i];
 
             unchecked {
                 i++;
             }
         }
 
-        /**
-         * 1. shares.mulDiv(_preBase, _totalSupply()) means the portion of idle base asset
-         * 2. counterAsset.balanceOf(address(this)) - _preBase means the base asset from redeemed positions
-         */
-        uint256 _payBase = shares.mulDiv(_preBase, _tsBeforeBurn) + counterAsset.balanceOf(address(this)) - _preBase;
-
-        if (_payBase > 0) _swapToRedeemAssets(_payBase);
-
-        // solhint-disable-next-line reentrancy
-        assets = shares.mulDiv(_preQuote, _tsBeforeBurn) + asset.balanceOf(address(this)) - _preQuote;
-
-        if (assets < minAssets) revert MinAssetsRequired(minAssets, assets);
-
-        asset.safeTransfer(msg.sender, assets);
-
-        emit Redeem(msg.sender, shares, assets);
+        /* solhint-disable reentrancy */
+        assetsReceived = asset.balanceOf(address(this)) - preAssets;
+        counterAssetsReceived = counterAsset.balanceOf(address(this)) - preCounters;
+        /* solhint-enable reentrancy */
     }
 
     function _burnPosition(int24 lowerTick, int24 upperTick, uint128 shares) internal {
@@ -482,19 +575,39 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
         );
     }
 
-    function _swapToRedeemAssets(uint256 counterAssetsIn) internal {
-        router.exactInputSingle(
-            ISwapRouter.ExactInputSingleParams({
-                tokenIn: address(counterAsset),
-                tokenOut: address(asset),
-                fee: pool.fee(),
-                recipient: address(this),
-                deadline: block.timestamp,
-                amountIn: counterAssetsIn,
-                amountOutMinimum: 0,
-                sqrtPriceLimitX96: 0
+    /**
+     * @dev Swaps the counter asset with the aggregator via swap proxy.
+     * Since we use aggregator for swapping, the user must create swap calldata off-chain
+     * and pass it to the redeem function.
+     * To prevent malicious swap by the user, we bypass the swap calldata to the proxy and validate the swap.
+     * @param swapIn The amount of counter asset to swap in.
+     * @param redeemData The redeem data passed by the user from the redeem function.
+     */
+    function _swapCounterWithProxy(uint256 swapIn, bytes memory redeemData) internal returns (uint256 swapOut) {
+        // decode swap proxy and swap provider from redeem data
+        (address _swapProxy, address _swapProvider, bytes memory _swapCalldata) = abi.decode(
+            redeemData,
+            (address, address, bytes)
+        );
+
+        // only allowed proxy can be used
+        if (asset.allowance(address(this), _swapProxy) == 0) revert Unauthorized();
+
+        // swap
+        uint256 _preAssets = asset.balanceOf(address(this));
+
+        IOrangeSwapProxy(_swapProxy).safeInputSwap(
+            IOrangeSwapProxy.SwapInputRequest({
+                provider: _swapProvider,
+                swapCalldata: _swapCalldata,
+                expectTokenIn: counterAsset,
+                expectTokenOut: asset,
+                expectAmountIn: swapIn,
+                inputDelta: swapInputDelta
             })
         );
+
+        swapOut = asset.balanceOf(address(this)) - _preAssets;
     }
 
     /**
@@ -511,163 +624,90 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
                                                     STRATEGIST ACTIONS
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
-    /// @inheritdoc IOrangeStrykeLPAutomatorV1_1
+    /// @inheritdoc IOrangeStrykeLPAutomatorV2
     function rebalance(
-        RebalanceTickInfo[] calldata ticksMint,
-        RebalanceTickInfo[] calldata ticksBurn,
-        RebalanceSwapParams calldata swapParams
+        RebalanceTick[] calldata ticksMint,
+        RebalanceTick[] calldata ticksBurn,
+        address swapProxy,
+        IOrangeSwapProxy.SwapInputRequest calldata swapRequest,
+        bytes calldata flashLoanData
     ) external onlyStrategist {
-        if (ticksMint.length + _activeTicks.length() > _MAX_TICKS) revert MaxTicksReached();
-
+        // prepare the calldata for multicall
         bytes[] memory _burnCalldataBatch = _createBurnCalldataBatch(ticksBurn);
-        // NOTE: burn should be called before mint to receive the assets from the burned position
-        if (_burnCalldataBatch.length > 0) IMulticallProvider(address(manager)).multicall(_burnCalldataBatch);
-
-        // NOTE: after receiving the assets from the burned position, swap should be called to get the assets for mint
-        // ! this should be called before mint. otherwise current tick might be changed and mint will fail
-        _swapBeforeRebalanceMint(swapParams);
-
         bytes[] memory _mintCalldataBatch = _createMintCalldataBatch(ticksMint);
 
-        if (_mintCalldataBatch.length > 0) IMulticallProvider(address(manager)).multicall(_mintCalldataBatch);
+        (IERC20[] memory _tokens, uint256[] memory _amounts, bool _execFlashLoan) = abi.decode(
+            flashLoanData,
+            (IERC20[], uint256[], bool)
+        );
+
+        // if needs the other token, execute flash loan, then _onFlashLoanReceived will call the multicall
+        if (_execFlashLoan) {
+            // prepare flash loan request
+            FlashLoanUserData memory _userData = FlashLoanUserData({
+                swapProxy: swapProxy,
+                swapRequest: swapRequest,
+                mintCalldata: _mintCalldataBatch,
+                burnCalldata: _burnCalldataBatch
+            });
+            _flashLoanHash = keccak256(abi.encode(_userData));
+            balancer.flashLoan(IBalancerFlashLoanRecipient(this), _tokens, _amounts, abi.encode(_userData));
+        }
+        // if not, execute multicall directly
+        else {
+            // burn should be called before mint to receive the assets from the burned position
+            if (_burnCalldataBatch.length > 0) Multicall(address(manager)).multicall(_burnCalldataBatch);
+            if (_mintCalldataBatch.length > 0) Multicall(address(manager)).multicall(_mintCalldataBatch);
+        }
+
+        // finally, check if tick count is not exceeded
+        if (_activeTicks.length() > _MAX_TICKS) revert MaxTicksReached();
 
         emit Rebalance(msg.sender, ticksMint, ticksBurn);
     }
 
-    function _swapBeforeRebalanceMint(RebalanceSwapParams calldata swapParams) internal {
-        if (swapParams.assetsShortage > 0) {
-            router.exactOutputSingle(
-                ISwapRouter.ExactOutputSingleParams({
-                    tokenIn: address(counterAsset),
-                    tokenOut: address(asset),
-                    fee: pool.fee(),
-                    recipient: address(this),
-                    deadline: block.timestamp,
-                    amountOut: swapParams.assetsShortage,
-                    amountInMaximum: swapParams.maxCounterAssetsUseForSwap,
-                    sqrtPriceLimitX96: 0
-                })
-            );
-        }
+    function receiveFlashLoan(
+        IERC20[] memory tokens,
+        uint256[] memory amounts,
+        uint256[] memory feeAmounts,
+        bytes memory userData
+    ) external validateFlashLoan(userData) {
+        if (msg.sender != address(balancer)) revert FlashLoan_Unauthorized();
 
-        if (swapParams.counterAssetsShortage > 0) {
-            router.exactOutputSingle(
-                ISwapRouter.ExactOutputSingleParams({
-                    tokenIn: address(asset),
-                    tokenOut: address(counterAsset),
-                    fee: pool.fee(),
-                    recipient: address(this),
-                    deadline: block.timestamp,
-                    amountOut: swapParams.counterAssetsShortage,
-                    amountInMaximum: swapParams.maxAssetsUseForSwap,
-                    sqrtPriceLimitX96: 0
-                })
-            );
+        FlashLoanUserData memory _ud = abi.decode(userData, (FlashLoanUserData));
+
+        // burn should be called before mint to receive the assets from the burned position
+        if (_ud.burnCalldata.length > 0) Multicall(address(manager)).multicall(_ud.burnCalldata);
+        if (_ud.mintCalldata.length > 0) Multicall(address(manager)).multicall(_ud.mintCalldata);
+
+        // we can directly pass the request as the user data is provided by the trusted strategist
+        IOrangeSwapProxy(_ud.swapProxy).safeInputSwap(_ud.swapRequest);
+
+        // repay flash loan
+        for (uint256 i = 0; i < tokens.length; ) {
+            tokens[i].safeTransfer(msg.sender, amounts[i] + feeAmounts[i]);
+
+            unchecked {
+                i++;
+            }
         }
     }
 
     function _createMintCalldataBatch(
-        RebalanceTickInfo[] calldata ticksMint
+        RebalanceTick[] calldata ticksMint
     ) internal returns (bytes[] memory mintCalldataBatch) {
-        (uint256 _actualMintLen, uint256 ignoreIndex) = _getSafeMintParams(ticksMint);
-        mintCalldataBatch = new bytes[](_actualMintLen);
+        uint256 ticks = ticksMint.length;
+        mintCalldataBatch = new bytes[](ticks);
 
-        int24 _lt;
-        int24 _ut;
-        uint256 _tid;
-        uint256 j;
-        for (uint256 i = 0; i < ticksMint.length; ) {
-            if (i == ignoreIndex) {
-                unchecked {
-                    i++;
-                }
-                continue;
-            }
+        int24 spacing = poolTickSpacing;
 
-            _lt = ticksMint[i].tick;
-            _ut = _lt + poolTickSpacing;
+        int24 lt;
+        int24 ut;
+        for (uint256 i = 0; i < ticks; ) {
+            lt = ticksMint[i].tick;
+            ut = lt + spacing;
 
-            mintCalldataBatch[j] = _createMintCalldata(_lt, _ut, ticksMint[i].liquidity);
-
-            // If the position is not active, push it to the active ticks
-            _tid = handler.tokenId(address(pool), handlerHook, _lt, _ut);
-            if (handler.balanceOf(address(this), _tid) == 0) _activeTicks.add(uint256(uint24(_lt)));
-
-            unchecked {
-                i++;
-                j++;
-            }
-        }
-    }
-
-    // NOTE: skip current tick as it is not allowed to mint on Dopex
-    /**
-     * @dev Returns the length of the ticksMint array after skipping the current tick if it is included.
-     *      Also returns the index of the current tick in the ticksMint array if it is included.
-     *      We need to avoid revert when mint Dopex position in the current tick.
-     *      This should be done on automator because current tick got on caller (this must be off-chain) is different from the current tick got on automator.
-     * @param ticksMint An array of RebalanceTickInfo structs representing the ticks to mint.
-     */
-    function _getSafeMintParams(
-        RebalanceTickInfo[] calldata ticksMint
-    ) internal view returns (uint256 mintLength, uint256 ignoreIndex) {
-        uint256 _providedLength = ticksMint.length;
-        mintLength = _providedLength;
-
-        (, int24 _ct, , , , , ) = pool.slot0();
-        int24 _spacing = poolTickSpacing;
-
-        // current lower tick is calculated by rounding down the current tick to the nearest tick spacing
-        // if current tick is negative and not divisible by tick spacing, we need to subtract one tick spacing to get the correct lower tick
-        int24 _currentLt = _ct < 0 && _ct % _spacing != 0
-            ? (_ct / _spacing - 1) * _spacing
-            : (_ct / _spacing) * _spacing;
-
-        for (uint256 i = 0; i < _providedLength; ) {
-            if (ticksMint[i].tick == _currentLt) {
-                unchecked {
-                    mintLength--;
-                    ignoreIndex = i;
-                    break;
-                }
-            }
-            unchecked {
-                i++;
-            }
-        }
-
-        if (mintLength == _providedLength) ignoreIndex = type(uint256).max;
-    }
-
-    function _createBurnCalldataBatch(
-        RebalanceTickInfo[] calldata ticksBurn
-    ) internal returns (bytes[] memory burnCalldataBatch) {
-        int24 _lt;
-        int24 _ut;
-        uint256 _tid;
-        uint256 _shares;
-        uint256 _burnLength = ticksBurn.length;
-        burnCalldataBatch = new bytes[](_burnLength);
-        for (uint256 i = 0; i < _burnLength; ) {
-            _lt = ticksBurn[i].tick;
-            _ut = _lt + poolTickSpacing;
-
-            _tid = _tid = handler.tokenId(address(pool), handlerHook, _lt, _ut);
-            _shares = handler.convertToShares(ticksBurn[i].liquidity, _tid);
-            burnCalldataBatch[i] = _createBurnCalldata(_lt, _ut, _shares.toUint128());
-
-            // if all shares will be burned, pop the active tick
-            if (handler.balanceOf(address(this), _tid) - _shares == 0) _activeTicks.remove(uint256(uint24(_lt)));
-
-            unchecked {
-                i++;
-            }
-        }
-    }
-
-    function _createMintCalldata(int24 lt, int24 ut, uint128 liq) internal view returns (bytes memory) {
-        return
-            abi.encodeWithSelector(
+            mintCalldataBatch[i] = abi.encodeWithSelector(
                 IDopexV2PositionManager.mintPosition.selector,
                 handler,
                 abi.encode(
@@ -676,15 +716,38 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
                         hook: handlerHook,
                         tickLower: lt,
                         tickUpper: ut,
-                        liquidity: liq
+                        liquidity: ticksMint[i].liquidity
                     })
                 )
             );
+
+            // If the position is not active, push it to the active ticks
+            if (handler.balanceOf(address(this), handler.tokenId(address(pool), handlerHook, lt, ut)) == 0)
+                _activeTicks.add(uint256(uint24(lt)));
+
+            unchecked {
+                i++;
+            }
+        }
     }
 
-    function _createBurnCalldata(int24 lt, int24 ut, uint128 shares) internal view returns (bytes memory) {
-        return
-            abi.encodeWithSelector(
+    function _createBurnCalldataBatch(
+        RebalanceTick[] calldata ticksBurn
+    ) internal returns (bytes[] memory burnCalldataBatch) {
+        int24 spacing = poolTickSpacing;
+        int24 lt;
+        int24 ut;
+        uint256 tid;
+        uint256 shares;
+        uint256 burnLength = ticksBurn.length;
+        burnCalldataBatch = new bytes[](burnLength);
+        for (uint256 i = 0; i < burnLength; ) {
+            lt = ticksBurn[i].tick;
+            ut = lt + spacing;
+
+            tid = handler.tokenId(address(pool), handlerHook, lt, ut);
+            shares = handler.convertToShares(ticksBurn[i].liquidity, tid);
+            burnCalldataBatch[i] = abi.encodeWithSelector(
                 IDopexV2PositionManager.burnPosition.selector,
                 handler,
                 abi.encode(
@@ -693,9 +756,17 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
                         hook: handlerHook,
                         tickLower: lt,
                         tickUpper: ut,
-                        shares: shares
+                        shares: shares.toUint128()
                     })
                 )
             );
+
+            // if all shares will be burned, pop the active tick
+            if (handler.balanceOf(address(this), tid) - shares == 0) _activeTicks.remove(uint256(uint24(lt)));
+
+            unchecked {
+                i++;
+            }
+        }
     }
 }

@@ -11,15 +11,16 @@ import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRoute
 import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
 
-import {ERC1967Proxy} from "@openzeppelin/contracts//proxy/ERC1967/ERC1967Proxy.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-import {IDopexV2PositionManager} from "../../contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
-import {IUniswapV3SingleTickLiquidityHandlerV2} from "../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
+import {IDopexV2PositionManager} from "contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
+import {IUniswapV3SingleTickLiquidityHandlerV2} from "contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 
-import {OrangeStrykeLPAutomatorV1_1} from "./../../contracts/OrangeStrykeLPAutomatorV1_1.sol";
-import {IOrangeStrykeLPAutomatorV1_1} from "./../../contracts/interfaces/IOrangeStrykeLPAutomatorV1_1.sol";
+import {OrangeStrykeLPAutomatorV1_1} from "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol";
+import {IOrangeStrykeLPAutomatorV1_1} from "contracts/v1_1/IOrangeStrykeLPAutomatorV1_1.sol";
+import {IOrangeStrykeLPAutomatorState} from "contracts/interfaces/IOrangeStrykeLPAutomatorState.sol";
 
-import {ChainlinkQuoter} from "../../contracts/ChainlinkQuoter.sol";
+import {ChainlinkQuoter} from "contracts/ChainlinkQuoter.sol";
 
 import {Vm} from "forge-std/Test.sol";
 
@@ -85,33 +86,33 @@ library auto11 {
     }
 
     function rebalanceMintSingle(IOrangeStrykeLPAutomatorV1_1 automator, int24 lowerTick, uint128 liquidity) internal {
-        IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[]
-            memory _ticksMint = new IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[](1);
-        _ticksMint[0] = IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo({tick: lowerTick, liquidity: liquidity});
+        IOrangeStrykeLPAutomatorState.RebalanceTickInfo[]
+            memory _ticksMint = new IOrangeStrykeLPAutomatorState.RebalanceTickInfo[](1);
+        _ticksMint[0] = IOrangeStrykeLPAutomatorState.RebalanceTickInfo({tick: lowerTick, liquidity: liquidity});
         automator.rebalance(
             _ticksMint,
-            new IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[](0),
+            new IOrangeStrykeLPAutomatorState.RebalanceTickInfo[](0),
             IOrangeStrykeLPAutomatorV1_1.RebalanceSwapParams(0, 0, 0, 0)
         );
     }
 
     function rebalanceMint(
         IOrangeStrykeLPAutomatorV1_1 automator,
-        IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[] memory ticksMint
+        IOrangeStrykeLPAutomatorState.RebalanceTickInfo[] memory ticksMint
     ) internal {
         automator.rebalance(
             ticksMint,
-            new IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[](0),
+            new IOrangeStrykeLPAutomatorState.RebalanceTickInfo[](0),
             IOrangeStrykeLPAutomatorV1_1.RebalanceSwapParams(0, 0, 0, 0)
         );
     }
 
     function rebalanceMintWithSwap(
         IOrangeStrykeLPAutomatorV1_1 automator,
-        IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[] memory ticksMint,
+        IOrangeStrykeLPAutomatorState.RebalanceTickInfo[] memory ticksMint,
         IOrangeStrykeLPAutomatorV1_1.RebalanceSwapParams memory swapParams
     ) internal {
-        automator.rebalance(ticksMint, new IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[](0), swapParams);
+        automator.rebalance(ticksMint, new IOrangeStrykeLPAutomatorState.RebalanceTickInfo[](0), swapParams);
     }
 
     function calculateRebalanceSwapParamsInRebalance(
@@ -119,8 +120,8 @@ library auto11 {
         IUniswapV3Pool pool,
         IERC20 asset,
         IERC20 counterAsset,
-        IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[] memory ticksMint,
-        IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[] memory ticksBurn
+        IOrangeStrykeLPAutomatorState.RebalanceTickInfo[] memory ticksMint,
+        IOrangeStrykeLPAutomatorState.RebalanceTickInfo[] memory ticksBurn
     ) public view returns (IOrangeStrykeLPAutomatorV1_1.RebalanceSwapParams memory) {
         uint256 _mintAssets;
         uint256 _mintCAssets;
@@ -169,7 +170,7 @@ library auto11 {
 
     function estimateTotalTokensFromPositions(
         IUniswapV3Pool pool,
-        IOrangeStrykeLPAutomatorV1_1.RebalanceTickInfo[] memory positions
+        IOrangeStrykeLPAutomatorState.RebalanceTickInfo[] memory positions
     ) internal view returns (uint256 totalAmount0, uint256 totalAmount1) {
         uint256 _a0;
         uint256 _a1;

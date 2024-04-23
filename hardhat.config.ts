@@ -2,23 +2,41 @@ import { HardhatUserConfig, subtask } from 'hardhat/config'
 import '@nomicfoundation/hardhat-toolbox'
 import '@nomicfoundation/hardhat-foundry'
 import '@openzeppelin/hardhat-upgrades'
-import dotenv from 'dotenv'
+import 'dotenv/config'
 import path from 'path'
 import glob from 'glob'
 import { TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS } from 'hardhat/builtin-tasks/task-names'
 
-dotenv.config()
-
 const { ARB_RPC_URL, DEV_ACCOUNT } = process.env
 
-const config: HardhatUserConfig = {
-  solidity: {
-    version: '0.8.19',
+function viaIR(version: string, runs: number) {
+  return {
+    version,
     settings: {
       optimizer: {
         enabled: true,
-        runs: 200,
+        runs,
       },
+      viaIR: true,
+    },
+  }
+}
+
+const config: HardhatUserConfig = {
+  solidity: {
+    compilers: [
+      {
+        version: '0.8.19',
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
+      },
+    ],
+    overrides: {
+      'contracts/v2/OrangeStrykeLPAutomatorV2.sol': viaIR('0.8.19', 200),
     },
   },
   networks: {
