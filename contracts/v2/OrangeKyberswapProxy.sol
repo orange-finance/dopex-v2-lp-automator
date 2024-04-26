@@ -17,6 +17,10 @@ contract OrangeKyberswapProxy is OrangeSwapProxy {
     using Address for address;
     using SafeERC20 for IERC20;
 
+    bytes4 private constant SWAP_SELECTOR = 0xe21fd0e9;
+    bytes4 private constant SWAP_GENERIC_SELECTOR = 0x59e50fed;
+    bytes4 private constant SWAP_SIMPLE_MODE_SELECTOR = 0x8af033fb;
+
     struct SwapDescriptionV2 {
         IERC20 srcToken;
         IERC20 dstToken;
@@ -56,27 +60,38 @@ contract OrangeKyberswapProxy is OrangeSwapProxy {
         // extract swap params
         (bytes4 selector, bytes memory args) = Decoder.calldataDecode(request.swapCalldata);
 
-        // check if the selector is supported
-        if (selector != 0xe21fd0e9) revert UnsupportedSelector();
+        SwapDescriptionV2 memory desc;
 
-        // decode as SwapExecutionParams layout
-        SwapExecutionParams memory params = abi.decode(args, (SwapExecutionParams));
+        // Kyberswap MetaAggregationRouterV2 has 3 different functions for swapping
+        // 1. swap
+        // 2. swapGeneric
+        // 3. swapSimpleMode
+        // so need to decode swap params based on the selector
+        if (selector == SWAP_SELECTOR || selector == SWAP_GENERIC_SELECTOR) {
+            // both SWAP_SELECTOR and SWAP_GENERIC_SELECTOR have the same layout
+            SwapExecutionParams memory params = abi.decode(args, (SwapExecutionParams));
+            desc = params.desc;
+        } else if (selector == SWAP_SIMPLE_MODE_SELECTOR) {
+            (, desc, , ) = abi.decode(args, (address, SwapDescriptionV2, bytes, bytes));
+        } else {
+            revert UnsupportedSelector();
+        }
 
         // check if the token addresses match
-        if (params.desc.srcToken != request.expectTokenIn) revert SrcTokenDoesNotMatch();
-        if (params.desc.dstToken != request.expectTokenOut) revert DstTokenDoesNotMatch();
+        if (desc.srcToken != request.expectTokenIn) revert SrcTokenDoesNotMatch();
+        if (desc.dstToken != request.expectTokenOut) revert DstTokenDoesNotMatch();
 
         // check if the destination receiver is match
-        if (params.desc.dstReceiver != msg.sender) revert ReceiverIsNotSender();
+        if (desc.dstReceiver != msg.sender) revert ReceiverIsNotSender();
 
         // check if the amount is within the expected range
         uint256 swapDelta = deltaScale + request.inputDelta;
         uint256 _min = FullMath.mulDiv(request.expectAmountIn * 1e18, deltaScale, swapDelta);
         uint256 _max = FullMath.mulDiv(request.expectAmountIn * 1e18, swapDelta, deltaScale);
-        if (params.desc.amount * 1e18 < _min || params.desc.amount * 1e18 > _max) revert OutOfDelta();
+        if (desc.amount * 1e18 < _min || desc.amount * 1e18 > _max) revert OutOfDelta();
 
         // receive expectTokenIn from msg.sender
-        IERC20(request.expectTokenIn).safeTransferFrom(msg.sender, address(this), params.desc.amount);
+        IERC20(request.expectTokenIn).safeTransferFrom(msg.sender, address(this), desc.amount);
 
         // approve kyberswap router to spend expectTokenIn
         if (request.expectTokenIn.allowance(address(this), request.provider) == 0) {
