@@ -60,4 +60,12 @@ interface IUniswapV3SingleTickLiquidityHandlerV2 is IERC6909, IHandler {
     function lockedBlockDuration() external view returns (uint64);
 
     function paused() external view returns (bool);
+
+    function reserveLiquidity(bytes calldata reserveLiquidityParam) external;
+
+    function withdrawReserveLiquidity(bytes calldata reserveLiquidityParam) external;
+
+    function whitelistedApps(address app) external view returns (bool);
+
+    function updateWhitelistedApps(address app, bool whitelisted) external;
 }

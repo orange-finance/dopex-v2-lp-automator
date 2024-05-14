@@ -12,6 +12,7 @@
     "IERC",
     "inheritdoc",
     "Initializable",
+    "iszero",
     "keccak",
     "kyberswap",
     "liquidization",
