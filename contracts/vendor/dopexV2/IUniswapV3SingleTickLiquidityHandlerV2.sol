@@ -51,6 +51,14 @@ interface IUniswapV3SingleTickLiquidityHandlerV2 is IERC6909, IHandler {
         uint128 liquidityToUse;
     }
 
+    struct UnusePositionParams {
+        address pool;
+        address hook;
+        int24 tickLower;
+        int24 tickUpper;
+        uint128 liquidityToUnuse;
+    }
+
     function tokenIds(uint256) external view returns (TokenIdInfo memory);
 
     function convertToShares(uint128 liquidity, uint256 tokenId) external view returns (uint128 shares);
@@ -68,4 +76,11 @@ interface IUniswapV3SingleTickLiquidityHandlerV2 is IERC6909, IHandler {
     function whitelistedApps(address app) external view returns (bool);
 
     function updateWhitelistedApps(address app, bool whitelisted) external;
+
+    function reservedLiquidityPerUser(
+        uint256 tokenId,
+        address user
+    ) external view returns (ReserveLiquidityData memory);
+
+    function reserveCooldown() external returns (uint64);
 }

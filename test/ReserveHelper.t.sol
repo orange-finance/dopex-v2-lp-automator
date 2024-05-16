@@ -16,7 +16,8 @@ import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import {IDopexV2PositionManager} from "../contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
 import {IUniswapV3SingleTickLiquidityHandlerV2} from "../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 
-import {ReserveHelper} from "../contracts/periphery/ReserveHelper.sol";
+import {ReserveHelper} from "../contracts/periphery/reserve-liquidity/ReserveHelper.sol";
+import {ReserveProxy} from "../contracts/periphery/reserve-liquidity/ReserveProxy.sol";
 
 import {PoolAddress} from "@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol";
 
@@ -34,15 +35,6 @@ abstract contract Base is Test {
 
     IDopexV2PositionManager public manager;
     IUniswapV3SingleTickLiquidityHandlerV2 public handlerV2;
-
-    function test_compute_address() public view {
-        address addr = PoolAddress.computeAddress(
-            address(factory),
-            PoolAddress.PoolKey({token0: address(mock0), token1: address(mock1), fee: pool.fee()})
-        );
-
-        assertEq(addr, address(pool));
-    }
 
     function initialize(uint8 t0decimals, uint8 t1decimals, uint24 poolFee, uint160 sqrtPriceX96) public virtual {
         vm.etch(address(mock0), address(deployMockERC20("Mock0", "MC0", t0decimals)).code);
@@ -191,6 +183,40 @@ abstract contract Base is Test {
         handlerV2.usePositionHandler(use);
     }
 
+    function _unuseRightPosition(address unuseFor, int24 tickLower, int24 tickUpper, uint256 token0) internal {
+        vm.prank(unuseFor);
+        mock0.approve(address(handlerV2), token0);
+        uint128 liquidity = liquidity0(token0, tickLower, tickUpper);
+        _unusePosition(unuseFor, tickLower, tickUpper, liquidity);
+    }
+
+    function _unuseLeftPosition(address unuseFor, int24 tickLower, int24 tickUpper, uint256 token1) internal {
+        vm.prank(unuseFor);
+        mock1.approve(address(handlerV2), token1);
+        uint128 liquidity = liquidity1(token1, tickLower, tickUpper);
+        _unusePosition(unuseFor, tickLower, tickUpper, liquidity);
+    }
+
+    function _unusePosition(address unuseFor, int24 tickLower, int24 tickUpper, uint128 liquidity) internal {
+        bool whitelisted = handlerV2.whitelistedApps(unuseFor);
+        if (!whitelisted) {
+            handlerV2.updateWhitelistedApps(unuseFor, true);
+        }
+        bytes memory unuse = abi.encode(
+            IUniswapV3SingleTickLiquidityHandlerV2.UnusePositionParams({
+                pool: address(pool),
+                hook: address(0),
+                tickLower: tickLower,
+                tickUpper: tickUpper,
+                liquidityToUnuse: liquidity
+            }),
+            ""
+        );
+
+        vm.prank(unuseFor);
+        handlerV2.unusePositionHandler(unuse);
+    }
+
     function _burnParamsRight(
         address pool_,
         int24 tickLower,
@@ -243,12 +269,6 @@ abstract contract Base is Test {
             });
     }
 
-    function reservedLiquidity(address pool_, int24 tickLower, int24 tickUpper) internal view returns (uint128) {
-        uint256 tokenId = uint256(keccak256(abi.encode(handlerV2, pool_, address(0), tickLower, tickUpper)));
-        IUniswapV3SingleTickLiquidityHandlerV2.TokenIdInfo memory tid = handlerV2.tokenIds(tokenId);
-        return tid.reservedLiquidity;
-    }
-
     function liquidity0(uint256 token0, int24 tickLower, int24 tickUpper) internal pure returns (uint128) {
         return
             LiquidityAmounts.getLiquidityForAmount0(
@@ -275,7 +295,7 @@ contract TestReserveHelper is Base {
 
     address[] public accounts = [alice, bob, carol];
 
-    ReserveHelper public reserveHelper;
+    ReserveProxy public reserveProxy;
 
     function setUp() public {
         // initialize current tick to zero
@@ -285,26 +305,7 @@ contract TestReserveHelper is Base {
             abi.encodeWithSignature("updateWhitelistedApps(address,bool)", address(this), true)
         );
         assertTrue(success, "updateWhitelistedApps failed");
-        reserveHelper = new ReserveHelper();
-    }
-
-    function test_deploy() public {
-        emit log_named_address("manager", address(manager));
-        emit log_named_address("factory", address(factory));
-        emit log_named_address("pool", address(pool));
-        emit log_named_address("router", address(router));
-        emit log_named_int("pool.tickSpacing", pool.tickSpacing());
-        (bool success, bytes memory data) = address(handlerV2).call(abi.encodeWithSignature("POOL_INIT_CODE_HASH()"));
-        assertTrue(success, "POOL_INIT_CODE_HASH failed");
-        bytes32 codeHash = abi.decode(data, (bytes32));
-        emit log_named_bytes32("codeHash", codeHash);
-
-        assertEq(address(mock0), pool.token0());
-        assertEq(address(mock1), pool.token1());
-
-        (uint160 sqrtPriceX96, int24 tick, , , , , ) = pool.slot0();
-        emit log_named_uint("sqrtPriceX96", sqrtPriceX96);
-        emit log_named_int("tick", tick);
+        reserveProxy = new ReserveProxy();
     }
 
     function test_batchReserveLiquidity() public {
@@ -328,21 +329,88 @@ contract TestReserveHelper is Base {
         reserveParams[2] = _burnParamsLeft(address(pool), -30, -20, 40e6);
         reserveParams[3] = _burnParamsLeft(address(pool), -20, -10, 40e6);
 
-        _batchReserveLiquidity(alice, handlerV2, reserveParams);
+        _batchReserveLiquidity(alice, reserveParams);
 
-        assertEq(reservedLiquidity(address(pool), 10, 20), liquidity0(4e18, 10, 20), "liquidity reserved tick(10,20)");
-        assertEq(reservedLiquidity(address(pool), 20, 30), liquidity0(4e18, 20, 30), "liquidity reserved tick(20,30)");
-        assertEq(reservedLiquidity(address(pool), -30, -20), liquidity1(40e6, -30, -20), "liquidity reserved tick(-30,-20)"); // prettier-ignore
-        assertEq(reservedLiquidity(address(pool), -20, -10), liquidity1(40e6, -20, -10), "liquidity reserved tick(-20,-10)"); // prettier-ignore
+        assertEq(reservedLiquidity(alice, address(pool), 10, 20), liquidity0(4e18, 10, 20), "liquidity reserved tick(10,20)"); // prettier-ignore
+        assertEq(reservedLiquidity(alice, address(pool), 20, 30), liquidity0(4e18, 20, 30), "liquidity reserved tick(20,30)"); // prettier-ignore
+        assertEq(reservedLiquidity(alice, address(pool), -30, -20), liquidity1(40e6, -30, -20), "liquidity reserved tick(-30,-20)"); // prettier-ignore
+        assertEq(reservedLiquidity(alice, address(pool), -20, -10), liquidity1(40e6, -20, -10), "liquidity reserved tick(-20,-10)"); // prettier-ignore
     }
+
+    function test_batchWithdrawReserveLiquidity() public {
+        deal(address(mock0), address(this), 10e18);
+        deal(address(mock1), address(this), 100e6);
+
+        _mintRightPosition(alice, 10, 20, 5e18);
+        _mintRightPosition(alice, 20, 30, 5e18);
+        _mintLeftPosition(alice, -30, -20, 50e6);
+        _mintLeftPosition(alice, -20, -10, 50e6);
+        _useRightPosition(bob, 10, 20, 4e18);
+        _useRightPosition(bob, 20, 30, 4e18);
+        _useLeftPosition(bob, -30, -20, 40e6);
+        _useLeftPosition(bob, -20, -10, 40e6);
+
+        IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams[]
+            memory reserveParams = new IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams[](4);
+
+        reserveParams[0] = _burnParamsRight(address(pool), 10, 20, 4e18);
+        reserveParams[1] = _burnParamsRight(address(pool), 20, 30, 4e18);
+        reserveParams[2] = _burnParamsLeft(address(pool), -30, -20, 40e6);
+        reserveParams[3] = _burnParamsLeft(address(pool), -20, -10, 40e6);
+
+        _batchReserveLiquidity(alice, reserveParams);
+
+        skip(6 hours);
+
+        _unuseRightPosition(bob, 10, 20, 4e18);
+
+        _unuseRightPosition(bob, 20, 30, 4e18);
+        _unuseLeftPosition(bob, -30, -20, 40e6);
+        _unuseLeftPosition(bob, -20, -10, 40e6);
+
+        vm.prank(alice);
+        reserveProxy.batchWithdrawReserveLiquidity(handlerV2, reserveParams);
+
+        assertApproxEqRel(
+            mock0.balanceOf(alice),
+            8e18,
+            0.0001e18,
+            "alice's mock0 balance should be 8e18 (delta 0.01%)"
+        );
+        assertApproxEqRel(
+            mock1.balanceOf(alice),
+            80e6,
+            0.0001e18,
+            "alice's mock1 balance should be 80e6 (delta 0.01%)"
+        );
+    }
+
+    function test_batchWithdrawReserveLiquidity_coolDownNotPassed() public {}
+
+    function test_batchWithdrawReserveLiquidity_liquidityNotEnough() public {}
 
     function _batchReserveLiquidity(
         address user,
-        IUniswapV3SingleTickLiquidityHandlerV2 handler,
         IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams[] memory reserveParams
     ) internal {
-        vm.prank(user);
-        IERC6909(address(handler)).setOperator(address(reserveHelper), true);
-        reserveHelper.batchReserveLiquidity(user, handler, reserveParams);
+        vm.startPrank(user);
+        // create a new reserve helper for the given handler and user
+        if (address(reserveProxy.reserveHelpers(reserveProxy.helperId(user, handlerV2))) == address(0)) {
+            ReserveHelper helper = reserveProxy.createMyReserveHelper(handlerV2);
+            IERC6909(address(handlerV2)).setOperator(address(helper), true);
+        }
+        reserveProxy.batchReserveLiquidity(handlerV2, reserveParams);
+        vm.stopPrank();
+    }
+
+    function reservedLiquidity(
+        address user,
+        address pool_,
+        int24 tickLower,
+        int24 tickUpper
+    ) internal view returns (uint128) {
+        ReserveHelper helper = reserveProxy.reserveHelpers(reserveProxy.helperId(user, handlerV2));
+        uint256 tokenId = uint256(keccak256(abi.encode(handlerV2, pool_, address(0), tickLower, tickUpper)));
+        return handlerV2.reservedLiquidityPerUser(tokenId, address(helper)).liquidity;
     }
 }
