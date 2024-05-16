@@ -21,7 +21,3 @@
 	path = lib/v3-periphery
 	url = https://github.com/Uniswap/v3-periphery
 	branch = 0.8
-[submodule "lib/solmate"]
-	path = lib/solmate
-	url = https://github.com/transmissions11/solmate
-	branch = b5c9aedc24577ede91d8974323ac7a9d7f88ecbd

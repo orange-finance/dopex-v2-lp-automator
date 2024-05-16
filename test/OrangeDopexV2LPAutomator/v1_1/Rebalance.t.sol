@@ -3,7 +3,6 @@
 pragma solidity 0.8.19;
 
 import {WETH_USDC_Fixture} from "./fixture/WETH_USDC_Fixture.t.sol";
-import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {IOrangeStrykeLPAutomatorV1_1} from "contracts/v1_1/IOrangeStrykeLPAutomatorV1_1.sol";
 import {IOrangeStrykeLPAutomatorState} from "./../../../contracts/interfaces/IOrangeStrykeLPAutomatorState.sol";
 import {ChainlinkQuoter} from "./../../../contracts/ChainlinkQuoter.sol";
@@ -17,7 +16,6 @@ import {IUniswapV3SingleTickLiquidityHandlerV2} from "./../../../contracts/vendo
 
 /* solhint-disable func-name-mixedcase, contract-name-camelcase */
 contract TestOrangeStrykeLPAutomatorV1_1Rebalance is WETH_USDC_Fixture, DealExtension {
-    using FixedPointMathLib for uint256;
     using UniswapV3Helper for IUniswapV3Pool;
     using DopexV2Helper for IUniswapV3Pool;
 
