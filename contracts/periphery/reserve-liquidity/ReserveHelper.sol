@@ -114,7 +114,6 @@ contract ReserveHelper is IReserveHelper {
         return reserveLiquidityParams;
     }
 
-    // FIXME: calculate liquidity to reserve in the function
     function batchWithdrawReservedLiquidity(
         IUniswapV3SingleTickLiquidityHandlerV2 handler,
         IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams[] calldata reservePositions
@@ -124,11 +123,14 @@ contract ReserveHelper is IReserveHelper {
 
         BatchWithdrawCache memory cache;
 
+        uint256 withdrawable;
+
         for (uint256 i = 0; i < len; ) {
             cache.request = reservePositions[i];
 
             // condition has not met, skip
-            if (!_checkWithdrawable(handler, cache.request)) {
+            withdrawable = _withdrawableLiquidity(handler, cache.request);
+            if (withdrawable == 0) {
                 unchecked {
                     i++;
                 }
@@ -173,10 +175,10 @@ contract ReserveHelper is IReserveHelper {
         }
     }
 
-    function _checkWithdrawable(
+    function _withdrawableLiquidity(
         IUniswapV3SingleTickLiquidityHandlerV2 handler,
         IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams memory reservePosition
-    ) internal returns (bool withdrawable) {
+    ) internal returns (uint256 withdrawable) {
         IUniswapV3SingleTickLiquidityHandlerV2.ReserveLiquidityData memory rld = handler.reservedLiquidityPerUser(
             handler.tokenId(
                 reservePosition.pool,
@@ -196,12 +198,13 @@ contract ReserveHelper is IReserveHelper {
             )
         );
 
-        // condition 1: reserve cooldown has passed
-        if (rld.lastReserve + handler.reserveCooldown() > block.timestamp) return false;
+        // if reserve cooldown has not passed. no withdrawable liquidity exists
+        if (rld.lastReserve + handler.reserveCooldown() > block.timestamp) return 0;
 
-        // condition 2: handler has enough liquidity to withdraw
-        if ((tki.totalLiquidity + tki.reservedLiquidity - tki.liquidityUsed) < reservePosition.shares) return false;
+        // if free liquidity of handler is not enough, return only available liquidity
+        uint256 free = tki.totalLiquidity + tki.reservedLiquidity - tki.liquidityUsed;
+        if (free < reservePosition.shares) return free;
 
-        return true;
+        return reservePosition.shares;
     }
 }
