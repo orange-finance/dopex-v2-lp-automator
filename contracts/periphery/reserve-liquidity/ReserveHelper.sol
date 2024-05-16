@@ -62,7 +62,7 @@ contract ReserveHelper is IReserveHelper {
             _userReservedTokenIds[_user].length()
         );
 
-        for (uint256 i = 0; i < positions.length; ) {
+        for (uint256 i; i < positions.length; ) {
             positions[i] = userReservedPositions[_user][_userReservedTokenIds[_user].at(i)];
             unchecked {
                 i++;
@@ -80,7 +80,7 @@ contract ReserveHelper is IReserveHelper {
     {
         uint256 len = reserveLiquidityParams.length;
 
-        for (uint256 i = 0; i < len; ) {
+        for (uint256 i; i < len; ) {
             IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams memory request = reserveLiquidityParams[i];
             uint256 tokenId = handler.tokenId(request.pool, request.hook, request.tickLower, request.tickUpper);
 
@@ -125,7 +125,7 @@ contract ReserveHelper is IReserveHelper {
 
         uint256 withdrawable;
 
-        for (uint256 i = 0; i < len; ) {
+        for (uint256 i; i < len; ) {
             cache.request = reservePositions[i];
 
             // condition has not met, skip
