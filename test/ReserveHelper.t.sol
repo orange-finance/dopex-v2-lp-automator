@@ -371,17 +371,23 @@ contract TestReserveHelper is Base {
     }
 
     function test_batchWithdrawReserveLiquidity() public {
-        deal(address(mock0), address(this), 10e18);
-        deal(address(mock1), address(this), 100e6);
+        deal(address(mock0), address(this), 20e18);
+        deal(address(mock1), address(this), 200e6);
+
+        // first minter receive 1 less shares
+        _mintRightPosition(carol, 10, 20, 5e18);
+        _mintRightPosition(carol, 20, 30, 5e18);
+        _mintLeftPosition(carol, -30, -20, 50e6);
+        _mintLeftPosition(carol, -20, -10, 50e6);
 
         _mintRightPosition(alice, 10, 20, 5e18);
         _mintRightPosition(alice, 20, 30, 5e18);
         _mintLeftPosition(alice, -30, -20, 50e6);
         _mintLeftPosition(alice, -20, -10, 50e6);
-        _useRightPosition(bob, 10, 20, 4e18);
-        _useRightPosition(bob, 20, 30, 4e18);
-        _useLeftPosition(bob, -30, -20, 40e6);
-        _useLeftPosition(bob, -20, -10, 40e6);
+        _useRightPosition(bob, 10, 20, 9.9e18);
+        _useRightPosition(bob, 20, 30, 9.9e18);
+        _useLeftPosition(bob, -30, -20, 99e6);
+        _useLeftPosition(bob, -20, -10, 99e6);
 
         ReserveHelper.ReserveRequest[] memory reserveRequest = new ReserveHelper.ReserveRequest[](4);
 
@@ -394,27 +400,24 @@ contract TestReserveHelper is Base {
 
         skip(6 hours);
 
-        _unuseRightPosition(bob, 10, 20, 4e18);
+        _unuseRightPosition(bob, 10, 20, 9.9e18);
+        _unuseRightPosition(bob, 20, 30, 9.9e18);
+        _unuseLeftPosition(bob, -30, -20, 99e6);
+        _unuseLeftPosition(bob, -20, -10, 99e6);
 
-        _unuseRightPosition(bob, 20, 30, 4e18);
-        _unuseLeftPosition(bob, -30, -20, 40e6);
-        _unuseLeftPosition(bob, -20, -10, 40e6);
-
-        vm.prank(alice);
-        reserveProxy.batchWithdrawReserveLiquidity(handlerV2);
-
-        assertApproxEqRel(
-            mock0.balanceOf(alice),
-            8e18,
-            0.0001e18,
-            "alice's mock0 balance should be 8e18 (delta 0.01%)"
+        vm.startPrank(alice);
+        reserveProxy.batchWithdrawReserveLiquidity(
+            handlerV2,
+            reserveProxy.reserveHelpers(reserveProxy.helperId(alice, handlerV2)).getReservedTokenIds()
         );
-        assertApproxEqRel(
-            mock1.balanceOf(alice),
-            80e6,
-            0.0001e18,
-            "alice's mock1 balance should be 80e6 (delta 0.01%)"
-        );
+        vm.stopPrank();
+
+        assertEq(tickBalance(alice, address(pool), 10, 20), 0, "tickBalance(10,20) should be 0");
+        assertEq(tickBalance(alice, address(pool), 20, 30), 0, "tickBalance(20,30) should be 0");
+        assertEq(tickBalance(alice, address(pool), -30, -20), 0, "tickBalance(-30,-20) should be 0");
+        assertEq(tickBalance(alice, address(pool), -20, -10), 0, "tickBalance(-20,-10) should be 0");
+        assertApproxEqRel(mock0.balanceOf(alice), 10e18, 0.0001e18, "alice's mock0 balance should be 10e18 (delta 0.01%)"); // prettier-ignore
+        assertApproxEqRel(mock1.balanceOf(alice), 100e6, 0.0001e18, "alice's mock1 balance should be 100e6 (delta 0.01%)"); // prettier-ignore
     }
 
     function test_batchWithdrawReserveLiquidity_coolDownNotPassed() public {}

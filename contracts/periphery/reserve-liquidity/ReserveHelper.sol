@@ -23,7 +23,6 @@ contract ReserveHelper {
     struct BatchWithdrawCache {
         IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams request;
         IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams position;
-        uint256 tokenId;
         uint256 prev0;
         uint256 prev1;
     }
@@ -56,6 +55,10 @@ contract ReserveHelper {
     constructor(address user_) {
         user = user_;
         proxy = msg.sender;
+    }
+
+    function getReservedTokenIds() external view returns (uint256[] memory tokenIds) {
+        tokenIds = _reservedTokenIds.values();
     }
 
     function getReservedPositions()
@@ -149,40 +152,47 @@ contract ReserveHelper {
         return reservedPositions;
     }
 
-    function batchWithdrawReservedLiquidity(IUniswapV3SingleTickLiquidityHandlerV2 handler) external onlyProxy {
+    /**
+     * @notice Withdraw reserved liquidity.
+     * @dev This function is used to withdraw reserved liquidity.
+     * @param handler The handler of the liquidity pool.
+     * @param tokenIds The token ids of the liquidity pool. which should be obtained from getReservedTokenIds() off-chain to reduce gas cost.
+     */
+    function batchWithdrawReservedLiquidity(
+        IUniswapV3SingleTickLiquidityHandlerV2 handler,
+        uint256[] memory tokenIds
+    ) external onlyProxy {
         address _user = user;
-        uint256 len = _reservedTokenIds.length();
+        uint256 len = tokenIds.length;
 
         BatchWithdrawCache memory cache;
 
-        uint256 withdrawable;
-
         for (uint256 i; i < len; ) {
-            cache.request = userReservedPositions[_reservedTokenIds.at(i)];
+            uint256 tid = tokenIds[i];
+            cache.request = userReservedPositions[tid];
+
+            // in withdrawReservedLiquidity(), shares is actually means assets(liquidity)
+            // so convert shares to assets before request
+            cache.request.shares = handler.convertToAssets(cache.request.shares, tid);
+
+            // get actual withdrawable liquidity.
+            cache.request.shares = _withdrawableLiquidity(handler, cache.request);
 
             // condition has not met, skip
-            withdrawable = _withdrawableLiquidity(handler, cache.request);
-            if (withdrawable == 0) {
+            if (cache.request.shares == 0) {
                 unchecked {
                     i++;
                 }
                 continue;
             }
 
-            cache.tokenId = handler.tokenId(
-                cache.request.pool,
-                cache.request.hook,
-                cache.request.tickLower,
-                cache.request.tickUpper
-            );
-
-            cache.position = userReservedPositions[cache.tokenId];
-            cache.position.shares -= cache.request.shares;
+            cache.position = userReservedPositions[tid];
+            cache.position.shares -= handler.convertToShares(cache.request.shares, tid);
             // if all shares are withdrawn, remove from active list
-            if (cache.position.shares == 0) _reservedTokenIds.remove(cache.tokenId);
+            if (cache.position.shares == 0) _reservedTokenIds.remove(tid);
 
             // update storage
-            userReservedPositions[cache.tokenId] = cache.position;
+            userReservedPositions[tid] = cache.position;
 
             IERC20 token0 = IERC20(IUniswapV3Pool(cache.request.pool).token0());
             IERC20 token1 = IERC20(IUniswapV3Pool(cache.request.pool).token1());
@@ -210,7 +220,7 @@ contract ReserveHelper {
     function _withdrawableLiquidity(
         IUniswapV3SingleTickLiquidityHandlerV2 handler,
         IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams memory reservePosition
-    ) internal returns (uint256 withdrawable) {
+    ) internal returns (uint128 withdrawable) {
         IUniswapV3SingleTickLiquidityHandlerV2.ReserveLiquidityData memory rld = handler.reservedLiquidityPerUser(
             handler.tokenId(
                 reservePosition.pool,
@@ -234,7 +244,7 @@ contract ReserveHelper {
         if (rld.lastReserve + handler.reserveCooldown() > block.timestamp) return 0;
 
         // if free liquidity of handler is not enough, return only available liquidity
-        uint256 free = tki.totalLiquidity + tki.reservedLiquidity - tki.liquidityUsed;
+        uint128 free = tki.totalLiquidity + tki.reservedLiquidity - tki.liquidityUsed;
         if (free < reservePosition.shares) return free;
 
         return reservePosition.shares;

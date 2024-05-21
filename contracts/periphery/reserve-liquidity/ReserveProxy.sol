@@ -59,10 +59,13 @@ contract ReserveProxy {
         return reserveHelper.batchReserveLiquidity(handler, reserveLiquidityParams);
     }
 
-    function batchWithdrawReserveLiquidity(IUniswapV3SingleTickLiquidityHandlerV2 handler) external {
+    function batchWithdrawReserveLiquidity(
+        IUniswapV3SingleTickLiquidityHandlerV2 handler,
+        uint256[] calldata tokenIds
+    ) external {
         ReserveHelper reserveHelper = reserveHelpers[helperId(msg.sender, handler)];
         if (address(reserveHelper) == address(0)) revert ReserveHelperUninitialized(msg.sender, handler);
 
-        reserveHelper.batchWithdrawReservedLiquidity(handler);
+        reserveHelper.batchWithdrawReservedLiquidity(handler, tokenIds);
     }
 }
