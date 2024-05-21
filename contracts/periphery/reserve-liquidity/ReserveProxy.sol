@@ -51,7 +51,7 @@ contract ReserveProxy {
      */
     function batchReserveLiquidity(
         IUniswapV3SingleTickLiquidityHandlerV2 handler,
-        IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams[] calldata reserveLiquidityParams
+        ReserveHelper.ReserveRequest[] calldata reserveLiquidityParams
     ) external returns (IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams[] memory reservedLiquidities) {
         ReserveHelper reserveHelper = reserveHelpers[helperId(msg.sender, handler)];
         if (address(reserveHelper) == address(0)) revert ReserveHelperUninitialized(msg.sender, handler);
@@ -59,13 +59,10 @@ contract ReserveProxy {
         return reserveHelper.batchReserveLiquidity(handler, reserveLiquidityParams);
     }
 
-    function batchWithdrawReserveLiquidity(
-        IUniswapV3SingleTickLiquidityHandlerV2 handler,
-        IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams[] calldata reservePositions
-    ) external {
+    function batchWithdrawReserveLiquidity(IUniswapV3SingleTickLiquidityHandlerV2 handler) external {
         ReserveHelper reserveHelper = reserveHelpers[helperId(msg.sender, handler)];
         if (address(reserveHelper) == address(0)) revert ReserveHelperUninitialized(msg.sender, handler);
 
-        reserveHelper.batchWithdrawReservedLiquidity(handler, reservePositions);
+        reserveHelper.batchWithdrawReservedLiquidity(handler);
     }
 }

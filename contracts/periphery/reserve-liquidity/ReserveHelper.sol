@@ -6,13 +6,19 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
-import {IReserveHelper} from "./IReserveHelper.sol";
 import {IUniswapV3SingleTickLiquidityHandlerV2} from "../../vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 import {UniswapV3SingleTickLiquidityLibV2} from "./../../lib/UniswapV3SingleTickLiquidityLibV2.sol";
 
-contract ReserveHelper is IReserveHelper {
+contract ReserveHelper {
     using UniswapV3SingleTickLiquidityLibV2 for IUniswapV3SingleTickLiquidityHandlerV2;
     using EnumerableSet for EnumerableSet.UintSet;
+
+    struct ReserveRequest {
+        address pool;
+        address hook;
+        int24 tickLower;
+        int24 tickUpper;
+    }
 
     struct BatchWithdrawCache {
         IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams request;
@@ -22,9 +28,9 @@ contract ReserveHelper is IReserveHelper {
         uint256 prev1;
     }
 
-    mapping(address user => mapping(uint256 tokenId => IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams position))
+    mapping(uint256 tokenId => IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams position)
         public userReservedPositions;
-    mapping(address user => EnumerableSet.UintSet tokenIds) internal _userReservedTokenIds;
+    EnumerableSet.UintSet internal _reservedTokenIds;
 
     address public user;
     address public proxy;
@@ -57,13 +63,10 @@ contract ReserveHelper is IReserveHelper {
         view
         returns (IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams[] memory positions)
     {
-        address _user = user;
-        positions = new IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams[](
-            _userReservedTokenIds[_user].length()
-        );
+        positions = new IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams[](_reservedTokenIds.length());
 
         for (uint256 i; i < positions.length; ) {
-            positions[i] = userReservedPositions[_user][_userReservedTokenIds[_user].at(i)];
+            positions[i] = userReservedPositions[_reservedTokenIds.at(i)];
             unchecked {
                 i++;
             }
@@ -72,61 +75,90 @@ contract ReserveHelper is IReserveHelper {
 
     function batchReserveLiquidity(
         IUniswapV3SingleTickLiquidityHandlerV2 handler,
-        IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams[] calldata reserveLiquidityParams
+        ReserveRequest[] calldata reserveRequests
     )
         external
         onlyProxy
         returns (IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams[] memory reservedPositions)
     {
-        uint256 len = reserveLiquidityParams.length;
+        uint256 len = reserveRequests.length;
+        reservedPositions = new IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams[](len);
 
         for (uint256 i; i < len; ) {
-            IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams memory request = reserveLiquidityParams[i];
-            uint256 tokenId = handler.tokenId(request.pool, request.hook, request.tickLower, request.tickUpper);
+            uint256 tokenId = handler.tokenId(
+                reserveRequests[i].pool,
+                reserveRequests[i].hook,
+                reserveRequests[i].tickLower,
+                reserveRequests[i].tickUpper
+            );
 
-            handler.transferFrom(user, address(this), tokenId, request.shares);
+            uint128 shares = uint128(handler.balanceOf(user, tokenId));
+            // reserve all user shares to withdraw.
+            // shares are converted to liquidity in reserveLiquidity() function of handler
+            uint128 assets = handler.convertToAssets(shares, tokenId);
+            IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams memory newReserve = (reservedPositions[
+                i
+            ] = IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams(
+                reserveRequests[i].pool,
+                reserveRequests[i].hook,
+                reserveRequests[i].tickLower,
+                reserveRequests[i].tickUpper,
+                // if the user is only LP provider at this tick, 1 liquidity shortage exists in handler.
+                // because handler will mint 1 less liquidity than requested when first position mint,
+                // therefore liquidity from convertToAssets() causes underflow when burning process
+                assets > handler.tokenIds(tokenId).totalLiquidity // handler.convertToAssets(shares, tokenId) > handler.tokenIds(tokenId).totalLiquidity
+                    ? shares - 1
+                    : shares
+            ));
+
+            // if no shares to reserve, skip
+            if (newReserve.shares == 0) {
+                unchecked {
+                    i++;
+                }
+                continue;
+            }
+
+            handler.transferFrom(user, address(this), tokenId, newReserve.shares);
 
             // this is update active list if not exist
-            _userReservedTokenIds[user].add(tokenId);
+            _reservedTokenIds.add(tokenId);
 
             // cache current position to save gas
-            IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams memory position = userReservedPositions[user][
+            IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams memory totalReserve = userReservedPositions[
                 tokenId
             ];
-            uint128 prevShares = position.shares;
+            uint128 prevShares = totalReserve.shares;
             // override with requested position, and add previous shares if exists
-            position = request;
-            position.shares += prevShares;
+            totalReserve = newReserve;
+            totalReserve.shares += prevShares;
 
             // update storage
-            userReservedPositions[user][tokenId] = position;
+            userReservedPositions[tokenId] = totalReserve;
 
             // execute reserve liquidity
-            handler.reserveLiquidity(abi.encode(request));
+            handler.reserveLiquidity(abi.encode(newReserve));
 
-            emit ReserveLiquidity(user, handler, request);
+            emit ReserveLiquidity(user, handler, newReserve);
 
             unchecked {
                 i++;
             }
         }
 
-        return reserveLiquidityParams;
+        return reservedPositions;
     }
 
-    function batchWithdrawReservedLiquidity(
-        IUniswapV3SingleTickLiquidityHandlerV2 handler,
-        IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams[] calldata reservePositions
-    ) external onlyProxy {
+    function batchWithdrawReservedLiquidity(IUniswapV3SingleTickLiquidityHandlerV2 handler) external onlyProxy {
         address _user = user;
-        uint256 len = reservePositions.length;
+        uint256 len = _reservedTokenIds.length();
 
         BatchWithdrawCache memory cache;
 
         uint256 withdrawable;
 
         for (uint256 i; i < len; ) {
-            cache.request = reservePositions[i];
+            cache.request = userReservedPositions[_reservedTokenIds.at(i)];
 
             // condition has not met, skip
             withdrawable = _withdrawableLiquidity(handler, cache.request);
@@ -144,13 +176,13 @@ contract ReserveHelper is IReserveHelper {
                 cache.request.tickUpper
             );
 
-            cache.position = userReservedPositions[_user][cache.tokenId];
+            cache.position = userReservedPositions[cache.tokenId];
             cache.position.shares -= cache.request.shares;
             // if all shares are withdrawn, remove from active list
-            if (cache.position.shares == 0) _userReservedTokenIds[_user].remove(cache.tokenId);
+            if (cache.position.shares == 0) _reservedTokenIds.remove(cache.tokenId);
 
             // update storage
-            userReservedPositions[_user][cache.tokenId] = cache.position;
+            userReservedPositions[cache.tokenId] = cache.position;
 
             IERC20 token0 = IERC20(IUniswapV3Pool(cache.request.pool).token0());
             IERC20 token1 = IERC20(IUniswapV3Pool(cache.request.pool).token1());

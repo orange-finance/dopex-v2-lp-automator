@@ -111,27 +111,37 @@ abstract contract Base is Test {
         }
     }
 
-    function _mintRightPosition(address to, int24 tickLower, int24 tickUpper, uint256 token0) internal {
+    function _mintRightPosition(
+        address to,
+        int24 tickLower,
+        int24 tickUpper,
+        uint256 token0
+    ) internal returns (uint256) {
         mock0.approve(address(handlerV2), token0);
         uint128 liquidity = LiquidityAmounts.getLiquidityForAmount0(
             TickMath.getSqrtRatioAtTick(tickLower),
             TickMath.getSqrtRatioAtTick(tickUpper),
             token0
         );
-        _mintPosition(to, tickLower, tickUpper, liquidity);
+        return _mintPosition(to, tickLower, tickUpper, liquidity);
     }
 
-    function _mintLeftPosition(address to, int24 tickLower, int24 tickUpper, uint256 token1) internal {
+    function _mintLeftPosition(
+        address to,
+        int24 tickLower,
+        int24 tickUpper,
+        uint256 token1
+    ) internal returns (uint256) {
         mock1.approve(address(handlerV2), token1);
         uint128 liquidity = LiquidityAmounts.getLiquidityForAmount1(
             TickMath.getSqrtRatioAtTick(tickLower),
             TickMath.getSqrtRatioAtTick(tickUpper),
             token1
         );
-        _mintPosition(to, tickLower, tickUpper, liquidity);
+        return _mintPosition(to, tickLower, tickUpper, liquidity);
     }
 
-    function _mintPosition(address to, int24 tickLower, int24 tickUpper, uint128 liquidity) internal {
+    function _mintPosition(address to, int24 tickLower, int24 tickUpper, uint128 liquidity) internal returns (uint256) {
         bytes memory mint = abi.encode(
             IUniswapV3SingleTickLiquidityHandlerV2.MintPositionParams({
                 pool: address(pool),
@@ -142,7 +152,7 @@ abstract contract Base is Test {
             })
         );
 
-        handlerV2.mintPositionHandler(to, mint);
+        return handlerV2.mintPositionHandler(to, mint);
     }
 
     function _useRightPosition(address useFor, int24 tickLower, int24 tickUpper, uint256 token0) internal {
@@ -309,32 +319,55 @@ contract TestReserveHelper is Base {
     }
 
     function test_batchReserveLiquidity() public {
-        deal(address(mock0), address(this), 10e18);
-        deal(address(mock1), address(this), 100e6);
+        deal(address(mock0), address(this), 20e18);
+        deal(address(mock1), address(this), 200e6);
 
-        _mintRightPosition(alice, 10, 20, 5e18);
-        _mintRightPosition(alice, 20, 30, 5e18);
-        _mintLeftPosition(alice, -30, -20, 50e6);
-        _mintLeftPosition(alice, -20, -10, 50e6);
-        _useRightPosition(bob, 10, 20, 4e18);
-        _useRightPosition(bob, 20, 30, 4e18);
-        _useLeftPosition(bob, -30, -20, 40e6);
-        _useLeftPosition(bob, -20, -10, 40e6);
+        // first minter receive 1 less shares
+        _mintRightPosition(carol, 10, 20, 5e18);
+        _mintRightPosition(carol, 20, 30, 5e18);
+        _mintLeftPosition(carol, -30, -20, 50e6);
+        _mintLeftPosition(carol, -20, -10, 50e6);
 
-        IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams[]
-            memory reserveParams = new IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams[](4);
+        uint256[] memory aliceMintShares = new uint256[](4);
+        uint256[] memory aliceMintLiquidities = new uint256[](4);
 
-        reserveParams[0] = _burnParamsRight(address(pool), 10, 20, 4e18);
-        reserveParams[1] = _burnParamsRight(address(pool), 20, 30, 4e18);
-        reserveParams[2] = _burnParamsLeft(address(pool), -30, -20, 40e6);
-        reserveParams[3] = _burnParamsLeft(address(pool), -20, -10, 40e6);
+        aliceMintShares[0] = _mintRightPosition(alice, 10, 20, 5e18);
+        aliceMintShares[1] = _mintRightPosition(alice, 20, 30, 5e18);
+        aliceMintShares[2] = _mintLeftPosition(alice, -30, -20, 50e6);
+        aliceMintShares[3] = _mintLeftPosition(alice, -20, -10, 50e6);
 
-        _batchReserveLiquidity(alice, reserveParams);
+        aliceMintLiquidities[0] = tickSharesToAssets(aliceMintShares[0], address(pool), 10, 20);
+        aliceMintLiquidities[1] = tickSharesToAssets(aliceMintShares[1], address(pool), 20, 30);
+        aliceMintLiquidities[2] = tickSharesToAssets(aliceMintShares[2], address(pool), -30, -20);
+        aliceMintLiquidities[3] = tickSharesToAssets(aliceMintShares[3], address(pool), -20, -10);
 
-        assertEq(reservedLiquidity(alice, address(pool), 10, 20), liquidity0(4e18, 10, 20), "liquidity reserved tick(10,20)"); // prettier-ignore
-        assertEq(reservedLiquidity(alice, address(pool), 20, 30), liquidity0(4e18, 20, 30), "liquidity reserved tick(20,30)"); // prettier-ignore
-        assertEq(reservedLiquidity(alice, address(pool), -30, -20), liquidity1(40e6, -30, -20), "liquidity reserved tick(-30,-20)"); // prettier-ignore
-        assertEq(reservedLiquidity(alice, address(pool), -20, -10), liquidity1(40e6, -20, -10), "liquidity reserved tick(-20,-10)"); // prettier-ignore
+        _useRightPosition(bob, 10, 20, 9.9e18);
+        _useRightPosition(bob, 20, 30, 9.9e18);
+        _useLeftPosition(bob, -30, -20, 99e6);
+        _useLeftPosition(bob, -20, -10, 99e6);
+
+        ReserveHelper.ReserveRequest[] memory reserveParams = new ReserveHelper.ReserveRequest[](4);
+
+        reserveParams[0] = ReserveHelper.ReserveRequest(address(pool), address(0), 10, 20);
+        reserveParams[1] = ReserveHelper.ReserveRequest(address(pool), address(0), 20, 30);
+        reserveParams[2] = ReserveHelper.ReserveRequest(address(pool), address(0), -30, -20);
+        reserveParams[3] = ReserveHelper.ReserveRequest(address(pool), address(0), -20, -10);
+
+        IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams[] memory reserves = _batchReserveLiquidity(
+            alice,
+            reserveParams
+        );
+
+        assertEq(reserves.length, 4, "reserves.length should be 4");
+        assertEq(reserves[0].shares, aliceMintShares[0], "reserves[0].shares should be aliceMintShares[0]");
+        assertEq(reserves[1].shares, aliceMintShares[1], "reserves[1].shares should be aliceMintShares[1]");
+        assertEq(reserves[2].shares, aliceMintShares[2], "reserves[2].shares should be aliceMintShares[2]");
+        assertEq(reserves[3].shares, aliceMintShares[3], "reserves[3].shares should be aliceMintShares[3]");
+
+        assertEq(reservedLiquidity(alice, address(pool), 10, 20), aliceMintLiquidities[0], "reservedLiquidity(10,20) should be aliceMintLiquidities[0]"); // prettier-ignore
+        assertEq(reservedLiquidity(alice, address(pool), 20, 30), aliceMintLiquidities[1], "reservedLiquidity(20,30) should be aliceMintLiquidities[1]"); // prettier-ignore
+        assertEq(reservedLiquidity(alice, address(pool), -30, -20), aliceMintLiquidities[2], "reservedLiquidity(-30,-20) should be aliceMintLiquidities[2]"); // prettier-ignore
+        assertEq(reservedLiquidity(alice, address(pool), -20, -10), aliceMintLiquidities[3], "reservedLiquidity(-20,-10) should be aliceMintLiquidities[3]"); // prettier-ignore
     }
 
     function test_batchWithdrawReserveLiquidity() public {
@@ -350,15 +383,14 @@ contract TestReserveHelper is Base {
         _useLeftPosition(bob, -30, -20, 40e6);
         _useLeftPosition(bob, -20, -10, 40e6);
 
-        IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams[]
-            memory reserveParams = new IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams[](4);
+        ReserveHelper.ReserveRequest[] memory reserveRequest = new ReserveHelper.ReserveRequest[](4);
 
-        reserveParams[0] = _burnParamsRight(address(pool), 10, 20, 4e18);
-        reserveParams[1] = _burnParamsRight(address(pool), 20, 30, 4e18);
-        reserveParams[2] = _burnParamsLeft(address(pool), -30, -20, 40e6);
-        reserveParams[3] = _burnParamsLeft(address(pool), -20, -10, 40e6);
+        reserveRequest[0] = ReserveHelper.ReserveRequest(address(pool), address(0), 10, 20);
+        reserveRequest[1] = ReserveHelper.ReserveRequest(address(pool), address(0), 20, 30);
+        reserveRequest[2] = ReserveHelper.ReserveRequest(address(pool), address(0), -30, -20);
+        reserveRequest[3] = ReserveHelper.ReserveRequest(address(pool), address(0), -20, -10);
 
-        _batchReserveLiquidity(alice, reserveParams);
+        _batchReserveLiquidity(alice, reserveRequest);
 
         skip(6 hours);
 
@@ -369,7 +401,7 @@ contract TestReserveHelper is Base {
         _unuseLeftPosition(bob, -20, -10, 40e6);
 
         vm.prank(alice);
-        reserveProxy.batchWithdrawReserveLiquidity(handlerV2, reserveParams);
+        reserveProxy.batchWithdrawReserveLiquidity(handlerV2);
 
         assertApproxEqRel(
             mock0.balanceOf(alice),
@@ -391,15 +423,15 @@ contract TestReserveHelper is Base {
 
     function _batchReserveLiquidity(
         address user,
-        IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams[] memory reserveParams
-    ) internal {
+        ReserveHelper.ReserveRequest[] memory reserveParams
+    ) internal returns (IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams[] memory positions) {
         vm.startPrank(user);
         // create a new reserve helper for the given handler and user
         if (address(reserveProxy.reserveHelpers(reserveProxy.helperId(user, handlerV2))) == address(0)) {
             ReserveHelper helper = reserveProxy.createMyReserveHelper(handlerV2);
             IERC6909(address(handlerV2)).setOperator(address(helper), true);
         }
-        reserveProxy.batchReserveLiquidity(handlerV2, reserveParams);
+        positions = reserveProxy.batchReserveLiquidity(handlerV2, reserveParams);
         vm.stopPrank();
     }
 
@@ -412,5 +444,31 @@ contract TestReserveHelper is Base {
         ReserveHelper helper = reserveProxy.reserveHelpers(reserveProxy.helperId(user, handlerV2));
         uint256 tokenId = uint256(keccak256(abi.encode(handlerV2, pool_, address(0), tickLower, tickUpper)));
         return handlerV2.reservedLiquidityPerUser(tokenId, address(helper)).liquidity;
+    }
+
+    function tickBalance(
+        address user,
+        address pool_,
+        int24 tickLower,
+        int24 tickUpper
+    ) internal view returns (uint256) {
+        return
+            handlerV2.balanceOf(
+                user,
+                uint256(keccak256(abi.encode(handlerV2, pool_, address(0), tickLower, tickUpper)))
+            );
+    }
+
+    function tickSharesToAssets(
+        uint256 shares,
+        address pool_,
+        int24 tickLower,
+        int24 tickUpper
+    ) internal view returns (uint128) {
+        return
+            handlerV2.convertToAssets(
+                uint128(shares),
+                uint256(keccak256(abi.encode(handlerV2, pool_, address(0), tickLower, tickUpper)))
+            );
     }
 }
