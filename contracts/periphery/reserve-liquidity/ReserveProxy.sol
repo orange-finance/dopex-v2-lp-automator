@@ -35,7 +35,8 @@ contract ReserveProxy {
     function createMyReserveHelper(
         IUniswapV3SingleTickLiquidityHandlerV2 handler
     ) external returns (ReserveHelper reserveHelper) {
-        if (address(reserveHelper) != address(0)) revert ReserveHelperAlreadyInitialized(msg.sender, handler);
+        if (address(reserveHelpers[helperId(msg.sender, handler)]) != address(0))
+            revert ReserveHelperAlreadyInitialized(msg.sender, handler);
         reserveHelper = new ReserveHelper(msg.sender);
         reserveHelpers[helperId(msg.sender, handler)] = reserveHelper;
     }
