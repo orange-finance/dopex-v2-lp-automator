@@ -245,8 +245,7 @@ contract ReserveHelper {
 
         // if free liquidity of handler is not enough, return only available liquidity
         uint128 free = tki.totalLiquidity + tki.reservedLiquidity - tki.liquidityUsed;
-        if (free < reservePosition.shares) return free;
 
-        return reservePosition.shares;
+        return free < reservePosition.shares ? free : reservePosition.shares;
     }
 }
