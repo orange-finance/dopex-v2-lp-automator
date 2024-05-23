@@ -49,7 +49,7 @@ interface IStrykeHandlerV2 {
 
     function transferFrom(address from, address to, uint256 tokenId, uint256 shares) external;
 
-    function reserveLiquidity(bytes calldata reserveLiquidityData) external;
+    function reserveLiquidity(bytes calldata reserveLiquidityData) external returns (uint128 sharesBurned);
 
     function withdrawReserveLiquidity(bytes calldata reserveLiquidityData) external;
 }

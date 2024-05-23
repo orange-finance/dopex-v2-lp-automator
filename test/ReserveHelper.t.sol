@@ -389,12 +389,12 @@ contract TestReserveHelper is Base {
         _useLeftPosition(bob, -30, -20, 99e6);
         _useLeftPosition(bob, -20, -10, 99e6);
 
-        ReserveHelper.ReserveRequest[] memory reserveParams = new ReserveHelper.ReserveRequest[](4);
+        IStrykeHandlerV2.BurnPositionParams[] memory reserveParams = new IStrykeHandlerV2.BurnPositionParams[](4);
 
-        reserveParams[0] = ReserveHelper.ReserveRequest(address(pool), address(0), 10, 20);
-        reserveParams[1] = ReserveHelper.ReserveRequest(address(pool), address(0), 20, 30);
-        reserveParams[2] = ReserveHelper.ReserveRequest(address(pool), address(0), -30, -20);
-        reserveParams[3] = ReserveHelper.ReserveRequest(address(pool), address(0), -20, -10);
+        reserveParams[0] = tickPosition(alice, address(pool), 10, 20);
+        reserveParams[1] = tickPosition(alice, address(pool), 20, 30);
+        reserveParams[2] = tickPosition(alice, address(pool), -30, -20);
+        reserveParams[3] = tickPosition(alice, address(pool), -20, -10);
 
         IStrykeHandlerV2.BurnPositionParams[] memory reserves = _batchReserveLiquidity(alice, reserveParams);
 
@@ -429,12 +429,12 @@ contract TestReserveHelper is Base {
         _useLeftPosition(bob, -30, -20, 99e6);
         _useLeftPosition(bob, -20, -10, 99e6);
 
-        ReserveHelper.ReserveRequest[] memory reserveRequest = new ReserveHelper.ReserveRequest[](4);
+        IStrykeHandlerV2.BurnPositionParams[] memory reserveRequest = new IStrykeHandlerV2.BurnPositionParams[](4);
 
-        reserveRequest[0] = ReserveHelper.ReserveRequest(address(pool), address(0), 10, 20);
-        reserveRequest[1] = ReserveHelper.ReserveRequest(address(pool), address(0), 20, 30);
-        reserveRequest[2] = ReserveHelper.ReserveRequest(address(pool), address(0), -30, -20);
-        reserveRequest[3] = ReserveHelper.ReserveRequest(address(pool), address(0), -20, -10);
+        reserveRequest[0] = tickPosition(alice, address(pool), 10, 20);
+        reserveRequest[1] = tickPosition(alice, address(pool), 20, 30);
+        reserveRequest[2] = tickPosition(alice, address(pool), -30, -20);
+        reserveRequest[3] = tickPosition(alice, address(pool), -20, -10);
 
         _batchReserveLiquidity(alice, reserveRequest);
 
@@ -466,7 +466,7 @@ contract TestReserveHelper is Base {
 
     function _batchReserveLiquidity(
         address user,
-        ReserveHelper.ReserveRequest[] memory reserveParams
+        IStrykeHandlerV2.BurnPositionParams[] memory reserveParams
     ) internal returns (IStrykeHandlerV2.BurnPositionParams[] memory positions) {
         vm.startPrank(user);
         // create a new reserve helper for the given handler and user
@@ -500,6 +500,22 @@ contract TestReserveHelper is Base {
                 user,
                 uint256(keccak256(abi.encode(handlerV2, pool_, address(0), tickLower, tickUpper)))
             );
+    }
+
+    function tickPosition(
+        address user,
+        address pool_,
+        int24 tickLower,
+        int24 tickUpper
+    ) internal view returns (IStrykeHandlerV2.BurnPositionParams memory) {
+        return
+            IStrykeHandlerV2.BurnPositionParams({
+                pool: pool_,
+                hook: address(0),
+                tickLower: tickLower,
+                tickUpper: tickUpper,
+                shares: uint128(tickBalance(user, pool_, tickLower, tickUpper))
+            });
     }
 
     function tickSharesToAssets(

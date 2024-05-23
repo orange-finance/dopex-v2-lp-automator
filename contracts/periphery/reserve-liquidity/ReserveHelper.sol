@@ -8,15 +8,10 @@ import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Po
 
 import {IStrykeHandlerV2} from "./IStrykeHandlerV2.sol";
 
+error OnlyProxy();
+
 contract ReserveHelper {
     using EnumerableSet for EnumerableSet.UintSet;
-
-    struct ReserveRequest {
-        address pool;
-        address hook;
-        int24 tickLower;
-        int24 tickUpper;
-    }
 
     struct BatchWithdrawCache {
         IStrykeHandlerV2.BurnPositionParams request;
@@ -30,19 +25,6 @@ contract ReserveHelper {
 
     address public user;
     address public proxy;
-
-    event ReserveLiquidity(
-        address indexed user,
-        IStrykeHandlerV2 handler,
-        IStrykeHandlerV2.BurnPositionParams reservedPosition
-    );
-    event WithdrawReservedLiquidity(
-        address indexed user,
-        IStrykeHandlerV2 handler,
-        IStrykeHandlerV2.BurnPositionParams reservedPosition
-    );
-
-    error OnlyProxy();
 
     modifier onlyProxy() {
         if (msg.sender != proxy) revert OnlyProxy();
@@ -69,136 +51,70 @@ contract ReserveHelper {
         }
     }
 
-    function batchReserveLiquidity(
+    function reserveLiquidity(
         IStrykeHandlerV2 handler,
-        ReserveRequest[] calldata reserveRequests
-    ) external onlyProxy returns (IStrykeHandlerV2.BurnPositionParams[] memory reservedPositions) {
-        uint256 len = reserveRequests.length;
-        reservedPositions = new IStrykeHandlerV2.BurnPositionParams[](len);
+        IStrykeHandlerV2.BurnPositionParams memory reservePosition
+    ) external onlyProxy returns (uint128 sharesBurned) {
+        uint256 tokenId = _tokenId(
+            handler,
+            reservePosition.pool,
+            reservePosition.hook,
+            reservePosition.tickLower,
+            reservePosition.tickUpper
+        );
 
-        for (uint256 i; i < len; ) {
-            uint256 tokenId = _tokenId(
-                handler,
-                reserveRequests[i].pool,
-                reserveRequests[i].hook,
-                reserveRequests[i].tickLower,
-                reserveRequests[i].tickUpper
-            );
-
-            uint128 shares = uint128(IStrykeHandlerV2(handler).balanceOf(user, tokenId));
-            // reserve all user shares to withdraw.
-            // shares are converted to liquidity in reserveLiquidity() function of handler
-            uint128 assets = handler.convertToAssets(shares, tokenId);
-            IStrykeHandlerV2.BurnPositionParams memory newReserve = (reservedPositions[i] = IStrykeHandlerV2
-                .BurnPositionParams(
-                    reserveRequests[i].pool,
-                    reserveRequests[i].hook,
-                    reserveRequests[i].tickLower,
-                    reserveRequests[i].tickUpper,
-                    // if the user is only LP provider at this tick, 1 liquidity shortage exists in handler.
-                    // because handler will mint 1 less liquidity than requested when first position mint,
-                    // therefore liquidity from convertToAssets() causes underflow when burning process
-                    assets > handler.tokenIds(tokenId).totalLiquidity // handler.convertToAssets(shares, tokenId) > handler.tokenIds(tokenId).totalLiquidity
-                        ? shares - 1
-                        : shares
-                ));
-
-            // if no shares to reserve, skip
-            if (newReserve.shares == 0) {
-                unchecked {
-                    i++;
-                }
-                continue;
-            }
-
-            handler.transferFrom(user, address(this), tokenId, newReserve.shares);
-
-            // this is update active list if not exist
+        IStrykeHandlerV2.BurnPositionParams memory totalReserve = userReservedPositions[tokenId];
+        if (totalReserve.shares == 0) {
             _reservedTokenIds.add(tokenId);
-
-            // cache current position to save gas
-            IStrykeHandlerV2.BurnPositionParams memory totalReserve = userReservedPositions[tokenId];
-            uint128 prevShares = totalReserve.shares;
-            // override with requested position, and add previous shares if exists
-            totalReserve = newReserve;
-            totalReserve.shares += prevShares;
-
-            // update storage
-            userReservedPositions[tokenId] = totalReserve;
-
-            // execute reserve liquidity
-            handler.reserveLiquidity(abi.encode(newReserve));
-
-            emit ReserveLiquidity(user, handler, newReserve);
-
-            unchecked {
-                i++;
-            }
+            userReservedPositions[tokenId] = reservePosition;
+        } else {
+            userReservedPositions[tokenId].shares += reservePosition.shares;
         }
 
-        return reservedPositions;
+        // all effect has done, transfer shares to this contract and execute reserve liquidity
+        handler.transferFrom(user, address(this), tokenId, reservePosition.shares);
+        sharesBurned = handler.reserveLiquidity(abi.encode(reservePosition));
     }
 
-    /**
-     * @notice Withdraw reserved liquidity.
-     * @dev This function is used to withdraw reserved liquidity.
-     * @param handler The handler of the liquidity pool.
-     * @param tokenIds The token ids of the liquidity pool. which should be obtained from getReservedTokenIds() off-chain to reduce gas cost.
-     */
-    function batchWithdrawReservedLiquidity(IStrykeHandlerV2 handler, uint256[] memory tokenIds) external onlyProxy {
-        address _user = user;
-        uint256 len = tokenIds.length;
+    function withdrawReservedLiquidity(
+        IStrykeHandlerV2 handler,
+        // IStrykeHandlerV2.BurnPositionParams memory reservePosition
+        uint256 tokenId
+    ) external onlyProxy returns (IStrykeHandlerV2.BurnPositionParams memory positionWithdrawn) {
+        IStrykeHandlerV2.BurnPositionParams memory request = userReservedPositions[tokenId];
+        IStrykeHandlerV2.BurnPositionParams memory position = userReservedPositions[tokenId];
 
-        BatchWithdrawCache memory cache;
+        // in withdrawReservedLiquidity(), shares is actually means assets(liquidity)
+        // so convert shares to assets before request
+        request.shares = handler.convertToAssets(request.shares, tokenId);
+        // get actual withdrawable liquidity.
+        request.shares = _withdrawableLiquidity(handler, request);
 
-        for (uint256 i; i < len; ) {
-            uint256 tid = tokenIds[i];
-            cache.request = userReservedPositions[tid];
+        if (request.shares == 0) return IStrykeHandlerV2.BurnPositionParams(address(0), address(0), 0, 0, 0);
 
-            // in withdrawReservedLiquidity(), shares is actually means assets(liquidity)
-            // so convert shares to assets before request
-            cache.request.shares = handler.convertToAssets(cache.request.shares, tid);
+        position.shares -= handler.convertToShares(request.shares, tokenId);
+        // if all shares are withdrawn, remove from active list
+        if (position.shares == 0) _reservedTokenIds.remove(tokenId);
 
-            // get actual withdrawable liquidity.
-            cache.request.shares = _withdrawableLiquidity(handler, cache.request);
+        // update storage
+        userReservedPositions[tokenId] = position;
 
-            // condition has not met, skip
-            if (cache.request.shares == 0) {
-                unchecked {
-                    i++;
-                }
-                continue;
-            }
+        IERC20 token0 = IERC20(IUniswapV3Pool(request.pool).token0());
+        IERC20 token1 = IERC20(IUniswapV3Pool(request.pool).token1());
 
-            cache.position = userReservedPositions[tid];
-            cache.position.shares -= handler.convertToShares(cache.request.shares, tid);
-            // if all shares are withdrawn, remove from active list
-            if (cache.position.shares == 0) _reservedTokenIds.remove(tid);
+        uint256 prev0 = token0.balanceOf(address(this));
+        uint256 prev1 = token1.balanceOf(address(this));
 
-            // update storage
-            userReservedPositions[tid] = cache.position;
+        // we need cache the shares first
+        handler.withdrawReserveLiquidity(abi.encode(request));
 
-            IERC20 token0 = IERC20(IUniswapV3Pool(cache.request.pool).token0());
-            IERC20 token1 = IERC20(IUniswapV3Pool(cache.request.pool).token1());
+        // transfer dissolved position to user
+        uint256 diff0 = token0.balanceOf(address(this)) - prev0;
+        uint256 diff1 = token1.balanceOf(address(this)) - prev1;
 
-            uint256 prev0 = token0.balanceOf(address(this));
-            uint256 prev1 = token1.balanceOf(address(this));
-
-            handler.withdrawReserveLiquidity(abi.encode(cache.request));
-
-            // transfer dissolved position to user
-            uint256 diff0 = token0.balanceOf(address(this)) - prev0;
-            uint256 diff1 = token1.balanceOf(address(this)) - prev1;
-
-            if (diff0 > 0) token0.transfer(_user, diff0);
-            if (diff1 > 0) token1.transfer(_user, diff1);
-
-            emit WithdrawReservedLiquidity(user, handler, cache.request);
-
-            unchecked {
-                i++;
-            }
-        }
+        // not cache user address to memory. only one transfer should be done for the single tick position.
+        if (diff0 > 0) token0.transfer(user, diff0);
+        if (diff1 > 0) token1.transfer(user, diff1);
     }
 
     function _tokenId(
@@ -215,26 +131,16 @@ contract ReserveHelper {
         IStrykeHandlerV2 handler,
         IStrykeHandlerV2.BurnPositionParams memory reservePosition
     ) internal view returns (uint128 withdrawable) {
-        IStrykeHandlerV2.ReserveLiquidityData memory rld = handler.reservedLiquidityPerUser(
-            _tokenId(
-                handler,
-                reservePosition.pool,
-                reservePosition.hook,
-                reservePosition.tickLower,
-                reservePosition.tickUpper
-            ),
-            address(this)
+        uint256 tokenId = _tokenId(
+            handler,
+            reservePosition.pool,
+            reservePosition.hook,
+            reservePosition.tickLower,
+            reservePosition.tickUpper
         );
+        IStrykeHandlerV2.ReserveLiquidityData memory rld = handler.reservedLiquidityPerUser(tokenId, address(this));
 
-        IStrykeHandlerV2.TokenIdInfo memory tki = handler.tokenIds(
-            _tokenId(
-                handler,
-                reservePosition.pool,
-                reservePosition.hook,
-                reservePosition.tickLower,
-                reservePosition.tickUpper
-            )
-        );
+        IStrykeHandlerV2.TokenIdInfo memory tki = handler.tokenIds(tokenId);
 
         // if reserve cooldown has not passed. no withdrawable liquidity exists
         if (rld.lastReserve + handler.reserveCooldown() > block.timestamp) return 0;
