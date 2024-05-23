@@ -14,12 +14,12 @@ contract ReserveProxy {
     event ReserveLiquidity(
         address indexed user,
         IStrykeHandlerV2 handler,
-        IStrykeHandlerV2.BurnPositionParams reservedPosition
+        IStrykeHandlerV2.ReserveLiquidity reservedPosition
     );
     event WithdrawReservedLiquidity(
         address indexed user,
         IStrykeHandlerV2 handler,
-        IStrykeHandlerV2.BurnPositionParams reservedPosition
+        IStrykeHandlerV2.ReserveLiquidity withdrawnPosition
     );
 
     function helperId(address user, IStrykeHandlerV2 handler) public pure returns (bytes32) {
@@ -49,15 +49,15 @@ contract ReserveProxy {
      */
     function batchReserveLiquidity(
         IStrykeHandlerV2 handler,
-        IStrykeHandlerV2.BurnPositionParams[] calldata reserveLiquidityParams
-    ) external returns (IStrykeHandlerV2.BurnPositionParams[] memory reservedLiquidities) {
+        IStrykeHandlerV2.ReserveShare[] calldata reserveLiquidityParams
+    ) external returns (IStrykeHandlerV2.ReserveLiquidity[] memory reservedLiquidities) {
         ReserveHelper reserveHelper = reserveHelpers[helperId(msg.sender, handler)];
         if (address(reserveHelper) == address(0)) revert ReserveHelperUninitialized(msg.sender, handler);
 
-        reservedLiquidities = new IStrykeHandlerV2.BurnPositionParams[](reserveLiquidityParams.length);
+        reservedLiquidities = new IStrykeHandlerV2.ReserveLiquidity[](reserveLiquidityParams.length);
 
         for (uint256 i; i < reserveLiquidityParams.length; ) {
-            IStrykeHandlerV2.BurnPositionParams memory reserve = reserveLiquidityParams[i];
+            IStrykeHandlerV2.ReserveShare memory reserve = reserveLiquidityParams[i];
             uint256 tokenId = _tokenId(handler, reserve.pool, reserve.hook, reserve.tickLower, reserve.tickUpper);
 
             uint128 assets = handler.convertToAssets(reserve.shares, tokenId);
@@ -65,14 +65,13 @@ contract ReserveProxy {
             // because handler will mint 1 less liquidity than requested when first position mint,
             // therefore liquidity from convertToAssets() causes underflow when burning process
             reserve.shares = assets > handler.tokenIds(tokenId).totalLiquidity ? reserve.shares - 1 : reserve.shares;
-            reservedLiquidities[i] = reserve;
 
-            // incase the sender is the only provider of the position and holding only 1 share, share will be 0
+            // in case the sender is the only provider of the position and holding only 1 share, share will be 0
             if (reserve.shares == 0) continue;
 
-            reserveHelper.reserveLiquidity(handler, reserve);
+            reservedLiquidities[i] = reserveHelper.reserveLiquidity(handler, reserve);
 
-            emit ReserveLiquidity(msg.sender, handler, reserve);
+            emit ReserveLiquidity(msg.sender, handler, reservedLiquidities[i]);
 
             unchecked {
                 i++;
@@ -92,13 +91,13 @@ contract ReserveProxy {
         if (address(reserveHelper) == address(0)) revert ReserveHelperUninitialized(msg.sender, handler);
 
         for (uint256 i; i < tokenIds.length; ) {
-            IStrykeHandlerV2.BurnPositionParams memory withdrawn = reserveHelper.withdrawReservedLiquidity(
+            IStrykeHandlerV2.ReserveLiquidity memory withdrawn = reserveHelper.withdrawReservedLiquidity(
                 handler,
                 tokenIds[i]
             );
 
             // emit the event only if the shares are greater than 0, to avoid invalid indexing occurs on the subgraph
-            if (withdrawn.shares > 0) emit WithdrawReservedLiquidity(msg.sender, handler, withdrawn);
+            if (withdrawn.liquidity > 0) emit WithdrawReservedLiquidity(msg.sender, handler, withdrawn);
 
             unchecked {
                 i++;

@@ -19,12 +19,22 @@ interface IStrykeHandlerV2 {
         uint128 reservedLiquidity;
     }
 
-    struct BurnPositionParams {
+    // these two structs have same structure, but are used for different purposes
+    // to be clear that last parameters (share, liquidity) are different, we use different names
+    struct ReserveShare {
         address pool;
         address hook;
         int24 tickLower;
         int24 tickUpper;
         uint128 shares;
+    }
+
+    struct ReserveLiquidity {
+        address pool;
+        address hook;
+        int24 tickLower;
+        int24 tickUpper;
+        uint128 liquidity;
     }
 
     struct ReserveLiquidityData {

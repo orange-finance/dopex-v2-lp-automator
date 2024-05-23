@@ -270,58 +270,6 @@ abstract contract Base is Test {
         IHandlerUse(address(handlerV2)).unusePositionHandler(unuse);
     }
 
-    function _burnParamsRight(
-        address pool_,
-        int24 tickLower,
-        int24 tickUpper,
-        uint256 token0
-    ) internal view returns (IStrykeHandlerV2.BurnPositionParams memory) {
-        uint128 liquidity = LiquidityAmounts.getLiquidityForAmount0(
-            TickMath.getSqrtRatioAtTick(tickLower),
-            TickMath.getSqrtRatioAtTick(tickUpper),
-            token0
-        );
-
-        uint256 tokenId = uint256(keccak256(abi.encode(handlerV2, pool_, address(0), tickLower, tickUpper)));
-
-        uint128 shares = handlerV2.convertToShares(liquidity, tokenId);
-
-        return
-            IStrykeHandlerV2.BurnPositionParams({
-                pool: pool_,
-                hook: address(0),
-                tickLower: tickLower,
-                tickUpper: tickUpper,
-                shares: shares
-            });
-    }
-
-    function _burnParamsLeft(
-        address pool_,
-        int24 tickLower,
-        int24 tickUpper,
-        uint256 token1
-    ) internal view returns (IStrykeHandlerV2.BurnPositionParams memory) {
-        uint128 liquidity = LiquidityAmounts.getLiquidityForAmount1(
-            TickMath.getSqrtRatioAtTick(tickLower),
-            TickMath.getSqrtRatioAtTick(tickUpper),
-            token1
-        );
-
-        uint256 tokenId = uint256(keccak256(abi.encode(handlerV2, pool_, address(0), tickLower, tickUpper)));
-
-        uint128 shares = handlerV2.convertToShares(liquidity, tokenId);
-
-        return
-            IStrykeHandlerV2.BurnPositionParams({
-                pool: pool_,
-                hook: address(0),
-                tickLower: tickLower,
-                tickUpper: tickUpper,
-                shares: shares
-            });
-    }
-
     function liquidity0(uint256 token0, int24 tickLower, int24 tickUpper) internal pure returns (uint128) {
         return
             LiquidityAmounts.getLiquidityForAmount0(
@@ -389,20 +337,20 @@ contract TestReserveHelper is Base {
         _useLeftPosition(bob, -30, -20, 99e6);
         _useLeftPosition(bob, -20, -10, 99e6);
 
-        IStrykeHandlerV2.BurnPositionParams[] memory reserveParams = new IStrykeHandlerV2.BurnPositionParams[](4);
+        IStrykeHandlerV2.ReserveShare[] memory reserveParams = new IStrykeHandlerV2.ReserveShare[](4);
 
-        reserveParams[0] = tickPosition(alice, address(pool), 10, 20);
-        reserveParams[1] = tickPosition(alice, address(pool), 20, 30);
-        reserveParams[2] = tickPosition(alice, address(pool), -30, -20);
-        reserveParams[3] = tickPosition(alice, address(pool), -20, -10);
+        reserveParams[0] = tickPositionInShare(alice, address(pool), 10, 20);
+        reserveParams[1] = tickPositionInShare(alice, address(pool), 20, 30);
+        reserveParams[2] = tickPositionInShare(alice, address(pool), -30, -20);
+        reserveParams[3] = tickPositionInShare(alice, address(pool), -20, -10);
 
-        IStrykeHandlerV2.BurnPositionParams[] memory reserves = _batchReserveLiquidity(alice, reserveParams);
+        IStrykeHandlerV2.ReserveLiquidity[] memory reserves = _batchReserveLiquidity(alice, reserveParams);
 
         assertEq(reserves.length, 4, "reserves.length should be 4");
-        assertEq(reserves[0].shares, aliceMintShares[0], "reserves[0].shares should be aliceMintShares[0]");
-        assertEq(reserves[1].shares, aliceMintShares[1], "reserves[1].shares should be aliceMintShares[1]");
-        assertEq(reserves[2].shares, aliceMintShares[2], "reserves[2].shares should be aliceMintShares[2]");
-        assertEq(reserves[3].shares, aliceMintShares[3], "reserves[3].shares should be aliceMintShares[3]");
+        assertEq(reserves[0].liquidity, aliceMintLiquidities[0], "reserves[0].shares should be aliceMintLiquidities[0]"); // prettier-ignore
+        assertEq(reserves[1].liquidity, aliceMintLiquidities[1], "reserves[1].shares should be aliceMintLiquidities[1]"); // prettier-ignore
+        assertEq(reserves[2].liquidity, aliceMintLiquidities[2], "reserves[2].shares should be aliceMintLiquidities[2]"); // prettier-ignore
+        assertEq(reserves[3].liquidity, aliceMintLiquidities[3], "reserves[3].shares should be aliceMintLiquidities[3]"); // prettier-ignore
 
         assertEq(reservedLiquidity(alice, address(pool), 10, 20), aliceMintLiquidities[0], "reservedLiquidity(10,20) should be aliceMintLiquidities[0]"); // prettier-ignore
         assertEq(reservedLiquidity(alice, address(pool), 20, 30), aliceMintLiquidities[1], "reservedLiquidity(20,30) should be aliceMintLiquidities[1]"); // prettier-ignore
@@ -429,12 +377,12 @@ contract TestReserveHelper is Base {
         _useLeftPosition(bob, -30, -20, 99e6);
         _useLeftPosition(bob, -20, -10, 99e6);
 
-        IStrykeHandlerV2.BurnPositionParams[] memory reserveRequest = new IStrykeHandlerV2.BurnPositionParams[](4);
+        IStrykeHandlerV2.ReserveShare[] memory reserveRequest = new IStrykeHandlerV2.ReserveShare[](4);
 
-        reserveRequest[0] = tickPosition(alice, address(pool), 10, 20);
-        reserveRequest[1] = tickPosition(alice, address(pool), 20, 30);
-        reserveRequest[2] = tickPosition(alice, address(pool), -30, -20);
-        reserveRequest[3] = tickPosition(alice, address(pool), -20, -10);
+        reserveRequest[0] = tickPositionInShare(alice, address(pool), 10, 20);
+        reserveRequest[1] = tickPositionInShare(alice, address(pool), 20, 30);
+        reserveRequest[2] = tickPositionInShare(alice, address(pool), -30, -20);
+        reserveRequest[3] = tickPositionInShare(alice, address(pool), -20, -10);
 
         _batchReserveLiquidity(alice, reserveRequest);
 
@@ -466,8 +414,8 @@ contract TestReserveHelper is Base {
 
     function _batchReserveLiquidity(
         address user,
-        IStrykeHandlerV2.BurnPositionParams[] memory reserveParams
-    ) internal returns (IStrykeHandlerV2.BurnPositionParams[] memory positions) {
+        IStrykeHandlerV2.ReserveShare[] memory reserveParams
+    ) internal returns (IStrykeHandlerV2.ReserveLiquidity[] memory positions) {
         vm.startPrank(user);
         // create a new reserve helper for the given handler and user
         if (address(reserveProxy.reserveHelpers(reserveProxy.helperId(user, handlerV2))) == address(0)) {
@@ -502,14 +450,14 @@ contract TestReserveHelper is Base {
             );
     }
 
-    function tickPosition(
+    function tickPositionInShare(
         address user,
         address pool_,
         int24 tickLower,
         int24 tickUpper
-    ) internal view returns (IStrykeHandlerV2.BurnPositionParams memory) {
+    ) internal view returns (IStrykeHandlerV2.ReserveShare memory) {
         return
-            IStrykeHandlerV2.BurnPositionParams({
+            IStrykeHandlerV2.ReserveShare({
                 pool: pool_,
                 hook: address(0),
                 tickLower: tickLower,
