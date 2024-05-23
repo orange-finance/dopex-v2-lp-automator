@@ -14,7 +14,6 @@ import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/Liquid
 import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 
 import {IDopexV2PositionManager} from "../contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
-import {IUniswapV3SingleTickLiquidityHandlerV2} from "../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 
 import {ReserveHelper} from "../contracts/periphery/reserve-liquidity/ReserveHelper.sol";
 import {ReserveProxy} from "../contracts/periphery/reserve-liquidity/ReserveProxy.sol";
@@ -22,6 +21,53 @@ import {ReserveProxy} from "../contracts/periphery/reserve-liquidity/ReserveProx
 import {PoolAddress} from "@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol";
 
 import {IERC6909} from "../contracts/vendor/dopexV2/IERC6909.sol";
+import {IStrykeHandlerV2} from "../contracts/periphery/reserve-liquidity/IStrykeHandlerV2.sol";
+
+interface IWhitelist {
+    function whitelistedApps(address app) external view returns (bool);
+    function updateWhitelistedApps(address app, bool whitelisted) external;
+}
+
+interface IHandlerMint {
+    struct MintPositionParams {
+        address pool;
+        address hook;
+        int24 tickLower;
+        int24 tickUpper;
+        uint128 liquidity;
+    }
+
+    function mintPositionHandler(
+        address context,
+        bytes calldata mintPositionData
+    ) external returns (uint256 sharesMinted);
+}
+
+interface IHandlerUse {
+    struct UsePositionParams {
+        address pool;
+        address hook;
+        int24 tickLower;
+        int24 tickUpper;
+        uint128 liquidityToUse;
+    }
+
+    struct UnusePositionParams {
+        address pool;
+        address hook;
+        int24 tickLower;
+        int24 tickUpper;
+        uint128 liquidityToUnuse;
+    }
+
+    function usePositionHandler(
+        bytes calldata usePositionHandler
+    ) external returns (address[] memory tokens, uint256[] memory amounts, uint256 liquidityUsed);
+
+    function unusePositionHandler(
+        bytes calldata _unusePositionData
+    ) external returns (uint256[] memory amounts, uint256 liquidityUnused);
+}
 
 abstract contract Base is Test {
     MockERC20 public mock0 = MockERC20(address(0x10));
@@ -34,7 +80,7 @@ abstract contract Base is Test {
     ISwapRouter public router;
 
     IDopexV2PositionManager public manager;
-    IUniswapV3SingleTickLiquidityHandlerV2 public handlerV2;
+    IStrykeHandlerV2 public handlerV2;
 
     function initialize(uint8 t0decimals, uint8 t1decimals, uint24 poolFee, uint160 sqrtPriceX96) public virtual {
         vm.etch(address(mock0), address(deployMockERC20("Mock0", "MC0", t0decimals)).code);
@@ -93,10 +139,7 @@ abstract contract Base is Test {
         }
     }
 
-    function deployUniHandlerV2(
-        address factory_,
-        address swapRouter
-    ) internal returns (IUniswapV3SingleTickLiquidityHandlerV2 handler_) {
+    function deployUniHandlerV2(address factory_, address swapRouter) internal returns (IStrykeHandlerV2 handler_) {
         bytes memory code = abi.encodePacked(
             INIT_UNI_HANDLER_V2,
             abi.encode(factory_, PoolAddress.POOL_INIT_CODE_HASH, swapRouter)
@@ -143,7 +186,7 @@ abstract contract Base is Test {
 
     function _mintPosition(address to, int24 tickLower, int24 tickUpper, uint128 liquidity) internal returns (uint256) {
         bytes memory mint = abi.encode(
-            IUniswapV3SingleTickLiquidityHandlerV2.MintPositionParams({
+            IHandlerMint.MintPositionParams({
                 pool: address(pool),
                 hook: address(0),
                 tickLower: tickLower,
@@ -152,7 +195,7 @@ abstract contract Base is Test {
             })
         );
 
-        return handlerV2.mintPositionHandler(to, mint);
+        return IHandlerMint(address(handlerV2)).mintPositionHandler(to, mint);
     }
 
     function _useRightPosition(address useFor, int24 tickLower, int24 tickUpper, uint256 token0) internal {
@@ -174,12 +217,12 @@ abstract contract Base is Test {
     }
 
     function _usePosition(address useFor, int24 tickLower, int24 tickUpper, uint128 liquidity) internal {
-        bool whitelisted = handlerV2.whitelistedApps(useFor);
+        bool whitelisted = IWhitelist(address(handlerV2)).whitelistedApps(useFor);
         if (!whitelisted) {
-            handlerV2.updateWhitelistedApps(useFor, true);
+            IWhitelist(address(handlerV2)).updateWhitelistedApps(useFor, true);
         }
         bytes memory use = abi.encode(
-            IUniswapV3SingleTickLiquidityHandlerV2.UsePositionParams({
+            IHandlerUse.UsePositionParams({
                 pool: address(pool),
                 hook: address(0),
                 tickLower: tickLower,
@@ -190,7 +233,7 @@ abstract contract Base is Test {
         );
 
         vm.prank(useFor);
-        handlerV2.usePositionHandler(use);
+        IHandlerUse(address(handlerV2)).usePositionHandler(use);
     }
 
     function _unuseRightPosition(address unuseFor, int24 tickLower, int24 tickUpper, uint256 token0) internal {
@@ -208,12 +251,12 @@ abstract contract Base is Test {
     }
 
     function _unusePosition(address unuseFor, int24 tickLower, int24 tickUpper, uint128 liquidity) internal {
-        bool whitelisted = handlerV2.whitelistedApps(unuseFor);
+        bool whitelisted = IWhitelist(address(handlerV2)).whitelistedApps(unuseFor);
         if (!whitelisted) {
-            handlerV2.updateWhitelistedApps(unuseFor, true);
+            IWhitelist(address(handlerV2)).updateWhitelistedApps(unuseFor, true);
         }
         bytes memory unuse = abi.encode(
-            IUniswapV3SingleTickLiquidityHandlerV2.UnusePositionParams({
+            IHandlerUse.UnusePositionParams({
                 pool: address(pool),
                 hook: address(0),
                 tickLower: tickLower,
@@ -224,7 +267,7 @@ abstract contract Base is Test {
         );
 
         vm.prank(unuseFor);
-        handlerV2.unusePositionHandler(unuse);
+        IHandlerUse(address(handlerV2)).unusePositionHandler(unuse);
     }
 
     function _burnParamsRight(
@@ -232,7 +275,7 @@ abstract contract Base is Test {
         int24 tickLower,
         int24 tickUpper,
         uint256 token0
-    ) internal view returns (IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams memory) {
+    ) internal view returns (IStrykeHandlerV2.BurnPositionParams memory) {
         uint128 liquidity = LiquidityAmounts.getLiquidityForAmount0(
             TickMath.getSqrtRatioAtTick(tickLower),
             TickMath.getSqrtRatioAtTick(tickUpper),
@@ -244,7 +287,7 @@ abstract contract Base is Test {
         uint128 shares = handlerV2.convertToShares(liquidity, tokenId);
 
         return
-            IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams({
+            IStrykeHandlerV2.BurnPositionParams({
                 pool: pool_,
                 hook: address(0),
                 tickLower: tickLower,
@@ -258,7 +301,7 @@ abstract contract Base is Test {
         int24 tickLower,
         int24 tickUpper,
         uint256 token1
-    ) internal view returns (IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams memory) {
+    ) internal view returns (IStrykeHandlerV2.BurnPositionParams memory) {
         uint128 liquidity = LiquidityAmounts.getLiquidityForAmount1(
             TickMath.getSqrtRatioAtTick(tickLower),
             TickMath.getSqrtRatioAtTick(tickUpper),
@@ -270,7 +313,7 @@ abstract contract Base is Test {
         uint128 shares = handlerV2.convertToShares(liquidity, tokenId);
 
         return
-            IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams({
+            IStrykeHandlerV2.BurnPositionParams({
                 pool: pool_,
                 hook: address(0),
                 tickLower: tickLower,
@@ -353,10 +396,7 @@ contract TestReserveHelper is Base {
         reserveParams[2] = ReserveHelper.ReserveRequest(address(pool), address(0), -30, -20);
         reserveParams[3] = ReserveHelper.ReserveRequest(address(pool), address(0), -20, -10);
 
-        IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams[] memory reserves = _batchReserveLiquidity(
-            alice,
-            reserveParams
-        );
+        IStrykeHandlerV2.BurnPositionParams[] memory reserves = _batchReserveLiquidity(alice, reserveParams);
 
         assertEq(reserves.length, 4, "reserves.length should be 4");
         assertEq(reserves[0].shares, aliceMintShares[0], "reserves[0].shares should be aliceMintShares[0]");
@@ -427,7 +467,7 @@ contract TestReserveHelper is Base {
     function _batchReserveLiquidity(
         address user,
         ReserveHelper.ReserveRequest[] memory reserveParams
-    ) internal returns (IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams[] memory positions) {
+    ) internal returns (IStrykeHandlerV2.BurnPositionParams[] memory positions) {
         vm.startPrank(user);
         // create a new reserve helper for the given handler and user
         if (address(reserveProxy.reserveHelpers(reserveProxy.helperId(user, handlerV2))) == address(0)) {

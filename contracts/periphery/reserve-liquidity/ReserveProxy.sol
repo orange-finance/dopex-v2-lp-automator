@@ -2,28 +2,27 @@
 
 pragma solidity 0.8.19;
 
-import {IUniswapV3SingleTickLiquidityHandlerV2} from "../../vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
-
 import {ReserveHelper} from "./ReserveHelper.sol";
+import {IStrykeHandlerV2} from "./IStrykeHandlerV2.sol";
 
 contract ReserveProxy {
     mapping(bytes32 helperId => ReserveHelper) public reserveHelpers;
 
     event ReserveLiquidity(
         address indexed user,
-        IUniswapV3SingleTickLiquidityHandlerV2 handler,
-        IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams reservedPosition
+        IStrykeHandlerV2 handler,
+        IStrykeHandlerV2.BurnPositionParams reservedPosition
     );
     event WithdrawReservedLiquidity(
         address indexed user,
-        IUniswapV3SingleTickLiquidityHandlerV2 handler,
-        IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams reservedPosition
+        IStrykeHandlerV2 handler,
+        IStrykeHandlerV2.BurnPositionParams reservedPosition
     );
 
-    error ReserveHelperAlreadyInitialized(address user, IUniswapV3SingleTickLiquidityHandlerV2 handler);
-    error ReserveHelperUninitialized(address user, IUniswapV3SingleTickLiquidityHandlerV2 handler);
+    error ReserveHelperAlreadyInitialized(address user, IStrykeHandlerV2 handler);
+    error ReserveHelperUninitialized(address user, IStrykeHandlerV2 handler);
 
-    function helperId(address user, IUniswapV3SingleTickLiquidityHandlerV2 handler) public pure returns (bytes32) {
+    function helperId(address user, IStrykeHandlerV2 handler) public pure returns (bytes32) {
         return keccak256(abi.encode(user, handler));
     }
 
@@ -32,9 +31,7 @@ contract ReserveProxy {
      * @param handler The handler to create the reserve helper for.
      * @return reserveHelper The new reserve helper.
      */
-    function createMyReserveHelper(
-        IUniswapV3SingleTickLiquidityHandlerV2 handler
-    ) external returns (ReserveHelper reserveHelper) {
+    function createMyReserveHelper(IStrykeHandlerV2 handler) external returns (ReserveHelper reserveHelper) {
         if (address(reserveHelpers[helperId(msg.sender, handler)]) != address(0))
             revert ReserveHelperAlreadyInitialized(msg.sender, handler);
         reserveHelper = new ReserveHelper(msg.sender);
@@ -51,19 +48,16 @@ contract ReserveProxy {
      * @return reservedLiquidities The reserved liquidities.
      */
     function batchReserveLiquidity(
-        IUniswapV3SingleTickLiquidityHandlerV2 handler,
+        IStrykeHandlerV2 handler,
         ReserveHelper.ReserveRequest[] calldata reserveLiquidityParams
-    ) external returns (IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams[] memory reservedLiquidities) {
+    ) external returns (IStrykeHandlerV2.BurnPositionParams[] memory reservedLiquidities) {
         ReserveHelper reserveHelper = reserveHelpers[helperId(msg.sender, handler)];
         if (address(reserveHelper) == address(0)) revert ReserveHelperUninitialized(msg.sender, handler);
 
         return reserveHelper.batchReserveLiquidity(handler, reserveLiquidityParams);
     }
 
-    function batchWithdrawReserveLiquidity(
-        IUniswapV3SingleTickLiquidityHandlerV2 handler,
-        uint256[] calldata tokenIds
-    ) external {
+    function batchWithdrawReserveLiquidity(IStrykeHandlerV2 handler, uint256[] calldata tokenIds) external {
         ReserveHelper reserveHelper = reserveHelpers[helperId(msg.sender, handler)];
         if (address(reserveHelper) == address(0)) revert ReserveHelperUninitialized(msg.sender, handler);
 
