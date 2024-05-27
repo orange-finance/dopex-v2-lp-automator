@@ -78,18 +78,17 @@ contract ReserveHelper {
         // update storage with updated struct to save gas
         userReservedPositions[tokenId] = totalReserve;
 
+        liquidityReserved = IStrykeHandlerV2.ReserveLiquidity(
+            reserveInShare.pool,
+            reserveInShare.hook,
+            reserveInShare.tickLower,
+            reserveInShare.tickUpper,
+            reserveInLiquidity.liquidity
+        );
+
         // all effect has done, transfer shares to this contract and execute reserve liquidity
         handler.transferFrom(user, address(this), tokenId, reserveInShare.shares);
         handler.reserveLiquidity(abi.encode(reserveInShare));
-
-        return
-            IStrykeHandlerV2.ReserveLiquidity(
-                reserveInShare.pool,
-                reserveInShare.hook,
-                reserveInShare.tickLower,
-                reserveInShare.tickUpper,
-                reserveInLiquidity.liquidity
-            );
     }
 
     function withdrawReservedLiquidity(
