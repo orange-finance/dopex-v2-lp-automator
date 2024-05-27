@@ -394,10 +394,7 @@ contract TestReserveHelper is Base {
         _unuseLeftPosition(bob, -20, -10, 99e6);
 
         vm.startPrank(alice);
-        reserveProxy.batchWithdrawReserveLiquidity(
-            handlerV2,
-            reserveProxy.reserveHelpers(reserveProxy.helperId(alice, handlerV2)).getReservedTokenIds()
-        );
+        reserveProxy.batchWithdrawReserveLiquidity(handlerV2, reserveProxy.reserveHelpers(alice).getReservedTokenIds());
         vm.stopPrank();
 
         assertEq(tickBalance(alice, address(pool), 10, 20), 0, "tickBalance(10,20) should be 0");
@@ -418,7 +415,7 @@ contract TestReserveHelper is Base {
     ) internal returns (IStrykeHandlerV2.ReserveLiquidity[] memory positions) {
         vm.startPrank(user);
         // create a new reserve helper for the given handler and user
-        if (address(reserveProxy.reserveHelpers(reserveProxy.helperId(user, handlerV2))) == address(0)) {
+        if (address(reserveProxy.reserveHelpers(user)) == address(0)) {
             ReserveHelper helper = reserveProxy.createMyReserveHelper(handlerV2);
             IERC6909(address(handlerV2)).setOperator(address(helper), true);
         }
@@ -432,7 +429,7 @@ contract TestReserveHelper is Base {
         int24 tickLower,
         int24 tickUpper
     ) internal view returns (uint128) {
-        ReserveHelper helper = reserveProxy.reserveHelpers(reserveProxy.helperId(user, handlerV2));
+        ReserveHelper helper = reserveProxy.reserveHelpers(user);
         uint256 tokenId = uint256(keccak256(abi.encode(handlerV2, pool_, address(0), tickLower, tickUpper)));
         return handlerV2.reservedLiquidityPerUser(tokenId, address(helper)).liquidity;
     }

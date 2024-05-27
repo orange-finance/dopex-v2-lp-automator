@@ -9,7 +9,7 @@ error ReserveHelperAlreadyInitialized(address user, IStrykeHandlerV2 handler);
 error ReserveHelperUninitialized(address user, IStrykeHandlerV2 handler);
 
 contract ReserveProxy {
-    mapping(bytes32 helperId => ReserveHelper) public reserveHelpers;
+    mapping(address user => ReserveHelper) public reserveHelpers;
 
     event ReserveLiquidity(
         address indexed user,
@@ -32,10 +32,10 @@ contract ReserveProxy {
      * @return reserveHelper The new reserve helper.
      */
     function createMyReserveHelper(IStrykeHandlerV2 handler) external returns (ReserveHelper reserveHelper) {
-        if (address(reserveHelpers[helperId(msg.sender, handler)]) != address(0))
+        if (address(reserveHelpers[msg.sender]) != address(0))
             revert ReserveHelperAlreadyInitialized(msg.sender, handler);
         reserveHelper = new ReserveHelper(msg.sender);
-        reserveHelpers[helperId(msg.sender, handler)] = reserveHelper;
+        reserveHelpers[msg.sender] = reserveHelper;
     }
 
     /**
@@ -51,7 +51,7 @@ contract ReserveProxy {
         IStrykeHandlerV2 handler,
         IStrykeHandlerV2.ReserveShare[] calldata reserveLiquidityParams
     ) external returns (IStrykeHandlerV2.ReserveLiquidity[] memory reservedLiquidities) {
-        ReserveHelper reserveHelper = reserveHelpers[helperId(msg.sender, handler)];
+        ReserveHelper reserveHelper = reserveHelpers[msg.sender];
         if (address(reserveHelper) == address(0)) revert ReserveHelperUninitialized(msg.sender, handler);
 
         reservedLiquidities = new IStrykeHandlerV2.ReserveLiquidity[](reserveLiquidityParams.length);
@@ -87,7 +87,7 @@ contract ReserveProxy {
      * @param tokenIds The token ids of the positions to withdraw the reserved liquidity for.
      */
     function batchWithdrawReserveLiquidity(IStrykeHandlerV2 handler, uint256[] calldata tokenIds) external {
-        ReserveHelper reserveHelper = reserveHelpers[helperId(msg.sender, handler)];
+        ReserveHelper reserveHelper = reserveHelpers[msg.sender];
         if (address(reserveHelper) == address(0)) revert ReserveHelperUninitialized(msg.sender, handler);
 
         for (uint256 i; i < tokenIds.length; ) {
