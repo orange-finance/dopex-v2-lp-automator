@@ -67,16 +67,16 @@ contract ReserveHelper {
             handler.convertToAssets(reserveInShare.shares, tokenId)
         );
 
-        IStrykeHandlerV2.ReserveLiquidity memory totalReserve = userReservedPositions[tokenId];
-        if (totalReserve.liquidity == 0) {
+        IStrykeHandlerV2.ReserveLiquidity memory userReserve = userReservedPositions[tokenId];
+        if (userReserve.liquidity == 0) {
             _reservedTokenIds.add(tokenId);
-            totalReserve = reserveInLiquidity;
+            userReserve = reserveInLiquidity;
         } else {
-            totalReserve.liquidity += reserveInLiquidity.liquidity;
+            userReserve.liquidity += reserveInLiquidity.liquidity;
         }
 
         // update storage with updated struct to save gas
-        userReservedPositions[tokenId] = totalReserve;
+        userReservedPositions[tokenId] = userReserve;
 
         liquidityReserved = IStrykeHandlerV2.ReserveLiquidity(
             reserveInShare.pool,
