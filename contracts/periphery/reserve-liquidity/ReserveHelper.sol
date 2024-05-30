@@ -93,30 +93,28 @@ contract ReserveHelper {
         handler.reserveLiquidity(abi.encode(reserveInShare));
     }
 
-    function withdrawReservedLiquidity(
+    function withdrawReserveLiquidity(
         IStrykeHandlerV2 handler,
-        // IStrykeHandlerV2.BurnPositionParams memory reservePosition
         uint256 tokenId
     ) external onlyProxy returns (IStrykeHandlerV2.ReserveLiquidity memory positionWithdrawn) {
-        IStrykeHandlerV2.ReserveLiquidity memory request = userReservedPositions[tokenId];
-        IStrykeHandlerV2.ReserveLiquidity memory position = userReservedPositions[tokenId];
+        IStrykeHandlerV2.ReserveLiquidity memory withdraw = userReservedPositions[tokenId];
+        IStrykeHandlerV2.ReserveLiquidity memory remaining = userReservedPositions[tokenId];
 
-        // get actual withdrawable liquidity.
-        request.liquidity = _withdrawableLiquidity(handler, request);
+        // get actual withdrawable liquidity since some liquidity might be used by other users.
+        withdraw.liquidity = _withdrawableLiquidity(handler, withdraw);
+        if (withdraw.liquidity == 0) return IStrykeHandlerV2.ReserveLiquidity(address(0), address(0), 0, 0, 0);
 
-        if (request.liquidity == 0) return IStrykeHandlerV2.ReserveLiquidity(address(0), address(0), 0, 0, 0);
+        remaining.liquidity -= withdraw.liquidity;
+        if (remaining.liquidity == 0) _reservedTokenIds.remove(tokenId);
 
-        position.liquidity -= request.liquidity;
-        // if all shares are withdrawn, remove from active list
-        if (position.liquidity == 0) _reservedTokenIds.remove(tokenId);
+        // update storage and return value
+        userReservedPositions[tokenId] = remaining;
+        positionWithdrawn = withdraw;
 
-        // update storage
-        userReservedPositions[tokenId] = position;
+        IERC20 token0 = IERC20(IUniswapV3Pool(withdraw.pool).token0());
+        IERC20 token1 = IERC20(IUniswapV3Pool(withdraw.pool).token1());
 
-        IERC20 token0 = IERC20(IUniswapV3Pool(request.pool).token0());
-        IERC20 token1 = IERC20(IUniswapV3Pool(request.pool).token1());
-
-        handler.withdrawReserveLiquidity(abi.encode(request));
+        handler.withdrawReserveLiquidity(abi.encode(withdraw));
 
         // transfer dissolved position to user
         // each ReserveHelper is dedicated to the user, so we can transfer all balance to the user.

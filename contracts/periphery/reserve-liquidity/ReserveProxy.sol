@@ -16,7 +16,7 @@ contract ReserveProxy {
         IStrykeHandlerV2 handler,
         IStrykeHandlerV2.ReserveLiquidity reservedPosition
     );
-    event WithdrawReservedLiquidity(
+    event WithdrawReserveLiquidity(
         address indexed user,
         IStrykeHandlerV2 handler,
         IStrykeHandlerV2.ReserveLiquidity withdrawnPosition
@@ -87,13 +87,13 @@ contract ReserveProxy {
         if (address(reserveHelper) == address(0)) revert ReserveHelperUninitialized(msg.sender, handler);
 
         for (uint256 i; i < tokenIds.length; ) {
-            IStrykeHandlerV2.ReserveLiquidity memory withdrawn = reserveHelper.withdrawReservedLiquidity(
+            IStrykeHandlerV2.ReserveLiquidity memory withdrawn = reserveHelper.withdrawReserveLiquidity(
                 handler,
                 tokenIds[i]
             );
 
             // emit the event only if the shares are greater than 0, to avoid invalid indexing occurs on the subgraph
-            if (withdrawn.liquidity > 0) emit WithdrawReservedLiquidity(msg.sender, handler, withdrawn);
+            if (withdrawn.liquidity > 0) emit WithdrawReserveLiquidity(msg.sender, handler, withdrawn);
 
             unchecked {
                 i++;

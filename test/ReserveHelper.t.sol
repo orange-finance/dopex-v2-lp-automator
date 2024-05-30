@@ -364,6 +364,69 @@ contract TestReserveHelper is Base {
         reserveProxy.createMyReserveHelper(handlerV2);
     }
 
+    function test_reserveLiquidity() public {
+        deal(address(mock0), address(this), 20e18);
+
+        // first minter receive 1 less shares
+        _mintRightPosition(carol, 10, 20, 10e18);
+
+        uint256 aliceMintShares = _mintRightPosition(alice, 10, 20, 10e18);
+        uint256 aliceMintLiquidity = tickSharesToAssets(aliceMintShares, address(pool), 10, 20);
+
+        _useRightPosition(bob, 10, 20, 19.9e18);
+
+        ReserveHelper helper = new ReserveHelper(alice);
+        vm.prank(alice);
+        IERC6909(address(handlerV2)).setOperator(address(helper), true);
+
+        IStrykeHandlerV2.ReserveLiquidity memory reserve = helper.reserveLiquidity(
+            handlerV2,
+            IStrykeHandlerV2.ReserveShare(address(pool), address(0), 10, 20, uint128(aliceMintShares))
+        );
+
+        assertEq(reserve.pool, address(pool), "reserve.pool should be address(pool)");
+        assertEq(reserve.hook, address(0), "reserve.hook should be address(0)");
+        assertEq(reserve.tickLower, 10, "reserve.tickLower should be 10");
+        assertEq(reserve.tickUpper, 20, "reserve.tickUpper should be 20");
+        assertEq(reserve.liquidity, aliceMintLiquidity, "reserve.liquidity should be aliceMintLiquidity");
+    }
+
+    function test_withdrawReserveLiquidity() public {
+        deal(address(mock0), address(this), 20e18);
+
+        // first minter receive 1 less shares
+        _mintRightPosition(carol, 10, 20, 10e18);
+
+        uint256 aliceMintShares = _mintRightPosition(alice, 10, 20, 10e18);
+        uint256 aliceMintLiquidity = tickSharesToAssets(aliceMintShares, address(pool), 10, 20);
+
+        _useRightPosition(bob, 10, 20, 19.9e18);
+
+        ReserveHelper helper = new ReserveHelper(alice);
+        vm.prank(alice);
+        IERC6909(address(handlerV2)).setOperator(address(helper), true);
+
+        IStrykeHandlerV2.ReserveLiquidity memory reserve = helper.reserveLiquidity(
+            handlerV2,
+            IStrykeHandlerV2.ReserveShare(address(pool), address(0), 10, 20, uint128(aliceMintShares))
+        );
+
+        skip(6 hours);
+
+        _unuseRightPosition(bob, 10, 20, 19.9e18);
+
+        IStrykeHandlerV2.ReserveLiquidity memory withdraw = helper.withdrawReserveLiquidity(
+            handlerV2,
+            uint256(keccak256(abi.encode(handlerV2, address(pool), address(0), 10, 20)))
+        );
+
+        assertEq(withdraw.pool, address(pool), "withdraw.pool should be address(pool)");
+        assertEq(withdraw.hook, address(0), "withdraw.hook should be address(0)");
+        assertEq(withdraw.tickLower, 10, "withdraw.tickLower should be 10");
+        assertEq(withdraw.tickUpper, 20, "withdraw.tickUpper should be 20");
+        assertEq(withdraw.liquidity, aliceMintLiquidity, "withdraw.liquidity should be aliceMintLiquidity");
+    }
+
     function test_batchReserveLiquidity() public {
         deal(address(mock0), address(this), 20e18);
         deal(address(mock1), address(this), 200e6);
