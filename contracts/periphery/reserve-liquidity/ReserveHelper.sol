@@ -104,8 +104,8 @@ contract ReserveHelper {
         // handler must be the same as the one used to reserve the liquidity
         // otherwise, withdraw call will waste gas for the external call even if the parameter is not valid,
         // or possibly revert unexpectedly in `_withdrawableLiquidity()`.
-        uint256 hash = _tokenId(handler, withdraw.pool, withdraw.hook, withdraw.tickLower, withdraw.tickUpper);
-        if (hash != tokenId) revert IncorrectHandler(handler);
+        if (_tokenId(handler, withdraw.pool, withdraw.hook, withdraw.tickLower, withdraw.tickUpper) != tokenId)
+            revert IncorrectHandler(handler);
 
         // get actual withdrawable liquidity since some liquidity might be used by other users.
         withdraw.liquidity = _withdrawableLiquidity(handler, withdraw);
