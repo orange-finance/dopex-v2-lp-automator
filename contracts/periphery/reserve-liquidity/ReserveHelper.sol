@@ -12,6 +12,12 @@ import {IStrykeHandlerV2} from "./IStrykeHandlerV2.sol";
 error OnlyProxy();
 error IncorrectHandler(address handler);
 
+/**
+ * @title ReserveHelper
+ * @notice This contract is used to manage the reserved liquidity for a user.
+ * @dev Each ReserveHelper is dedicated to the user, and called by the ReserveProxy contract.
+ * @author Orange Finance
+ */
 contract ReserveHelper {
     using EnumerableSet for EnumerableSet.UintSet;
     using SafeERC20 for IERC20;
@@ -47,6 +53,11 @@ contract ReserveHelper {
         }
     }
 
+    /**
+     * @notice Reserve liquidity for the user.
+     * @dev This function is called by the ReserveProxy contract.
+     * @dev Reserve must be requested with shares, not liquidity.
+     */
     function reserveLiquidity(
         IStrykeHandlerV2 handler,
         IStrykeHandlerV2.ReserveShare memory reserveInShare
@@ -94,6 +105,11 @@ contract ReserveHelper {
         handler.reserveLiquidity(abi.encode(reserveInShare));
     }
 
+    /**
+     * @notice Withdraw reserve liquidity for the user.
+     * @dev This function is called by the ReserveProxy contract.
+     * @dev Withdraw must be requested with liquidity, not shares.
+     */
     function withdrawReserveLiquidity(
         IStrykeHandlerV2 handler,
         uint256 tokenId
@@ -144,6 +160,10 @@ contract ReserveHelper {
         return uint256(keccak256(abi.encode(handler, pool, hook, tickLower, tickUpper)));
     }
 
+    /**
+     * @notice Get the withdrawable liquidity for the user.
+     * @dev some liquidity might be used by other users. so we need to get the actual withdrawable liquidity.
+     */
     function _withdrawableLiquidity(
         IStrykeHandlerV2 handler,
         IStrykeHandlerV2.ReserveLiquidity memory reservePosition

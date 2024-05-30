@@ -8,6 +8,12 @@ import {IStrykeHandlerV2} from "./IStrykeHandlerV2.sol";
 error ReserveHelperAlreadyInitialized(address user);
 error ReserveHelperUninitialized(address user);
 
+/**
+ * @title ReserveProxy
+ * @notice Routes the reserve liquidity requests to the correct ReserveHelper.
+ * @dev Stryke Handler has reserveCooldown for each user and position id, therefore, to avoid reserve conflict, we have to create a new ReserveHelper for each user.
+ * @author Orange Finance
+ */
 contract ReserveProxy {
     mapping(address user => ReserveHelper) public reserveHelpers;
 
