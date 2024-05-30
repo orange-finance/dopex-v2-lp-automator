@@ -114,19 +114,17 @@ contract ReserveHelper {
         IERC20 token0 = IERC20(IUniswapV3Pool(request.pool).token0());
         IERC20 token1 = IERC20(IUniswapV3Pool(request.pool).token1());
 
-        uint256 prev0 = token0.balanceOf(address(this));
-        uint256 prev1 = token1.balanceOf(address(this));
-
-        // we need cache the shares first
         handler.withdrawReserveLiquidity(abi.encode(request));
 
         // transfer dissolved position to user
-        uint256 diff0 = token0.balanceOf(address(this)) - prev0;
-        uint256 diff1 = token1.balanceOf(address(this)) - prev1;
-
-        // not cache user address to memory. only one transfer should be done for the single tick position.
-        if (diff0 > 0) token0.transfer(user, diff0);
-        if (diff1 > 0) token1.transfer(user, diff1);
+        // each ReserveHelper is dedicated to the user, so we can transfer all balance to the user.
+        // token is accumulated in this contract when:
+        // 1. call `handler.reserveLiquidity`, pool fee is transferred to this contract
+        // 2. call `handler.withdrawReservedLiquidity`, the dissolved position in token0/1 is transferred to the user
+        uint256 transfer;
+        address _user = user;
+        if ((transfer = token0.balanceOf(address(this))) > 0) token0.transfer(_user, transfer);
+        if ((transfer = token1.balanceOf(address(this))) > 0) token1.transfer(_user, transfer);
     }
 
     function _tokenId(
