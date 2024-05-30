@@ -63,11 +63,11 @@ contract ReserveProxy {
             reserve.shares = assets > handler.tokenIds(tokenId).totalLiquidity ? reserve.shares - 1 : reserve.shares;
 
             // in case the sender is the only provider of the position and holding only 1 share, share will be 0
-            if (reserve.shares == 0) continue;
+            if (reserve.shares != 0) {
+                reservedLiquidities[i] = reserveHelper.reserveLiquidity(handler, reserve);
 
-            reservedLiquidities[i] = reserveHelper.reserveLiquidity(handler, reserve);
-
-            emit ReserveLiquidity(msg.sender, handler, reservedLiquidities[i]);
+                emit ReserveLiquidity(msg.sender, handler, reservedLiquidities[i]);
+            }
 
             unchecked {
                 i++;
