@@ -15,8 +15,8 @@ import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 
 import {IDopexV2PositionManager} from "../contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
 
-import {ReserveHelper} from "../contracts/periphery/reserve-liquidity/ReserveHelper.sol";
-import {ReserveProxy} from "../contracts/periphery/reserve-liquidity/ReserveProxy.sol";
+import {ReserveHelper, OnlyProxy} from "../contracts/periphery/reserve-liquidity/ReserveHelper.sol";
+import {ReserveProxy, ReserveHelperAlreadyInitialized, ReserveHelperUninitialized} from "../contracts/periphery/reserve-liquidity/ReserveProxy.sol";
 
 import {PoolAddress} from "@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol";
 
@@ -309,6 +309,61 @@ contract TestReserveHelper is Base {
         reserveProxy = new ReserveProxy();
     }
 
+    function test_getReservedPositions() public {
+        deal(address(mock0), address(this), 20e18);
+        deal(address(mock1), address(this), 200e6);
+
+        // first minter receive 1 less shares
+        _mintRightPosition(carol, 10, 20, 5e18);
+        _mintRightPosition(carol, 20, 30, 5e18);
+        _mintLeftPosition(carol, -30, -20, 50e6);
+        _mintLeftPosition(carol, -20, -10, 50e6);
+
+        uint256[] memory aliceMintShares = new uint256[](4);
+        uint256[] memory aliceMintLiquidities = new uint256[](4);
+
+        aliceMintShares[0] = _mintRightPosition(alice, 10, 20, 5e18);
+        aliceMintShares[1] = _mintRightPosition(alice, 20, 30, 5e18);
+        aliceMintShares[2] = _mintLeftPosition(alice, -30, -20, 50e6);
+        aliceMintShares[3] = _mintLeftPosition(alice, -20, -10, 50e6);
+
+        aliceMintLiquidities[0] = tickSharesToAssets(aliceMintShares[0], address(pool), 10, 20);
+        aliceMintLiquidities[1] = tickSharesToAssets(aliceMintShares[1], address(pool), 20, 30);
+        aliceMintLiquidities[2] = tickSharesToAssets(aliceMintShares[2], address(pool), -30, -20);
+        aliceMintLiquidities[3] = tickSharesToAssets(aliceMintShares[3], address(pool), -20, -10);
+
+        _useRightPosition(bob, 10, 20, 9.9e18);
+        _useRightPosition(bob, 20, 30, 9.9e18);
+        _useLeftPosition(bob, -30, -20, 99e6);
+        _useLeftPosition(bob, -20, -10, 99e6);
+
+        IStrykeHandlerV2.ReserveShare[] memory reserveParams = new IStrykeHandlerV2.ReserveShare[](4);
+
+        reserveParams[0] = tickPositionInShare(alice, address(pool), 10, 20);
+        reserveParams[1] = tickPositionInShare(alice, address(pool), 20, 30);
+        reserveParams[2] = tickPositionInShare(alice, address(pool), -30, -20);
+        reserveParams[3] = tickPositionInShare(alice, address(pool), -20, -10);
+
+        IStrykeHandlerV2.ReserveLiquidity[] memory results = _batchReserveLiquidity(alice, reserveParams);
+        IStrykeHandlerV2.ReserveLiquidity[] memory positions = reserveProxy
+            .reserveHelpers(alice)
+            .getReservedPositions();
+
+        for (uint256 i = 0; i < positions.length; i++) {
+            assertEq(positions[i].pool, results[i].pool, "pool should be equal");
+            assertEq(positions[i].hook, results[i].hook, "hook should be equal");
+            assertEq(positions[i].tickLower, results[i].tickLower, "tickLower should be equal");
+            assertEq(positions[i].tickUpper, results[i].tickUpper, "tickUpper should be equal");
+            assertEq(positions[i].liquidity, results[i].liquidity, "liquidity should be equal");
+        }
+    }
+
+    function test_createMyReserveHelper_revert_ReserveHelperAlreadyInitialized() public {
+        reserveProxy.createMyReserveHelper(handlerV2);
+        vm.expectRevert(abi.encodeWithSelector(ReserveHelperAlreadyInitialized.selector, address(this), handlerV2));
+        reserveProxy.createMyReserveHelper(handlerV2);
+    }
+
     function test_batchReserveLiquidity() public {
         deal(address(mock0), address(this), 20e18);
         deal(address(mock1), address(this), 200e6);
@@ -358,6 +413,42 @@ contract TestReserveHelper is Base {
         assertEq(reservedLiquidity(alice, address(pool), -20, -10), aliceMintLiquidities[3], "reservedLiquidity(-20,-10) should be aliceMintLiquidities[3]"); // prettier-ignore
     }
 
+    function test_batchReserveLiquidity_reserveTwice() public {
+        deal(address(mock0), address(this), 20e18);
+        deal(address(mock1), address(this), 200e6);
+
+        // first minter receive 1 less shares
+        _mintRightPosition(carol, 10, 20, 5e18);
+        _mintLeftPosition(carol, -20, -10, 50e6);
+
+        uint256[] memory aliceMintShares = new uint256[](2);
+
+        aliceMintShares[0] = _mintRightPosition(alice, 10, 20, 5e18);
+        aliceMintShares[1] = _mintLeftPosition(alice, -20, -10, 50e6);
+
+        _useRightPosition(bob, 10, 20, 9.9e18);
+        _useLeftPosition(bob, -20, -10, 99e6);
+
+        IStrykeHandlerV2.ReserveShare[] memory reserveParams = new IStrykeHandlerV2.ReserveShare[](2);
+
+        reserveParams[0] = IStrykeHandlerV2.ReserveShare(address(pool), address(0), 10, 20, 1e6);
+        reserveParams[1] = IStrykeHandlerV2.ReserveShare(address(pool), address(0), -20, -10, 1e6);
+
+        // first reserve
+        _batchReserveLiquidity(alice, reserveParams);
+        // second reserve
+        _batchReserveLiquidity(alice, reserveParams);
+        uint256 id1 = uint256(keccak256(abi.encode(handlerV2, pool, address(0), 10, 20)));
+        uint256 id2 = uint256(keccak256(abi.encode(handlerV2, pool, address(0), -20, -10)));
+
+        (, , , , uint128 liq1) = reserveProxy.reserveHelpers(alice).userReservedPositions(id1);
+        (, , , , uint128 liq2) = reserveProxy.reserveHelpers(alice).userReservedPositions(id2);
+
+        // 1e6 shares are rounded up to 1e6 + 1, so (1e6 + 1) * 2 = 2e6 + 2
+        assertEq(liq1, 2e6 + 2, "id1 liquidity reserved twice");
+        assertEq(liq2, 2e6 + 2, "id2 liquidity reserved twice");
+    }
+
     function test_batchWithdrawReserveLiquidity() public {
         deal(address(mock0), address(this), 20e18);
         deal(address(mock1), address(this), 200e6);
@@ -405,9 +496,67 @@ contract TestReserveHelper is Base {
         assertApproxEqRel(mock1.balanceOf(alice), 100e6, 0.0001e18, "alice's mock1 balance should be 100e6 (delta 0.01%)"); // prettier-ignore
     }
 
-    function test_batchWithdrawReserveLiquidity_coolDownNotPassed() public {}
+    function test_batchReserveLiquidity_revert_OnlyProxy() public {
+        ReserveHelper helper = reserveProxy.createMyReserveHelper(handlerV2);
+        vm.expectRevert(OnlyProxy.selector);
+        helper.reserveLiquidity(handlerV2, IStrykeHandlerV2.ReserveShare(address(pool), address(0), 10, 20, 1));
+    }
 
-    function test_batchWithdrawReserveLiquidity_liquidityNotEnough() public {}
+    function test_batchReserveLiquidity_revert_ReserveHelperUninitialized() public {
+        IStrykeHandlerV2.ReserveShare[] memory reserveParams = new IStrykeHandlerV2.ReserveShare[](1);
+        reserveParams[0] = IStrykeHandlerV2.ReserveShare(address(pool), address(0), 10, 20, 1);
+
+        vm.expectRevert(abi.encodeWithSelector(ReserveHelperUninitialized.selector, address(this), handlerV2));
+        reserveProxy.batchReserveLiquidity(handlerV2, reserveParams);
+    }
+
+    function test_batchWithdrawReserveLiquidity_revert_ReserveHelperUninitialized() public {
+        vm.expectRevert(abi.encodeWithSelector(ReserveHelperUninitialized.selector, address(this), handlerV2));
+        reserveProxy.batchWithdrawReserveLiquidity(handlerV2, new uint256[](0));
+    }
+
+    function test_batchWithdrawReserveLiquidity_coolDownNotPassed() public {
+        deal(address(mock0), address(this), 20e18);
+        deal(address(mock1), address(this), 200e6);
+
+        // first minter receive 1 less shares
+        _mintRightPosition(carol, 10, 20, 5e18);
+        _mintRightPosition(carol, 20, 30, 5e18);
+        _mintLeftPosition(carol, -30, -20, 50e6);
+        _mintLeftPosition(carol, -20, -10, 50e6);
+
+        _mintRightPosition(alice, 10, 20, 5e18);
+        _mintRightPosition(alice, 20, 30, 5e18);
+        _mintLeftPosition(alice, -30, -20, 50e6);
+        _mintLeftPosition(alice, -20, -10, 50e6);
+        _useRightPosition(bob, 10, 20, 9.9e18);
+        _useRightPosition(bob, 20, 30, 9.9e18);
+        _useLeftPosition(bob, -30, -20, 99e6);
+        _useLeftPosition(bob, -20, -10, 99e6);
+
+        IStrykeHandlerV2.ReserveShare[] memory reserveRequest = new IStrykeHandlerV2.ReserveShare[](4);
+
+        reserveRequest[0] = tickPositionInShare(alice, address(pool), 10, 20);
+        reserveRequest[1] = tickPositionInShare(alice, address(pool), 20, 30);
+        reserveRequest[2] = tickPositionInShare(alice, address(pool), -30, -20);
+        reserveRequest[3] = tickPositionInShare(alice, address(pool), -20, -10);
+
+        _batchReserveLiquidity(alice, reserveRequest);
+
+        uint256[] memory tokenIds = reserveProxy.reserveHelpers(alice).getReservedTokenIds();
+        uint128[] memory reserves = new uint128[](tokenIds.length);
+
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            reserves[i] = handlerV2.tokenIds(tokenIds[i]).reservedLiquidity;
+        }
+
+        vm.prank(alice);
+        reserveProxy.batchWithdrawReserveLiquidity(handlerV2, tokenIds);
+
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            assertEq(handlerV2.tokenIds(tokenIds[i]).reservedLiquidity, reserves[i], "reserve should be skipped");
+        }
+    }
 
     function _batchReserveLiquidity(
         address user,

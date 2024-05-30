@@ -22,10 +22,6 @@ contract ReserveProxy {
         IStrykeHandlerV2.ReserveLiquidity withdrawnPosition
     );
 
-    function helperId(address user, IStrykeHandlerV2 handler) public pure returns (bytes32) {
-        return keccak256(abi.encode(user, handler));
-    }
-
     /**
      * @dev Creates a new reserve helper for the given handler and user.
      * @param handler The handler to create the reserve helper for.
