@@ -4,6 +4,7 @@ pragma solidity 0.8.19;
 
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
 import {IStrykeHandlerV2} from "./IStrykeHandlerV2.sol";
@@ -12,6 +13,7 @@ error OnlyProxy();
 
 contract ReserveHelper {
     using EnumerableSet for EnumerableSet.UintSet;
+    using SafeERC20 for IERC20;
 
     mapping(uint256 tokenId => IStrykeHandlerV2.ReserveLiquidity position) public userReservedPositions;
     EnumerableSet.UintSet internal _reservedTokenIds;
@@ -123,8 +125,8 @@ contract ReserveHelper {
         // 2. call `handler.withdrawReservedLiquidity`, the dissolved position in token0/1 is transferred to the user
         uint256 transfer;
         address _user = user;
-        if ((transfer = token0.balanceOf(address(this))) > 0) token0.transfer(_user, transfer);
-        if ((transfer = token1.balanceOf(address(this))) > 0) token1.transfer(_user, transfer);
+        if ((transfer = token0.balanceOf(address(this))) > 0) token0.safeTransfer(_user, transfer);
+        if ((transfer = token1.balanceOf(address(this))) > 0) token1.safeTransfer(_user, transfer);
     }
 
     function _tokenId(
