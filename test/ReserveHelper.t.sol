@@ -359,9 +359,9 @@ contract TestReserveHelper is Base {
     }
 
     function test_createMyReserveHelper_revert_ReserveHelperAlreadyInitialized() public {
-        reserveProxy.createMyReserveHelper(handlerV2);
-        vm.expectRevert(abi.encodeWithSelector(ReserveHelperAlreadyInitialized.selector, address(this), handlerV2));
-        reserveProxy.createMyReserveHelper(handlerV2);
+        reserveProxy.createMyReserveHelper();
+        vm.expectRevert(abi.encodeWithSelector(ReserveHelperAlreadyInitialized.selector, address(this)));
+        reserveProxy.createMyReserveHelper();
     }
 
     function test_reserveLiquidity() public {
@@ -591,7 +591,7 @@ contract TestReserveHelper is Base {
     }
 
     function test_batchReserveLiquidity_revert_OnlyProxy() public {
-        ReserveHelper helper = reserveProxy.createMyReserveHelper(handlerV2);
+        ReserveHelper helper = reserveProxy.createMyReserveHelper();
         vm.expectRevert(OnlyProxy.selector);
         helper.reserveLiquidity(handlerV2, IStrykeHandlerV2.ReserveShare(address(pool), address(0), 10, 20, 1));
     }
@@ -659,7 +659,7 @@ contract TestReserveHelper is Base {
         vm.startPrank(user);
         // create a new reserve helper for the given handler and user
         if (address(reserveProxy.reserveHelpers(user)) == address(0)) {
-            ReserveHelper helper = reserveProxy.createMyReserveHelper(handlerV2);
+            ReserveHelper helper = reserveProxy.createMyReserveHelper();
             IERC6909(address(handlerV2)).setOperator(address(helper), true);
         }
         positions = reserveProxy.batchReserveLiquidity(handlerV2, reserveParams);

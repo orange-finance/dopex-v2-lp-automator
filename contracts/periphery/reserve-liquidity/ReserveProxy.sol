@@ -5,7 +5,7 @@ pragma solidity 0.8.19;
 import {ReserveHelper} from "./ReserveHelper.sol";
 import {IStrykeHandlerV2} from "./IStrykeHandlerV2.sol";
 
-error ReserveHelperAlreadyInitialized(address user, IStrykeHandlerV2 handler);
+error ReserveHelperAlreadyInitialized(address user);
 error ReserveHelperUninitialized(address user, IStrykeHandlerV2 handler);
 
 contract ReserveProxy {
@@ -23,13 +23,11 @@ contract ReserveProxy {
     );
 
     /**
-     * @dev Creates a new reserve helper for the given handler and user.
-     * @param handler The handler to create the reserve helper for.
+     * @dev Creates a new reserve helper for the given user.
      * @return reserveHelper The new reserve helper.
      */
-    function createMyReserveHelper(IStrykeHandlerV2 handler) external returns (ReserveHelper reserveHelper) {
-        if (address(reserveHelpers[msg.sender]) != address(0))
-            revert ReserveHelperAlreadyInitialized(msg.sender, handler);
+    function createMyReserveHelper() external returns (ReserveHelper reserveHelper) {
+        if (address(reserveHelpers[msg.sender]) != address(0)) revert ReserveHelperAlreadyInitialized(msg.sender);
         reserveHelper = new ReserveHelper(msg.sender);
         reserveHelpers[msg.sender] = reserveHelper;
     }
