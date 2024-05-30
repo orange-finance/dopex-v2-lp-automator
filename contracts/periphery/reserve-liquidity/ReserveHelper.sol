@@ -19,8 +19,8 @@ contract ReserveHelper {
     mapping(uint256 tokenId => IStrykeHandlerV2.ReserveLiquidity position) public userReservedPositions;
     EnumerableSet.UintSet internal _reservedTokenIds;
 
-    address public user;
-    address public proxy;
+    address public immutable user;
+    address public immutable proxy;
 
     modifier onlyProxy() {
         if (msg.sender != proxy) revert OnlyProxy();
