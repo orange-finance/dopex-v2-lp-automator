@@ -600,12 +600,12 @@ contract TestReserveHelper is Base {
         IStrykeHandlerV2.ReserveShare[] memory reserveParams = new IStrykeHandlerV2.ReserveShare[](1);
         reserveParams[0] = IStrykeHandlerV2.ReserveShare(address(pool), address(0), 10, 20, 1);
 
-        vm.expectRevert(abi.encodeWithSelector(ReserveHelperUninitialized.selector, address(this), handlerV2));
+        vm.expectRevert(abi.encodeWithSelector(ReserveHelperUninitialized.selector, address(this)));
         reserveProxy.batchReserveLiquidity(handlerV2, reserveParams);
     }
 
     function test_batchWithdrawReserveLiquidity_revert_ReserveHelperUninitialized() public {
-        vm.expectRevert(abi.encodeWithSelector(ReserveHelperUninitialized.selector, address(this), handlerV2));
+        vm.expectRevert(abi.encodeWithSelector(ReserveHelperUninitialized.selector, address(this)));
         reserveProxy.batchWithdrawReserveLiquidity(handlerV2, new uint256[](0));
     }
 

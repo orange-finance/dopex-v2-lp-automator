@@ -6,7 +6,7 @@ import {ReserveHelper} from "./ReserveHelper.sol";
 import {IStrykeHandlerV2} from "./IStrykeHandlerV2.sol";
 
 error ReserveHelperAlreadyInitialized(address user);
-error ReserveHelperUninitialized(address user, IStrykeHandlerV2 handler);
+error ReserveHelperUninitialized(address user);
 
 contract ReserveProxy {
     mapping(address user => ReserveHelper) public reserveHelpers;
@@ -46,7 +46,7 @@ contract ReserveProxy {
         IStrykeHandlerV2.ReserveShare[] calldata reserveLiquidityParams
     ) external returns (IStrykeHandlerV2.ReserveLiquidity[] memory reservedLiquidities) {
         ReserveHelper reserveHelper = reserveHelpers[msg.sender];
-        if (address(reserveHelper) == address(0)) revert ReserveHelperUninitialized(msg.sender, handler);
+        if (address(reserveHelper) == address(0)) revert ReserveHelperUninitialized(msg.sender);
 
         reservedLiquidities = new IStrykeHandlerV2.ReserveLiquidity[](reserveLiquidityParams.length);
 
@@ -82,7 +82,7 @@ contract ReserveProxy {
      */
     function batchWithdrawReserveLiquidity(IStrykeHandlerV2 handler, uint256[] calldata tokenIds) external {
         ReserveHelper reserveHelper = reserveHelpers[msg.sender];
-        if (address(reserveHelper) == address(0)) revert ReserveHelperUninitialized(msg.sender, handler);
+        if (address(reserveHelper) == address(0)) revert ReserveHelperUninitialized(msg.sender);
 
         for (uint256 i; i < tokenIds.length; ) {
             IStrykeHandlerV2.ReserveLiquidity memory withdrawn = reserveHelper.withdrawReserveLiquidity(
