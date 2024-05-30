@@ -15,7 +15,7 @@ import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 
 import {IDopexV2PositionManager} from "../contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
 
-import {ReserveHelper, OnlyProxy} from "../contracts/periphery/reserve-liquidity/ReserveHelper.sol";
+import {ReserveHelper, OnlyProxy, IncorrectHandler} from "../contracts/periphery/reserve-liquidity/ReserveHelper.sol";
 import {ReserveProxy, ReserveHelperAlreadyInitialized, ReserveHelperUninitialized} from "../contracts/periphery/reserve-liquidity/ReserveProxy.sol";
 
 import {PoolAddress} from "@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol";
@@ -406,7 +406,7 @@ contract TestReserveHelper is Base {
         vm.prank(alice);
         IERC6909(address(handlerV2)).setOperator(address(helper), true);
 
-        IStrykeHandlerV2.ReserveLiquidity memory reserve = helper.reserveLiquidity(
+        helper.reserveLiquidity(
             handlerV2,
             IStrykeHandlerV2.ReserveShare(address(pool), address(0), 10, 20, uint128(aliceMintShares))
         );
@@ -425,6 +425,37 @@ contract TestReserveHelper is Base {
         assertEq(withdraw.tickLower, 10, "withdraw.tickLower should be 10");
         assertEq(withdraw.tickUpper, 20, "withdraw.tickUpper should be 20");
         assertEq(withdraw.liquidity, aliceMintLiquidity, "withdraw.liquidity should be aliceMintLiquidity");
+    }
+
+    function test_withdrawReserveLiquidity_revert_IncorrectHandler() public {
+        deal(address(mock0), address(this), 20e18);
+
+        // first minter receive 1 less shares
+        _mintRightPosition(carol, 10, 20, 10e18);
+
+        uint256 aliceMintShares = _mintRightPosition(alice, 10, 20, 10e18);
+
+        _useRightPosition(bob, 10, 20, 19.9e18);
+
+        ReserveHelper helper = new ReserveHelper(alice);
+        vm.prank(alice);
+        IERC6909(address(handlerV2)).setOperator(address(helper), true);
+
+        helper.reserveLiquidity(
+            handlerV2,
+            IStrykeHandlerV2.ReserveShare(address(pool), address(0), 10, 20, uint128(aliceMintShares))
+        );
+
+        skip(6 hours);
+
+        _unuseRightPosition(bob, 10, 20, 19.9e18);
+
+        IStrykeHandlerV2 badHandler = IStrykeHandlerV2(makeAddr("bad_handler"));
+        vm.expectRevert(abi.encodeWithSelector(IncorrectHandler.selector, badHandler));
+        helper.withdrawReserveLiquidity(
+            badHandler,
+            uint256(keccak256(abi.encode(handlerV2, address(pool), address(0), 10, 20)))
+        );
     }
 
     function test_batchReserveLiquidity() public {

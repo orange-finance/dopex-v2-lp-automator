@@ -10,6 +10,7 @@ import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Po
 import {IStrykeHandlerV2} from "./IStrykeHandlerV2.sol";
 
 error OnlyProxy();
+error IncorrectHandler(IStrykeHandlerV2 handler);
 
 contract ReserveHelper {
     using EnumerableSet for EnumerableSet.UintSet;
@@ -99,6 +100,12 @@ contract ReserveHelper {
     ) external onlyProxy returns (IStrykeHandlerV2.ReserveLiquidity memory positionWithdrawn) {
         IStrykeHandlerV2.ReserveLiquidity memory withdraw = userReservedPositions[tokenId];
         IStrykeHandlerV2.ReserveLiquidity memory remaining = userReservedPositions[tokenId];
+
+        // handler must be the same as the one used to reserve the liquidity
+        // otherwise, withdraw call will waste gas for the external call even if the parameter is not valid,
+        // or possibly revert unexpectedly in `_withdrawableLiquidity()`.
+        uint256 hash = _tokenId(handler, withdraw.pool, withdraw.hook, withdraw.tickLower, withdraw.tickUpper);
+        if (hash != tokenId) revert IncorrectHandler(handler);
 
         // get actual withdrawable liquidity since some liquidity might be used by other users.
         withdraw.liquidity = _withdrawableLiquidity(handler, withdraw);
