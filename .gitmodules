@@ -25,3 +25,6 @@
 	path = lib/solmate
 	url = https://github.com/transmissions11/solmate
 	branch = b5c9aedc24577ede91d8974323ac7a9d7f88ecbd
+[submodule "lib/oracle"]
+	path = lib/oracle
+	url = https://github.com/orange-finance/oracle
