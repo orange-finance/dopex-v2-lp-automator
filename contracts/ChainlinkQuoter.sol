@@ -3,30 +3,16 @@
 pragma solidity 0.8.19;
 
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-import {IERC20Decimals} from "./interfaces/IERC20Extended.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+
+import {IERC20Decimals} from "./interfaces/IERC20Extended.sol";
+import {IOrangeQuoter} from "./interfaces/IOrangeQuoter.sol";
 
 /**
  * @title ChainlinkQuoter
  * @notice Provides quotes for token pairs using Chainlink price feeds
  */
-contract ChainlinkQuoter is Ownable {
-    /**
-     * @notice Quote request
-     * @param baseToken The base token to get a quote for
-     * @param quoteToken The quote token
-     * @param baseAmount The base amount with decimals
-     * @param baseUsdFeed The base token USD price feed by Chainlink
-     * @param quoteUsdFeed The quote token USD price feed by Chainlink
-     */
-    struct QuoteRequest {
-        address baseToken;
-        address quoteToken;
-        uint256 baseAmount;
-        address baseUsdFeed;
-        address quoteUsdFeed;
-    }
-
+contract ChainlinkQuoter is IOrangeQuoter, Ownable {
     uint256 private constant GRACE_PERIOD_TIME = 3600;
 
     address public immutable l2SequencerUptimeFeed;

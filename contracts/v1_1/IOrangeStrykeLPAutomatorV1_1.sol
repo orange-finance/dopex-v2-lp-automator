@@ -5,7 +5,7 @@ pragma solidity 0.8.19;
 /* solhint-disable contract-name-camelcase */
 
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
-import {ChainlinkQuoter} from "./../ChainlinkQuoter.sol";
+import {IOrangeQuoter} from "../interfaces/IOrangeQuoter.sol";
 import {IOrangeStrykeLPAutomatorState} from "../interfaces/IOrangeStrykeLPAutomatorState.sol";
 
 /**
@@ -70,7 +70,7 @@ interface IOrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorState {
     /**
      * @dev Returns the Chainlink quoter contract.
      */
-    function quoter() external view returns (ChainlinkQuoter);
+    function quoter() external view returns (IOrangeQuoter);
 
     /**
      * @dev Returns the address of the asset USD feed.

@@ -97,8 +97,14 @@ contract OrangeStrykeLPAutomatorV2Handler is Test {
         vm.startPrank(args.admin);
         automator.setDepositCap(args.depositCap);
         automator.setStrategist(args.strategist, true);
-        automator.quoter().setStalenessThreshold(0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612, 86400);
-        automator.quoter().setStalenessThreshold(0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3, 86400);
+        ChainlinkQuoter(address(automator.quoter())).setStalenessThreshold(
+            0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
+            86400
+        );
+        ChainlinkQuoter(address(automator.quoter())).setStalenessThreshold(
+            0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
+            86400
+        );
         vm.stopPrank();
 
         vm.prank(args.dopexV2ManagerOwner);

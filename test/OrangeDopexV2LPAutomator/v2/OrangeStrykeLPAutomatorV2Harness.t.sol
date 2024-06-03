@@ -70,8 +70,8 @@ function deployAutomatorHarness(DeployArgs memory args) returns (OrangeStrykeLPA
     vm.startPrank(args.admin);
     harness.setDepositCap(args.depositCap);
     harness.setStrategist(args.strategist, true);
-    harness.quoter().setStalenessThreshold(0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612, 86400);
-    harness.quoter().setStalenessThreshold(0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3, 86400);
+    ChainlinkQuoter(address(harness.quoter())).setStalenessThreshold(0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612, 86400);
+    ChainlinkQuoter(address(harness.quoter())).setStalenessThreshold(0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3, 86400);
     vm.stopPrank();
 
     vm.prank(args.dopexV2ManagerOwner);
