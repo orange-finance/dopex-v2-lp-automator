@@ -1,1 +1,1 @@
-npm run test && npx hardhat test
+npm run test:forge
