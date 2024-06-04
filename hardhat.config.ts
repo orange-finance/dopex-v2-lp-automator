@@ -73,6 +73,11 @@ const config: HardhatUserConfig = {
       chainId: 42161,
       accounts: [DEV_ACCOUNT || ''],
     },
+    arbitrum_qa: {
+      url: ARB_RPC_URL,
+      chainId: 42161,
+      accounts: [DEV_ACCOUNT || ''],
+    },
   },
   paths: {
     tests: './test-hardhat',
