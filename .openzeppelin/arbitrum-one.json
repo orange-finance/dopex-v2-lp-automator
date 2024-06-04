@@ -1,0 +1,751 @@
+{
+  "manifestVersion": "3.2",
+  "proxies": [
+    {
+      "address": "0x3f00f26BE29D671753197f1a6a1cb5688eeFBaD8",
+      "kind": "uups"
+    }
+  ],
+  "impls": {
+    "f50489f89d40158c6dd82730c32ca05617b238e9cb935ec1e38f20aaa99e6385": {
+      "address": "0x072a890FBE70F5B57445BDA60bccE44642568C95",
+      "layout": {
+        "solcVersion": "0.8.19",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC1967UpgradeUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol:169"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "UUPSUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:111"
+          },
+          {
+            "label": "_balances",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "OrangeERC20Upgradeable",
+            "src": "contracts/OrangeERC20Upgradeable.sol:50"
+          },
+          {
+            "label": "_allowances",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
+            "contract": "OrangeERC20Upgradeable",
+            "src": "contracts/OrangeERC20Upgradeable.sol:52"
+          },
+          {
+            "label": "_totalSupply",
+            "offset": 0,
+            "slot": "103",
+            "type": "t_uint256",
+            "contract": "OrangeERC20Upgradeable",
+            "src": "contracts/OrangeERC20Upgradeable.sol:54"
+          },
+          {
+            "label": "_name",
+            "offset": 0,
+            "slot": "104",
+            "type": "t_string_storage",
+            "contract": "OrangeERC20Upgradeable",
+            "src": "contracts/OrangeERC20Upgradeable.sol:56"
+          },
+          {
+            "label": "_symbol",
+            "offset": 0,
+            "slot": "105",
+            "type": "t_string_storage",
+            "contract": "OrangeERC20Upgradeable",
+            "src": "contracts/OrangeERC20Upgradeable.sol:57"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "106",
+            "type": "t_array(t_uint256)45_storage",
+            "contract": "OrangeERC20Upgradeable",
+            "src": "contracts/OrangeERC20Upgradeable.sol:337"
+          },
+          {
+            "label": "asset",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_contract(IERC20)1460",
+            "contract": "OrangeStrykeLPAutomatorV1_1",
+            "src": "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol:54"
+          },
+          {
+            "label": "counterAsset",
+            "offset": 0,
+            "slot": "152",
+            "type": "t_contract(IERC20)1460",
+            "contract": "OrangeStrykeLPAutomatorV1_1",
+            "src": "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol:55"
+          },
+          {
+            "label": "minDepositAssets",
+            "offset": 0,
+            "slot": "153",
+            "type": "t_uint256",
+            "contract": "OrangeStrykeLPAutomatorV1_1",
+            "src": "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol:57"
+          },
+          {
+            "label": "depositCap",
+            "offset": 0,
+            "slot": "154",
+            "type": "t_uint256",
+            "contract": "OrangeStrykeLPAutomatorV1_1",
+            "src": "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol:58"
+          },
+          {
+            "label": "depositFeePips",
+            "offset": 0,
+            "slot": "155",
+            "type": "t_uint24",
+            "contract": "OrangeStrykeLPAutomatorV1_1",
+            "src": "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol:61"
+          },
+          {
+            "label": "depositFeeRecipient",
+            "offset": 3,
+            "slot": "155",
+            "type": "t_address",
+            "contract": "OrangeStrykeLPAutomatorV1_1",
+            "src": "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol:62"
+          },
+          {
+            "label": "isOwner",
+            "offset": 0,
+            "slot": "156",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "OrangeStrykeLPAutomatorV1_1",
+            "src": "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol:64"
+          },
+          {
+            "label": "isStrategist",
+            "offset": 0,
+            "slot": "157",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "OrangeStrykeLPAutomatorV1_1",
+            "src": "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol:65"
+          },
+          {
+            "label": "_activeTicks",
+            "offset": 0,
+            "slot": "158",
+            "type": "t_struct(UintSet)5169_storage",
+            "contract": "OrangeStrykeLPAutomatorV1_1",
+            "src": "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol:67"
+          },
+          {
+            "label": "_decimals",
+            "offset": 0,
+            "slot": "160",
+            "type": "t_uint8",
+            "contract": "OrangeStrykeLPAutomatorV1_1",
+            "src": "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol:69"
+          },
+          {
+            "label": "manager",
+            "offset": 1,
+            "slot": "160",
+            "type": "t_contract(IDopexV2PositionManager)15121",
+            "contract": "OrangeStrykeLPAutomatorV1_1",
+            "src": "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol:74"
+          },
+          {
+            "label": "handler",
+            "offset": 0,
+            "slot": "161",
+            "type": "t_contract(IUniswapV3SingleTickLiquidityHandlerV2)15401",
+            "contract": "OrangeStrykeLPAutomatorV1_1",
+            "src": "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol:75"
+          },
+          {
+            "label": "handlerHook",
+            "offset": 0,
+            "slot": "162",
+            "type": "t_address",
+            "contract": "OrangeStrykeLPAutomatorV1_1",
+            "src": "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol:76"
+          },
+          {
+            "label": "quoter",
+            "offset": 0,
+            "slot": "163",
+            "type": "t_contract(IOrangeQuoter)8879",
+            "contract": "OrangeStrykeLPAutomatorV1_1",
+            "src": "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol:81"
+          },
+          {
+            "label": "assetUsdFeed",
+            "offset": 0,
+            "slot": "164",
+            "type": "t_address",
+            "contract": "OrangeStrykeLPAutomatorV1_1",
+            "src": "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol:82"
+          },
+          {
+            "label": "counterAssetUsdFeed",
+            "offset": 0,
+            "slot": "165",
+            "type": "t_address",
+            "contract": "OrangeStrykeLPAutomatorV1_1",
+            "src": "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol:83"
+          },
+          {
+            "label": "pool",
+            "offset": 0,
+            "slot": "166",
+            "type": "t_contract(IUniswapV3Pool)5343",
+            "contract": "OrangeStrykeLPAutomatorV1_1",
+            "src": "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol:88"
+          },
+          {
+            "label": "router",
+            "offset": 0,
+            "slot": "167",
+            "type": "t_contract(ISwapRouter)6638",
+            "contract": "OrangeStrykeLPAutomatorV1_1",
+            "src": "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol:89"
+          },
+          {
+            "label": "poolTickSpacing",
+            "offset": 20,
+            "slot": "167",
+            "type": "t_int24",
+            "contract": "OrangeStrykeLPAutomatorV1_1",
+            "src": "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol:90"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_bytes32)dyn_storage": {
+            "label": "bytes32[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)45_storage": {
+            "label": "uint256[45]",
+            "numberOfBytes": "1440"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IDopexV2PositionManager)15121": {
+            "label": "contract IDopexV2PositionManager",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IERC20)1460": {
+            "label": "contract IERC20",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IOrangeQuoter)8879": {
+            "label": "contract IOrangeQuoter",
+            "numberOfBytes": "20"
+          },
+          "t_contract(ISwapRouter)6638": {
+            "label": "contract ISwapRouter",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IUniswapV3Pool)5343": {
+            "label": "contract IUniswapV3Pool",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IUniswapV3SingleTickLiquidityHandlerV2)15401": {
+            "label": "contract IUniswapV3SingleTickLiquidityHandlerV2",
+            "numberOfBytes": "20"
+          },
+          "t_int24": {
+            "label": "int24",
+            "numberOfBytes": "3"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
+            "label": "mapping(address => mapping(address => uint256))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_uint256)": {
+            "label": "mapping(bytes32 => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_string_storage": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_struct(Set)4697_storage": {
+            "label": "struct EnumerableSet.Set",
+            "members": [
+              {
+                "label": "_values",
+                "type": "t_array(t_bytes32)dyn_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_indexes",
+                "type": "t_mapping(t_bytes32,t_uint256)",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(UintSet)5169_storage": {
+            "label": "struct EnumerableSet.UintSet",
+            "members": [
+              {
+                "label": "_inner",
+                "type": "t_struct(Set)4697_storage",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint24": {
+            "label": "uint24",
+            "numberOfBytes": "3"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
+    },
+    "08447102f4fc18067b79fafbb48544bc04559d6ea3bcbd7c8d17ea2e26124938": {
+      "address": "0x8c5DaA7CAA1fFC627b4B9E1872cccBefa2975361",
+      "layout": {
+        "solcVersion": "0.8.19",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC1967UpgradeUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol:169"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "UUPSUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:111"
+          },
+          {
+            "label": "_balances",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "OrangeERC20Upgradeable",
+            "src": "contracts/OrangeERC20Upgradeable.sol:50"
+          },
+          {
+            "label": "_allowances",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
+            "contract": "OrangeERC20Upgradeable",
+            "src": "contracts/OrangeERC20Upgradeable.sol:52"
+          },
+          {
+            "label": "_totalSupply",
+            "offset": 0,
+            "slot": "103",
+            "type": "t_uint256",
+            "contract": "OrangeERC20Upgradeable",
+            "src": "contracts/OrangeERC20Upgradeable.sol:54"
+          },
+          {
+            "label": "_name",
+            "offset": 0,
+            "slot": "104",
+            "type": "t_string_storage",
+            "contract": "OrangeERC20Upgradeable",
+            "src": "contracts/OrangeERC20Upgradeable.sol:56"
+          },
+          {
+            "label": "_symbol",
+            "offset": 0,
+            "slot": "105",
+            "type": "t_string_storage",
+            "contract": "OrangeERC20Upgradeable",
+            "src": "contracts/OrangeERC20Upgradeable.sol:57"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "106",
+            "type": "t_array(t_uint256)45_storage",
+            "contract": "OrangeERC20Upgradeable",
+            "src": "contracts/OrangeERC20Upgradeable.sol:337"
+          },
+          {
+            "label": "asset",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_contract(IERC20)1298",
+            "contract": "OrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/OrangeStrykeLPAutomatorV2.sol:61"
+          },
+          {
+            "label": "counterAsset",
+            "offset": 0,
+            "slot": "152",
+            "type": "t_contract(IERC20)1298",
+            "contract": "OrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/OrangeStrykeLPAutomatorV2.sol:62"
+          },
+          {
+            "label": "minDepositAssets",
+            "offset": 0,
+            "slot": "153",
+            "type": "t_uint256",
+            "contract": "OrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/OrangeStrykeLPAutomatorV2.sol:64"
+          },
+          {
+            "label": "depositCap",
+            "offset": 0,
+            "slot": "154",
+            "type": "t_uint256",
+            "contract": "OrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/OrangeStrykeLPAutomatorV2.sol:65"
+          },
+          {
+            "label": "depositFeePips",
+            "offset": 0,
+            "slot": "155",
+            "type": "t_uint24",
+            "contract": "OrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/OrangeStrykeLPAutomatorV2.sol:68"
+          },
+          {
+            "label": "depositFeeRecipient",
+            "offset": 3,
+            "slot": "155",
+            "type": "t_address",
+            "contract": "OrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/OrangeStrykeLPAutomatorV2.sol:69"
+          },
+          {
+            "label": "isOwner",
+            "offset": 0,
+            "slot": "156",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "OrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/OrangeStrykeLPAutomatorV2.sol:71"
+          },
+          {
+            "label": "isStrategist",
+            "offset": 0,
+            "slot": "157",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "OrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/OrangeStrykeLPAutomatorV2.sol:72"
+          },
+          {
+            "label": "_activeTicks",
+            "offset": 0,
+            "slot": "158",
+            "type": "t_struct(UintSet)4119_storage",
+            "contract": "OrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/OrangeStrykeLPAutomatorV2.sol:74"
+          },
+          {
+            "label": "_decimals",
+            "offset": 0,
+            "slot": "160",
+            "type": "t_uint8",
+            "contract": "OrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/OrangeStrykeLPAutomatorV2.sol:76"
+          },
+          {
+            "label": "manager",
+            "offset": 1,
+            "slot": "160",
+            "type": "t_contract(IDopexV2PositionManager)9215",
+            "contract": "OrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/OrangeStrykeLPAutomatorV2.sol:81"
+          },
+          {
+            "label": "handler",
+            "offset": 0,
+            "slot": "161",
+            "type": "t_contract(IUniswapV3SingleTickLiquidityHandlerV2)9495",
+            "contract": "OrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/OrangeStrykeLPAutomatorV2.sol:82"
+          },
+          {
+            "label": "handlerHook",
+            "offset": 0,
+            "slot": "162",
+            "type": "t_address",
+            "contract": "OrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/OrangeStrykeLPAutomatorV2.sol:83"
+          },
+          {
+            "label": "quoter",
+            "offset": 0,
+            "slot": "163",
+            "type": "t_contract(IOrangeQuoter)6362",
+            "contract": "OrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/OrangeStrykeLPAutomatorV2.sol:88"
+          },
+          {
+            "label": "assetUsdFeed",
+            "offset": 0,
+            "slot": "164",
+            "type": "t_address",
+            "contract": "OrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/OrangeStrykeLPAutomatorV2.sol:89"
+          },
+          {
+            "label": "counterAssetUsdFeed",
+            "offset": 0,
+            "slot": "165",
+            "type": "t_address",
+            "contract": "OrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/OrangeStrykeLPAutomatorV2.sol:90"
+          },
+          {
+            "label": "pool",
+            "offset": 0,
+            "slot": "166",
+            "type": "t_contract(IUniswapV3Pool)4281",
+            "contract": "OrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/OrangeStrykeLPAutomatorV2.sol:95"
+          },
+          {
+            "label": "router",
+            "offset": 0,
+            "slot": "167",
+            "type": "t_address",
+            "contract": "OrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/OrangeStrykeLPAutomatorV2.sol:97"
+          },
+          {
+            "label": "poolTickSpacing",
+            "offset": 20,
+            "slot": "167",
+            "type": "t_int24",
+            "contract": "OrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/OrangeStrykeLPAutomatorV2.sol:98"
+          },
+          {
+            "label": "balancer",
+            "offset": 0,
+            "slot": "168",
+            "type": "t_contract(IBalancerVault)9139",
+            "contract": "OrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/OrangeStrykeLPAutomatorV2.sol:103"
+          },
+          {
+            "label": "_flashLoanHash",
+            "offset": 0,
+            "slot": "169",
+            "type": "t_bytes32",
+            "contract": "OrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/OrangeStrykeLPAutomatorV2.sol:104"
+          },
+          {
+            "label": "swapInputDelta",
+            "offset": 0,
+            "slot": "170",
+            "type": "t_uint256",
+            "contract": "OrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/OrangeStrykeLPAutomatorV2.sol:105"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_bytes32)dyn_storage": {
+            "label": "bytes32[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)45_storage": {
+            "label": "uint256[45]",
+            "numberOfBytes": "1440"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IBalancerVault)9139": {
+            "label": "contract IBalancerVault",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IDopexV2PositionManager)9215": {
+            "label": "contract IDopexV2PositionManager",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IERC20)1298": {
+            "label": "contract IERC20",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IOrangeQuoter)6362": {
+            "label": "contract IOrangeQuoter",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IUniswapV3Pool)4281": {
+            "label": "contract IUniswapV3Pool",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IUniswapV3SingleTickLiquidityHandlerV2)9495": {
+            "label": "contract IUniswapV3SingleTickLiquidityHandlerV2",
+            "numberOfBytes": "20"
+          },
+          "t_int24": {
+            "label": "int24",
+            "numberOfBytes": "3"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
+            "label": "mapping(address => mapping(address => uint256))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_uint256)": {
+            "label": "mapping(bytes32 => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_string_storage": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_struct(Set)3647_storage": {
+            "label": "struct EnumerableSet.Set",
+            "members": [
+              {
+                "label": "_values",
+                "type": "t_array(t_bytes32)dyn_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_indexes",
+                "type": "t_mapping(t_bytes32,t_uint256)",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(UintSet)4119_storage": {
+            "label": "struct EnumerableSet.UintSet",
+            "members": [
+              {
+                "label": "_inner",
+                "type": "t_struct(Set)3647_storage",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint24": {
+            "label": "uint24",
+            "numberOfBytes": "3"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
+    }
+  }
+}

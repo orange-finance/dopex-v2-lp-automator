@@ -9,9 +9,11 @@ import path from 'path'
 import glob from 'glob'
 import { TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS } from 'hardhat/builtin-tasks/task-names'
 
-tenderly.setup()
+tenderly.setup({
+  automaticVerifications: false,
+})
 
-const { ARB_RPC_URL, DEV_ACCOUNT } = process.env
+const { ARB_RPC_URL, DEV_ACCOUNT, PROD_ACCOUNT } = process.env
 
 function viaIR(version: string, runs: number) {
   return {
@@ -62,6 +64,11 @@ const config: HardhatUserConfig = {
       ],
     },
     arbitrum: {
+      url: ARB_RPC_URL,
+      chainId: 42161,
+      accounts: [PROD_ACCOUNT || ''],
+    },
+    arbitrum_test: {
       url: ARB_RPC_URL,
       chainId: 42161,
       accounts: [DEV_ACCOUNT || ''],
