@@ -17,6 +17,8 @@ error ReserveHelperUninitialized(address user);
 contract ReserveProxy {
     mapping(address user => ReserveHelper) public reserveHelpers;
 
+    event CreateReserveHelper(address indexed user, ReserveHelper reserveHelper);
+
     event ReserveLiquidity(
         address indexed user,
         IStrykeHandlerV2 handler,
@@ -36,6 +38,8 @@ contract ReserveProxy {
         if (address(reserveHelpers[msg.sender]) != address(0)) revert ReserveHelperAlreadyInitialized(msg.sender);
         reserveHelper = new ReserveHelper(msg.sender);
         reserveHelpers[msg.sender] = reserveHelper;
+
+        emit CreateReserveHelper(msg.sender, reserveHelper);
     }
 
     /**
