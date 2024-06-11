@@ -10,6 +10,11 @@ import {IOrangeQuoter} from "./interfaces/IOrangeQuoter.sol";
 error UniswapV3TWAPQuoter__PairNotConfigured();
 error UniswapV3TWAPQuoter__NotAdmin();
 
+/**
+ * @title UniswapV3TWAPQuoter
+ * @notice Quotes Uniswap V3 TWAP prices
+ * @author Orange Finance
+ */
 contract UniswapV3TWAPQuoter is IOrangeQuoter {
     struct TWAPConfig {
         address pool;
@@ -31,16 +36,33 @@ contract UniswapV3TWAPQuoter is IOrangeQuoter {
         isAdmin[msg.sender] = true;
     }
 
+    /**
+     * @notice Returns a unique identifier for a pair. The identifier is ordered descending.
+     * @dev We don't care about pool fee because Automator contract has no way to pass a fee parameter in current implementation.
+     * @param tokenA The first token
+     * @param tokenB The second token
+     * @return The unique identifier
+     */
     function pairId(address tokenA, address tokenB) public pure returns (bytes32) {
         if (tokenA < tokenB) (tokenA, tokenB) = (tokenB, tokenA);
 
         return keccak256(abi.encode(tokenA, tokenB));
     }
 
+    /**
+     * @notice Sets the TWAP configuration for a pair
+     * @param pairId_ The unique identifier of the pair
+     * @param config The TWAP configuration
+     */
     function setTWAPConfig(bytes32 pairId_, TWAPConfig memory config) external onlyAdmin {
         twapConfigs[pairId_] = config;
     }
 
+    /**
+     * @notice Returns the TWAP price for a pair
+     * @param req The quote request
+     * @return quote The TWAP price
+     */
     function getQuote(QuoteRequest memory req) external view returns (uint256 quote) {
         TWAPConfig memory config = twapConfigs[pairId(req.baseToken, req.quoteToken)];
         if (config.pool == address(0)) revert UniswapV3TWAPQuoter__PairNotConfigured();
