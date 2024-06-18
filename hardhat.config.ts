@@ -1,13 +1,19 @@
 import { HardhatUserConfig, subtask } from 'hardhat/config'
 import '@nomicfoundation/hardhat-toolbox'
 import '@nomicfoundation/hardhat-foundry'
+import 'hardhat-deploy'
+import * as tenderly from '@tenderly/hardhat-tenderly'
 import '@openzeppelin/hardhat-upgrades'
 import 'dotenv/config'
 import path from 'path'
 import glob from 'glob'
 import { TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS } from 'hardhat/builtin-tasks/task-names'
 
-const { ARB_RPC_URL, DEV_ACCOUNT } = process.env
+tenderly.setup({
+  automaticVerifications: false,
+})
+
+const { ARB_RPC_URL, DEV_ACCOUNT, PROD_ACCOUNT } = process.env
 
 function viaIR(version: string, runs: number) {
   return {
@@ -40,6 +46,9 @@ const config: HardhatUserConfig = {
       'contracts/v2/BCOrangeStrykeLPAutomatorV2.sol': viaIR('0.8.19', 200),
     },
   },
+  namedAccounts: {
+    deployer: 0,
+  },
   networks: {
     hardhat: {
       forking: {
@@ -54,7 +63,17 @@ const config: HardhatUserConfig = {
         },
       ],
     },
-    arb: {
+    arbitrum: {
+      url: ARB_RPC_URL,
+      chainId: 42161,
+      accounts: [PROD_ACCOUNT || ''],
+    },
+    arbitrum_test: {
+      url: ARB_RPC_URL,
+      chainId: 42161,
+      accounts: [DEV_ACCOUNT || ''],
+    },
+    arbitrum_qa: {
       url: ARB_RPC_URL,
       chainId: 42161,
       accounts: [DEV_ACCOUNT || ''],
@@ -62,6 +81,15 @@ const config: HardhatUserConfig = {
   },
   paths: {
     tests: './test-hardhat',
+  },
+  tenderly: {
+    username: process.env.TENDERLY_USERNAME ?? '',
+    project: process.env.TENDERLY_PROJECT ?? '',
+  },
+  etherscan: {
+    apiKey: {
+      arbitrumOne: process.env.ARBSCAN_API_KEY ?? '',
+    },
   },
 }
 
