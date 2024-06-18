@@ -19,7 +19,7 @@ contract TestUniswapV3PoolLib is Test {
         emit log_named_int("current tick", tick);
     }
 
-    function test_currentTick() public {
+    function test_currentTick() public view {
         (, int24 tickFromSlot, , , , , ) = wethUsdce.slot0();
         int24 tick = UniswapV3PoolLib.currentTick(wethUsdce);
 

@@ -25,7 +25,7 @@ contract TestChainlinkQuoter is Test {
         quoter.setStalenessThreshold(0xb2A824043730FE05F3DA2efaFa1CBbe83fa548D6, 86400);
     }
 
-    function test_getQuote_ethToUsdc() public {
+    function test_getQuote_ethToUsdc() public view {
         uint256 uniQuote = UniswapV3Helper.getQuote(
             IUniswapV3Pool(0xC6962004f452bE9203591991D15f6b388e09E8D0),
             WETH,
@@ -46,7 +46,7 @@ contract TestChainlinkQuoter is Test {
         assertApproxEqRel(uniQuote, clQuote, 0.001e18); // 0.1%
     }
 
-    function test_getQuote_usdcToEth() public {
+    function test_getQuote_usdcToEth() public view {
         uint256 uniQuote = UniswapV3Helper.getQuote(
             IUniswapV3Pool(0xC6962004f452bE9203591991D15f6b388e09E8D0),
             USDC,
@@ -67,7 +67,7 @@ contract TestChainlinkQuoter is Test {
         assertApproxEqRel(uniQuote, clQuote, 0.001e18); // 0.1%
     }
 
-    function test_getQuote_wbtcToUsdc() public {
+    function test_getQuote_wbtcToUsdc() public view {
         uint256 uniQuote = UniswapV3Helper.getQuote(
             IUniswapV3Pool(0xac70bD92F89e6739B3a08Db9B6081a923912f73D),
             WBTC,
@@ -88,7 +88,7 @@ contract TestChainlinkQuoter is Test {
         assertApproxEqRel(uniQuote, clQuote, 0.0015e18); // 0.15%
     }
 
-    function test_getQuote_usdcToWbtc() public {
+    function test_getQuote_usdcToWbtc() public view {
         uint256 uniQuote = UniswapV3Helper.getQuote(
             IUniswapV3Pool(0xac70bD92F89e6739B3a08Db9B6081a923912f73D),
             USDC,
@@ -109,7 +109,7 @@ contract TestChainlinkQuoter is Test {
         assertApproxEqRel(uniQuote, clQuote, 0.0015e18); // 0.15%
     }
 
-    function test_getQuote_arbToUsdc() public {
+    function test_getQuote_arbToUsdc() public view {
         uint256 uniQuote = UniswapV3Helper.getQuote(
             IUniswapV3Pool(0xcDa53B1F66614552F834cEeF361A8D12a0B8DaD8),
             ARB,
@@ -130,7 +130,7 @@ contract TestChainlinkQuoter is Test {
         assertApproxEqRel(uniQuote, clQuote, 0.001e18); // 0.1%
     }
 
-    function test_getQuote_UsdcToArb() public {
+    function test_getQuote_UsdcToArb() public view {
         uint256 uniQuote = UniswapV3Helper.getQuote(
             IUniswapV3Pool(0xcDa53B1F66614552F834cEeF361A8D12a0B8DaD8),
             USDC,
