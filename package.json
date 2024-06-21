@@ -7,6 +7,7 @@
     "test:forge": "forge test --no-match-test \"Skip\"",
     "test:hardhat": "npx hardhat test",
     "coverage": "./coverage.sh",
+    "coverage:forge": "./coverage_forge.sh",
     "fmt": "prettier --write 'contracts/**/*.sol'",
     "lint:sol": "solhint 'contracts/**/*.sol'",
     "prepare": "husky",
