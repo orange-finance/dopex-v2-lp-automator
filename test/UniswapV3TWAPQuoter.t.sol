@@ -7,7 +7,7 @@ import {Test} from "forge-std/Test.sol";
 import {IUniswapV3TWAPOracle} from "@orange-finance/oracle/src/IUniswapV3TWAPOracle.sol";
 
 import {UniswapV3Helper, IUniswapV3Pool} from "./helper/UniswapV3Helper.t.sol";
-import {UniswapV3TWAPQuoter} from "../contracts/UniswapV3TWAPQuoter.sol";
+import {UniswapV3TWAPQuoter, UniswapV3TWAPQuoter__NotAdmin} from "../contracts/UniswapV3TWAPQuoter.sol";
 import {IOrangeQuoter} from "../contracts/interfaces/IOrangeQuoter.sol";
 
 contract TestUniswapV3TWAPQuoter is Test {
@@ -19,10 +19,38 @@ contract TestUniswapV3TWAPQuoter is Test {
 
     UniswapV3TWAPQuoter public quoter;
 
+    address public alice = makeAddr("alice");
+
     function setUp() public {
         vm.createSelectFork("arb", 217911867);
 
         quoter = new UniswapV3TWAPQuoter(twapOracle);
+    }
+
+    function test_setAdmin() public {
+        quoter.setAdmin(alice, true);
+        assertTrue(quoter.isAdmin(alice));
+
+        quoter.setAdmin(alice, false);
+        assertFalse(quoter.isAdmin(alice));
+    }
+
+    function test_setAdmin_revert_onlyOwner() public {
+        vm.expectRevert(UniswapV3TWAPQuoter__NotAdmin.selector);
+        vm.prank(alice);
+        quoter.setAdmin(alice, true);
+    }
+
+    function test_setTWAPConfig_revert_onlyAdmin() public {
+        bytes32 id = quoter.pairId(WETH, USDC);
+        UniswapV3TWAPQuoter.TWAPConfig memory config = UniswapV3TWAPQuoter.TWAPConfig({
+            pool: 0xC6962004f452bE9203591991D15f6b388e09E8D0,
+            duration: 5 minutes
+        });
+
+        vm.expectRevert(UniswapV3TWAPQuoter__NotAdmin.selector);
+        vm.prank(alice);
+        quoter.setTWAPConfig(id, config);
     }
 
     function test_getQuote_ethToUsdc() public {

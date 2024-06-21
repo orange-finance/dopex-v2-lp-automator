@@ -50,15 +50,6 @@ contract UniswapV3TWAPQuoter is IOrangeQuoter {
     }
 
     /**
-     * @notice Sets the TWAP configuration for a pair
-     * @param pairId_ The unique identifier of the pair
-     * @param config The TWAP configuration
-     */
-    function setTWAPConfig(bytes32 pairId_, TWAPConfig memory config) external onlyAdmin {
-        twapConfigs[pairId_] = config;
-    }
-
-    /**
      * @notice Returns the TWAP price for a pair
      * @param req The quote request
      * @return quote The TWAP price
@@ -74,5 +65,23 @@ contract UniswapV3TWAPQuoter is IOrangeQuoter {
                 req.baseToken,
                 req.quoteToken
             );
+    }
+
+    /**
+     * @notice Sets the TWAP configuration for a pair
+     * @param pairId_ The unique identifier of the pair
+     * @param config The TWAP configuration
+     */
+    function setTWAPConfig(bytes32 pairId_, TWAPConfig memory config) external onlyAdmin {
+        twapConfigs[pairId_] = config;
+    }
+
+    /**
+     * @notice Sets the admin status for a user
+     * @param admin The address of the user
+     * @param enabled The new admin status
+     */
+    function setAdmin(address admin, bool enabled) external onlyAdmin {
+        isAdmin[admin] = enabled;
     }
 }
