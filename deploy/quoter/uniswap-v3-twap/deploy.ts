@@ -19,7 +19,7 @@ function pairId(
 }
 
 const func: DeployFunction = async function (hre) {
-  const ORACLE = '0x4487d08B77530AAdEb11459f1BC19b479f90d8F9'
+  const ORACLE = '0x534166c5a52A548786D2F51A0a3Bc026e48Dda11'
   const TWAP_CONFIG = {
     'boop-weth': {
       pairId: pairId(

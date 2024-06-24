@@ -52,6 +52,14 @@
     {
       "address": "0xf454d407d69d32B2b710569FbedA4f1862f36B90",
       "kind": "uups"
+    },
+    {
+      "address": "0x99AE8A30594D7F637baf8E1F2B6E45d631C28865",
+      "kind": "uups"
+    },
+    {
+      "address": "0x3D2692Bb38686d0Fb9B1FAa2A3e2e5620EF112A9",
+      "kind": "uups"
     }
   ],
   "impls": {
@@ -209,7 +217,7 @@
             "label": "_activeTicks",
             "offset": 0,
             "slot": "158",
-            "type": "t_struct(UintSet)5169_storage",
+            "type": "t_struct(UintSet)4303_storage",
             "contract": "OrangeStrykeLPAutomatorV1_1",
             "src": "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol:67"
           },
@@ -225,7 +233,7 @@
             "label": "manager",
             "offset": 1,
             "slot": "160",
-            "type": "t_contract(IDopexV2PositionManager)15121",
+            "type": "t_contract(IDopexV2PositionManager)13469",
             "contract": "OrangeStrykeLPAutomatorV1_1",
             "src": "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol:74"
           },
@@ -233,7 +241,7 @@
             "label": "handler",
             "offset": 0,
             "slot": "161",
-            "type": "t_contract(IUniswapV3SingleTickLiquidityHandlerV2)15401",
+            "type": "t_contract(IUniswapV3SingleTickLiquidityHandlerV2)13799",
             "contract": "OrangeStrykeLPAutomatorV1_1",
             "src": "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol:75"
           },
@@ -249,7 +257,7 @@
             "label": "quoter",
             "offset": 0,
             "slot": "163",
-            "type": "t_contract(IOrangeQuoter)8879",
+            "type": "t_contract(IOrangeQuoter)7835",
             "contract": "OrangeStrykeLPAutomatorV1_1",
             "src": "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol:81"
           },
@@ -273,7 +281,7 @@
             "label": "pool",
             "offset": 0,
             "slot": "166",
-            "type": "t_contract(IUniswapV3Pool)5343",
+            "type": "t_contract(IUniswapV3Pool)4477",
             "contract": "OrangeStrykeLPAutomatorV1_1",
             "src": "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol:88"
           },
@@ -281,7 +289,7 @@
             "label": "router",
             "offset": 0,
             "slot": "167",
-            "type": "t_contract(ISwapRouter)6638",
+            "type": "t_contract(ISwapRouter)5772",
             "contract": "OrangeStrykeLPAutomatorV1_1",
             "src": "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol:89"
           },
@@ -319,7 +327,7 @@
             "label": "bytes32",
             "numberOfBytes": "32"
           },
-          "t_contract(IDopexV2PositionManager)15121": {
+          "t_contract(IDopexV2PositionManager)13469": {
             "label": "contract IDopexV2PositionManager",
             "numberOfBytes": "20"
           },
@@ -327,19 +335,19 @@
             "label": "contract IERC20",
             "numberOfBytes": "20"
           },
-          "t_contract(IOrangeQuoter)8879": {
+          "t_contract(IOrangeQuoter)7835": {
             "label": "contract IOrangeQuoter",
             "numberOfBytes": "20"
           },
-          "t_contract(ISwapRouter)6638": {
+          "t_contract(ISwapRouter)5772": {
             "label": "contract ISwapRouter",
             "numberOfBytes": "20"
           },
-          "t_contract(IUniswapV3Pool)5343": {
+          "t_contract(IUniswapV3Pool)4477": {
             "label": "contract IUniswapV3Pool",
             "numberOfBytes": "20"
           },
-          "t_contract(IUniswapV3SingleTickLiquidityHandlerV2)15401": {
+          "t_contract(IUniswapV3SingleTickLiquidityHandlerV2)13799": {
             "label": "contract IUniswapV3SingleTickLiquidityHandlerV2",
             "numberOfBytes": "20"
           },
@@ -367,7 +375,7 @@
             "label": "string",
             "numberOfBytes": "32"
           },
-          "t_struct(Set)4697_storage": {
+          "t_struct(Set)3831_storage": {
             "label": "struct EnumerableSet.Set",
             "members": [
               {
@@ -385,12 +393,12 @@
             ],
             "numberOfBytes": "64"
           },
-          "t_struct(UintSet)5169_storage": {
+          "t_struct(UintSet)4303_storage": {
             "label": "struct EnumerableSet.UintSet",
             "members": [
               {
                 "label": "_inner",
-                "type": "t_struct(Set)4697_storage",
+                "type": "t_struct(Set)3831_storage",
                 "offset": 0,
                 "slot": "0"
               }
@@ -414,6 +422,8 @@
       },
       "allAddresses": [
         "0x072a890FBE70F5B57445BDA60bccE44642568C95",
+        "0x6B3c2B2BCF630dA37bEbBCcF86c761B1a2B6E0E9",
+        "0xC7d5a1c551E75E72c024b4688ECB067D35f7bE32",
         "0x2DD2c5Becad668C3F295EFBc198C4821fECbB5BD",
         "0x4d35B19D76C254280345251DA830D3CD1e296c38",
         "0x1a57522A17261E7397e74a44263969D07b992dD8",
@@ -811,6 +821,8 @@
       },
       "allAddresses": [
         "0x8c5DaA7CAA1fFC627b4B9E1872cccBefa2975361",
+        "0x4A599aB3cBce9D7C046BBCF20b96dF09F8c462FD",
+        "0x20e507Faddf73fc81ad0d4A08eA60D0683Cb1E2A",
         "0xCE4156EDdf80ED1f1C3e2F6997C9c7cc1cC07FB6",
         "0x2E2623A20c4cd3aB284Eb4Cbd115126d7E4a4FE9",
         "0x6B93e752Ff54758fE17b9C676AA19d1c7BF317Ef",
