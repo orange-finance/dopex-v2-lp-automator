@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 import {UniswapV3Helper, IUniswapV3Pool} from "./helper/UniswapV3Helper.t.sol";
+import {IOrangeQuoter} from "./../contracts/interfaces/IOrangeQuoter.sol";
 import {ChainlinkQuoter} from "../contracts/ChainlinkQuoter.sol";
 
 contract TestChainlinkQuoter is Test {
@@ -34,7 +35,7 @@ contract TestChainlinkQuoter is Test {
         );
 
         uint256 clQuote = quoter.getQuote(
-            ChainlinkQuoter.QuoteRequest({
+            IOrangeQuoter.QuoteRequest({
                 baseToken: WETH,
                 quoteToken: USDC,
                 baseAmount: 10_000 ether,
@@ -55,7 +56,7 @@ contract TestChainlinkQuoter is Test {
         );
 
         uint256 clQuote = quoter.getQuote(
-            ChainlinkQuoter.QuoteRequest({
+            IOrangeQuoter.QuoteRequest({
                 baseToken: USDC,
                 quoteToken: WETH,
                 baseAmount: 100_000e6,
@@ -76,7 +77,7 @@ contract TestChainlinkQuoter is Test {
         );
 
         uint256 clQuote = quoter.getQuote(
-            ChainlinkQuoter.QuoteRequest({
+            IOrangeQuoter.QuoteRequest({
                 baseToken: WBTC,
                 quoteToken: USDC,
                 baseAmount: 10_000e8,
@@ -97,7 +98,7 @@ contract TestChainlinkQuoter is Test {
         );
 
         uint256 clQuote = quoter.getQuote(
-            ChainlinkQuoter.QuoteRequest({
+            IOrangeQuoter.QuoteRequest({
                 baseToken: USDC,
                 quoteToken: WBTC,
                 baseAmount: 100_000e6,
@@ -118,7 +119,7 @@ contract TestChainlinkQuoter is Test {
         );
 
         uint256 clQuote = quoter.getQuote(
-            ChainlinkQuoter.QuoteRequest({
+            IOrangeQuoter.QuoteRequest({
                 baseToken: ARB,
                 quoteToken: USDC,
                 baseAmount: 1_000_000e18,
@@ -139,7 +140,7 @@ contract TestChainlinkQuoter is Test {
         );
 
         uint256 clQuote = quoter.getQuote(
-            ChainlinkQuoter.QuoteRequest({
+            IOrangeQuoter.QuoteRequest({
                 baseToken: USDC,
                 quoteToken: ARB,
                 baseAmount: 100_000e6,
@@ -161,7 +162,7 @@ contract TestChainlinkQuoter is Test {
 
         vm.expectRevert(ChainlinkQuoter.FeedNotAvailable.selector);
         quoter.getQuote(
-            ChainlinkQuoter.QuoteRequest({
+            IOrangeQuoter.QuoteRequest({
                 baseToken: WETH,
                 quoteToken: USDC,
                 baseAmount: 10_000 ether,
@@ -181,7 +182,7 @@ contract TestChainlinkQuoter is Test {
 
         vm.expectRevert(ChainlinkQuoter.FeedNotAvailable.selector);
         quoter.getQuote(
-            ChainlinkQuoter.QuoteRequest({
+            IOrangeQuoter.QuoteRequest({
                 baseToken: WETH,
                 quoteToken: USDC,
                 baseAmount: 10_000 ether,
@@ -212,7 +213,7 @@ contract TestChainlinkQuoter is Test {
 
         assertEq(
             quoter.getQuote(
-                ChainlinkQuoter.QuoteRequest({
+                IOrangeQuoter.QuoteRequest({
                     baseToken: WETH,
                     quoteToken: USDC,
                     baseAmount: 10_000 ether,
@@ -245,7 +246,7 @@ contract TestChainlinkQuoter is Test {
 
         assertEq(
             quoter.getQuote(
-                ChainlinkQuoter.QuoteRequest({
+                IOrangeQuoter.QuoteRequest({
                     baseToken: WETH,
                     quoteToken: USDC,
                     baseAmount: 10_000 ether,

@@ -11,6 +11,7 @@ import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {IOrangeStrykeLPAutomatorState} from "./../interfaces/IOrangeStrykeLPAutomatorState.sol";
 import {IUniswapV3SingleTickLiquidityHandlerV2} from "./../vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 import {ChainlinkQuoter} from "./../ChainlinkQuoter.sol";
+import {IOrangeQuoter} from "./../interfaces/IOrangeQuoter.sol";
 import {UniswapV3SingleTickLiquidityLibV2} from "./../lib/UniswapV3SingleTickLiquidityLibV2.sol";
 
 contract StrykeVaultInspector {
@@ -156,7 +157,7 @@ contract StrykeVaultInspector {
         return
             _quote +
             automator.quoter().getQuote(
-                ChainlinkQuoter.QuoteRequest({
+                IOrangeQuoter.QuoteRequest({
                     baseToken: address(_counterAsset),
                     quoteToken: address(_asset),
                     baseAmount: _base,

@@ -11,7 +11,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IUniswapV3SingleTickLiquidityHandlerV2} from "../vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 import {IDopexV2PositionManager} from "../vendor/dopexV2/IDopexV2PositionManager.sol";
 
-import {ChainlinkQuoter} from "./../ChainlinkQuoter.sol";
+import {IOrangeQuoter} from "./IOrangeQuoter.sol";
 
 /**
  * @title IOrangeStrykeLPAutomatorState
@@ -52,7 +52,7 @@ interface IOrangeStrykeLPAutomatorState {
     /**
      * @dev Returns the Chainlink quoter contract.
      */
-    function quoter() external view returns (ChainlinkQuoter);
+    function quoter() external view returns (IOrangeQuoter);
 
     /**
      * @dev Returns the address of the asset USD feed.

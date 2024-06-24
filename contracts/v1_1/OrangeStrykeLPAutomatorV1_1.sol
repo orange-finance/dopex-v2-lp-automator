@@ -20,7 +20,7 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
 import {IUniswapV3SingleTickLiquidityHandlerV2} from "../vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 import {IDopexV2PositionManager} from "../vendor/dopexV2/IDopexV2PositionManager.sol";
 
-import {ChainlinkQuoter} from "../ChainlinkQuoter.sol";
+import {IOrangeQuoter} from "./../interfaces/IOrangeQuoter.sol";
 import {UniswapV3SingleTickLiquidityLibV2} from "../lib/UniswapV3SingleTickLiquidityLibV2.sol";
 import {OrangeERC20Upgradeable} from "../OrangeERC20Upgradeable.sol";
 import {IERC20Decimals} from "../interfaces/IERC20Extended.sol";
@@ -78,7 +78,7 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                     Chainlink
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
-    ChainlinkQuoter public quoter;
+    IOrangeQuoter public quoter;
     address public assetUsdFeed;
     address public counterAssetUsdFeed;
 
@@ -137,7 +137,7 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
         ISwapRouter router;
         IUniswapV3Pool pool;
         IERC20 asset;
-        ChainlinkQuoter quoter;
+        IOrangeQuoter quoter;
         address assetUsdFeed;
         address counterAssetUsdFeed;
         uint256 minDepositAssets;
@@ -285,7 +285,7 @@ contract OrangeStrykeLPAutomatorV1_1 is IOrangeStrykeLPAutomatorV1_1, UUPSUpgrad
         return
             _quote +
             quoter.getQuote(
-                ChainlinkQuoter.QuoteRequest({
+                IOrangeQuoter.QuoteRequest({
                     baseToken: address(counterAsset),
                     quoteToken: address(asset),
                     baseAmount: _base,
