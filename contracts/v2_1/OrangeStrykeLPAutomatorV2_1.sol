@@ -23,23 +23,22 @@ import {IDopexV2PositionManager} from "../vendor/dopexV2/IDopexV2PositionManager
 import {IOrangeQuoter} from "./../interfaces/IOrangeQuoter.sol";
 import {UniswapV3SingleTickLiquidityLibV2} from "../lib/UniswapV3SingleTickLiquidityLibV2.sol";
 import {OrangeERC20Upgradeable} from "../OrangeERC20Upgradeable.sol";
+import {IERC20Decimals} from "../interfaces/IERC20Extended.sol";
 
-import {IOrangeStrykeLPAutomatorV2} from "./IOrangeStrykeLPAutomatorV2.sol";
-import {IOrangeStrykeLPAutomatorState} from "./../interfaces/IOrangeStrykeLPAutomatorState.sol";
+import {IOrangeStrykeLPAutomatorV2_1} from "./IOrangeStrykeLPAutomatorV2_1.sol";
 import {IOrangeSwapProxy} from "../swap-proxy/IOrangeSwapProxy.sol";
+import {IUniswapV3PoolAdapter} from "../pool-adapter/IUniswapV3PoolAdapter.sol";
 
 import {IBalancerVault} from "../vendor/balancer/IBalancerVault.sol";
 import {IBalancerFlashLoanRecipient} from "../vendor/balancer/IBalancerFlashLoanRecipient.sol";
 
 /**
- * @title BackwardCompatibleOrangeStrykeLPAutomatorV2
- * @dev This contract only be used for WETH-USDC vault on Arbitrum as Some protocols needs v1 redeem function after v2 upgrade.
- * @dev To reduce contract size, initialize functions are removed.
- * @dev v1 redeem function call will be delegated to v1 implementation contract.
+ * @title OrangeStrykeLPAutomatorV2
+ * @dev Automate liquidity provision to Stryke CLAMM
  * @author Orange Finance
  */
-contract BackwardCompatibleOrangeStrykeLPAutomatorV2 is
-    IOrangeStrykeLPAutomatorV2,
+contract OrangeStrykeLPAutomatorV2_1 is
+    IOrangeStrykeLPAutomatorV2_1,
     IBalancerFlashLoanRecipient,
     UUPSUpgradeable,
     OrangeERC20Upgradeable
@@ -93,7 +92,7 @@ contract BackwardCompatibleOrangeStrykeLPAutomatorV2 is
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                     Uniswap
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
-    IUniswapV3Pool public pool;
+    IUniswapV3Pool internal _pool;
     /// @dev vestigial variable previously used for swapping. keep for upgrade compatibility
     address public router;
     int24 public poolTickSpacing;
@@ -104,6 +103,11 @@ contract BackwardCompatibleOrangeStrykeLPAutomatorV2 is
     IBalancerVault public balancer;
     bytes32 private _flashLoanHash;
     uint256 public swapInputDelta;
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                    V2_1 States
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
+    IUniswapV3PoolAdapter public poolAdapter;
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                     Modifiers
@@ -141,6 +145,81 @@ contract BackwardCompatibleOrangeStrykeLPAutomatorV2 is
     // @inheritdoc UUPSUpgradeable
     // solhint-disable-next-line no-empty-blocks
     function _authorizeUpgrade(address) internal override onlyOwner {}
+
+    /**
+     * @dev Constructor arguments for OrangeDopexV2LPAutomatorV1 contract.
+     * @param name The name of the ERC20 token.
+     * @param symbol The symbol of the ERC20 token.
+     * @param admin The address of the admin role.
+     * @param manager The address of the DopexV2PositionManager contract.
+     * @param handler The address of the UniswapV3SingleTickLiquidityHandler contract.
+     * @param router The address of the SwapRouter contract.
+     * @param poolAdapter The address of the UniswapV3PoolAdapter contract.
+     * @param asset The address of the ERC20 token used as the deposit asset in this vault.
+     * @param minDepositAssets The minimum amount of assets that can be deposited.
+     */
+    struct InitArgs {
+        string name;
+        string symbol;
+        address admin;
+        IDopexV2PositionManager manager;
+        IUniswapV3SingleTickLiquidityHandlerV2 handler;
+        address handlerHook;
+        IUniswapV3PoolAdapter adapter;
+        IERC20 asset;
+        IOrangeQuoter quoter;
+        address assetUsdFeed;
+        address counterAssetUsdFeed;
+        uint256 minDepositAssets;
+        IBalancerVault balancer;
+    }
+
+    function initialize(InitArgs memory args) public initializer {
+        if (args.asset != IERC20(args.adapter.token0()) && args.asset != IERC20(args.adapter.token1()))
+            revert TokenAddressMismatch();
+        if (args.assetUsdFeed == address(0) || args.counterAssetUsdFeed == address(0)) revert AddressZero();
+
+        __ERC20_init(args.name, args.symbol);
+
+        _decimals = IERC20Decimals(address(args.asset)).decimals();
+
+        quoter = args.quoter;
+        assetUsdFeed = args.assetUsdFeed;
+        counterAssetUsdFeed = args.counterAssetUsdFeed;
+
+        manager = args.manager;
+        handler = args.handler;
+        handlerHook = args.handlerHook;
+        asset = args.asset;
+        counterAsset = args.adapter.token0() == address(args.asset)
+            ? IERC20(args.adapter.token1())
+            : IERC20(args.adapter.token0());
+        poolTickSpacing = args.adapter.tickSpacing();
+
+        if (_decimals < 3) revert UnsupportedDecimals();
+        if (IERC20Decimals(address(counterAsset)).decimals() < 3) revert UnsupportedDecimals();
+
+        // The minimum deposit must be set to greater than 0.1% of the asset's value, otherwise, the transaction will result in zero shares being allocated.
+        if (args.minDepositAssets <= (10 ** _decimals / 1000)) revert MinDepositAssetsTooSmall();
+        // The minimum deposit should be set to 1e6 (equivalent to 100% in pip units). Failing to do so will result in a zero deposit fee for the recipient.
+        if (args.minDepositAssets < 1e6) revert MinDepositAssetsTooSmall();
+
+        minDepositAssets = args.minDepositAssets;
+
+        balancer = args.balancer;
+        swapInputDelta = 10; // initial delta is 10 (allow +-0.1% diff to the input amount)
+
+        args.asset.safeIncreaseAllowance(address(args.manager), type(uint256).max);
+        counterAsset.safeIncreaseAllowance(address(args.manager), type(uint256).max);
+
+        isOwner[args.admin] = true;
+    }
+
+    /// @dev used for upgrade from v1 to v2. This is a one-time operation.
+    function initializeV2(IBalancerVault balancer_) external reinitializer(2) onlyOwner {
+        balancer = balancer_;
+        swapInputDelta = 10; // initial delta is 10 (allow +-0.1% diff to the input amount)
+    }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                     ADMIN FUNCTIONS
@@ -224,7 +303,12 @@ contract BackwardCompatibleOrangeStrykeLPAutomatorV2 is
                                                     VAULT STATE DERIVATION FUNCTIONS
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
-    /// @inheritdoc IOrangeStrykeLPAutomatorState
+    /// @inheritdoc IOrangeStrykeLPAutomatorV2_1
+    function pool() public view returns (address) {
+        return poolAdapter.pool();
+    }
+
+    /// @inheritdoc IOrangeStrykeLPAutomatorV2_1
     function totalAssets() public view returns (uint256) {
         // 1. calculate the total assets in Dopex pools
         uint256 _length = _activeTicks.length();
@@ -235,13 +319,13 @@ contract BackwardCompatibleOrangeStrykeLPAutomatorV2 is
         (uint256 _a0, uint256 _a1) = (0, 0);
         (uint256 _fee0, uint256 _fee1) = (0, 0);
 
-        (uint160 _sqrtRatioX96, , , , , , ) = pool.slot0();
+        (uint160 _sqrtRatioX96, , , , , , ) = poolAdapter.slot0();
 
         // convert all positions and swap fees to assets
         for (uint256 i = 0; i < _length; ) {
             _lt = int24(uint24(_activeTicks.at(i)));
             _ut = _lt + poolTickSpacing;
-            _tid = handler.tokenId(address(pool), handlerHook, _lt, _ut);
+            _tid = handler.tokenId(poolAdapter.pool(), handlerHook, _lt, _ut);
 
             (_liquidity, , , _fee0, _fee1) = handler.positionDetail(address(this), _tid);
 
@@ -263,7 +347,7 @@ contract BackwardCompatibleOrangeStrykeLPAutomatorV2 is
         // 2. merge into the total assets in the automator
         (uint256 _base, uint256 _quote) = (counterAsset.balanceOf(address(this)), asset.balanceOf(address(this)));
 
-        if (address(asset) == pool.token0()) {
+        if (address(asset) == poolAdapter.token0()) {
             _base += _sum1;
             _quote += _sum0;
         } else {
@@ -284,20 +368,20 @@ contract BackwardCompatibleOrangeStrykeLPAutomatorV2 is
             );
     }
 
-    /// @inheritdoc IOrangeStrykeLPAutomatorState
+    /// @inheritdoc IOrangeStrykeLPAutomatorV2_1
     function convertToShares(uint256 assets) external view returns (uint256) {
         // NOTE: no need to check total supply as it is checked in deposit function.
         return assets.mulDiv(totalSupply(), totalAssets());
     }
 
-    /// @inheritdoc IOrangeStrykeLPAutomatorState
+    /// @inheritdoc IOrangeStrykeLPAutomatorV2_1
     function convertToAssets(uint256 shares) public view returns (uint256) {
         uint256 _supply = totalSupply();
 
         return _supply == 0 ? shares : shares.mulDiv(totalAssets(), _supply);
     }
 
-    /// @inheritdoc IOrangeStrykeLPAutomatorState
+    /// @inheritdoc IOrangeStrykeLPAutomatorV2_1
     function getActiveTicks() external view returns (int24[] memory) {
         uint256[] memory _tempTicks = _activeTicks.values();
         int24[] memory __activeTicks = new int24[](_tempTicks.length);
@@ -313,7 +397,7 @@ contract BackwardCompatibleOrangeStrykeLPAutomatorV2 is
                                                     USER ACTIONS
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
-    /// @inheritdoc IOrangeStrykeLPAutomatorV2
+    /// @inheritdoc IOrangeStrykeLPAutomatorV2_1
     function deposit(uint256 assets) external returns (uint256 shares) {
         if (assets == 0) revert AmountZero();
         if (assets < minDepositAssets) revert DepositTooSmall();
@@ -369,17 +453,7 @@ contract BackwardCompatibleOrangeStrykeLPAutomatorV2 is
         uint256 lockedShareIndex;
     }
 
-    function redeem(
-        uint256 shares,
-        uint256 minAssets
-    ) external returns (uint256 assets, LockedDopexShares[] memory lockedDopexShares) {
-        bytes memory res = address(0xC5Ef1Ee6f862a6f299F77ACA2236af5Bb9E782e4).functionDelegateCall(
-            abi.encodeWithSignature("redeem(uint256,uint256)", shares, minAssets)
-        );
-        (assets, lockedDopexShares) = abi.decode(res, (uint256, LockedDopexShares[]));
-    }
-
-    /// @inheritdoc IOrangeStrykeLPAutomatorV2
+    /// @inheritdoc IOrangeStrykeLPAutomatorV2_1
     function redeem(
         uint256 shares,
         bytes calldata redeemData
@@ -443,7 +517,7 @@ contract BackwardCompatibleOrangeStrykeLPAutomatorV2 is
         for (uint256 i = 0; i < ticks; ) {
             c.lowerTick = int24(uint24(_activeTicks.at(i)));
 
-            c.tokenId = handler.tokenId(address(pool), handlerHook, c.lowerTick, c.lowerTick + poolTickSpacing);
+            c.tokenId = handler.tokenId(poolAdapter.pool(), handlerHook, c.lowerTick, c.lowerTick + poolTickSpacing);
 
             (, uint128 _redeemableLiquidity, uint128 _lockedLiquidity, , ) = handler.positionDetail(
                 address(this),
@@ -500,7 +574,7 @@ contract BackwardCompatibleOrangeStrykeLPAutomatorV2 is
             handler,
             abi.encode(
                 IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams({
-                    pool: address(pool),
+                    pool: poolAdapter.pool(),
                     hook: handlerHook,
                     tickLower: lowerTick,
                     tickUpper: upperTick,
@@ -559,7 +633,7 @@ contract BackwardCompatibleOrangeStrykeLPAutomatorV2 is
                                                     STRATEGIST ACTIONS
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
-    /// @inheritdoc IOrangeStrykeLPAutomatorV2
+    /// @inheritdoc IOrangeStrykeLPAutomatorV2_1
     function rebalance(
         RebalanceTick[] calldata ticksMint,
         RebalanceTick[] calldata ticksBurn,
@@ -635,6 +709,7 @@ contract BackwardCompatibleOrangeStrykeLPAutomatorV2 is
         mintCalldataBatch = new bytes[](ticks);
 
         int24 spacing = poolTickSpacing;
+        address pool_ = poolAdapter.pool();
 
         int24 lt;
         int24 ut;
@@ -647,7 +722,7 @@ contract BackwardCompatibleOrangeStrykeLPAutomatorV2 is
                 handler,
                 abi.encode(
                     IUniswapV3SingleTickLiquidityHandlerV2.MintPositionParams({
-                        pool: address(pool),
+                        pool: pool_,
                         hook: handlerHook,
                         tickLower: lt,
                         tickUpper: ut,
@@ -657,7 +732,7 @@ contract BackwardCompatibleOrangeStrykeLPAutomatorV2 is
             );
 
             // If the position is not active, push it to the active ticks
-            if (handler.balanceOf(address(this), handler.tokenId(address(pool), handlerHook, lt, ut)) == 0)
+            if (handler.balanceOf(address(this), handler.tokenId(pool_, handlerHook, lt, ut)) == 0)
                 _activeTicks.add(uint256(uint24(lt)));
 
             unchecked {
@@ -680,14 +755,16 @@ contract BackwardCompatibleOrangeStrykeLPAutomatorV2 is
             lt = ticksBurn[i].tick;
             ut = lt + spacing;
 
-            tid = handler.tokenId(address(pool), handlerHook, lt, ut);
+            address pool_ = poolAdapter.pool();
+
+            tid = handler.tokenId(pool_, handlerHook, lt, ut);
             shares = handler.convertToShares(ticksBurn[i].liquidity, tid);
             burnCalldataBatch[i] = abi.encodeWithSelector(
                 IDopexV2PositionManager.burnPosition.selector,
                 handler,
                 abi.encode(
                     IUniswapV3SingleTickLiquidityHandlerV2.BurnPositionParams({
-                        pool: address(pool),
+                        pool: pool_,
                         hook: handlerHook,
                         tickLower: lt,
                         tickUpper: ut,

@@ -5,10 +5,14 @@ import {IUniswapV3PoolAdapter} from "../IUniswapV3PoolAdapter.sol";
 import {IPancakeV3Pool} from "./interfaces/IPancakeV3Pool.sol";
 
 contract PancakeV3PoolAdapter is IUniswapV3PoolAdapter {
-    IPancakeV3Pool public immutable pool;
+    IPancakeV3Pool internal immutable _pool;
 
-    constructor(IPancakeV3Pool _pool) {
-        pool = _pool;
+    constructor(IPancakeV3Pool pool_) {
+        _pool = pool_;
+    }
+
+    function pool() external view returns (address) {
+        return address(_pool);
     }
 
     function slot0()
@@ -27,25 +31,25 @@ contract PancakeV3PoolAdapter is IUniswapV3PoolAdapter {
         // PancakeV3 Pool has uint32 feeProtocol, but UniswapV3PoolAdapter uses uint8
         // We set the value to zero as we don't use this value
         feeProtocol = 0;
-        (sqrtPriceX96, tick, observationIndex, observationCardinality, observationCardinalityNext, , unlocked) = pool
+        (sqrtPriceX96, tick, observationIndex, observationCardinality, observationCardinalityNext, , unlocked) = _pool
             .slot0();
     }
 
     function feeGrowthGlobal0X128() external view returns (uint256) {
-        return pool.feeGrowthGlobal0X128();
+        return _pool.feeGrowthGlobal0X128();
     }
 
     function feeGrowthGlobal1X128() external view returns (uint256) {
-        return pool.feeGrowthGlobal1X128();
+        return _pool.feeGrowthGlobal1X128();
     }
 
     function protocolFees() external view returns (uint128 _token0, uint128 _token1) {
-        return pool.protocolFees();
+        return _pool.protocolFees();
     }
 
     // @dev This value has no relationship to the total liquidity across all ticks
     function liquidity() external view returns (uint128) {
-        return pool.liquidity();
+        return _pool.liquidity();
     }
 
     function ticks(
@@ -64,11 +68,11 @@ contract PancakeV3PoolAdapter is IUniswapV3PoolAdapter {
             bool initialized
         )
     {
-        return pool.ticks(tick);
+        return _pool.ticks(tick);
     }
 
     function tickBitmap(int16 wordPosition) external view returns (uint256) {
-        return pool.tickBitmap(wordPosition);
+        return _pool.tickBitmap(wordPosition);
     }
 
     function positions(
@@ -84,7 +88,7 @@ contract PancakeV3PoolAdapter is IUniswapV3PoolAdapter {
             uint128 tokensOwed1
         )
     {
-        return pool.positions(key);
+        return _pool.positions(key);
     }
 
     function observations(
@@ -99,43 +103,43 @@ contract PancakeV3PoolAdapter is IUniswapV3PoolAdapter {
             bool initialized
         )
     {
-        return pool.observations(index);
+        return _pool.observations(index);
     }
 
     function factory() external view returns (address) {
-        return pool.factory();
+        return _pool.factory();
     }
 
     function token0() external view returns (address) {
-        return pool.token0();
+        return _pool.token0();
     }
 
     function token1() external view returns (address) {
-        return pool.token1();
+        return _pool.token1();
     }
 
     function fee() external view returns (uint24) {
-        return pool.fee();
+        return _pool.fee();
     }
 
     function tickSpacing() external view returns (int24) {
-        return pool.tickSpacing();
+        return _pool.tickSpacing();
     }
 
     function maxLiquidityPerTick() external view returns (uint128) {
-        return pool.maxLiquidityPerTick();
+        return _pool.maxLiquidityPerTick();
     }
 
     function observe(
         uint32[] calldata secondsAgos
     ) external view returns (int56[] memory tickCumulatives, uint160[] memory secondsPerLiquidityCumulativeX128s) {
-        return pool.observe(secondsAgos);
+        return _pool.observe(secondsAgos);
     }
 
     function snapshotCumulativesInside(
         int24 tickLower,
         int24 tickUpper
     ) external view returns (int56 tickCumulativeInside, uint160 secondsPerLiquidityInsideX128, uint32 secondsInside) {
-        return pool.snapshotCumulativesInside(tickLower, tickUpper);
+        return _pool.snapshotCumulativesInside(tickLower, tickUpper);
     }
 }

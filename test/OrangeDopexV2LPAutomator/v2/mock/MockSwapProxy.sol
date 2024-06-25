@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.19;
 
-import {IOrangeSwapProxy} from "contracts/v2/IOrangeSwapProxy.sol";
+import {IOrangeSwapProxy} from "contracts/swap-proxy/IOrangeSwapProxy.sol";
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import {Decoder} from "contracts/lib/Decoder.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";

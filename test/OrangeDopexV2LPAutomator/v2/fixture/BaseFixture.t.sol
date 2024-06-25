@@ -11,7 +11,7 @@ import {IUniswapV3SingleTickLiquidityHandlerV2} from "./../../../../contracts/ve
 import {UniswapV3SingleTickLiquidityLib} from "./../../../../contracts/lib/UniswapV3SingleTickLiquidityLib.sol";
 import {ChainlinkQuoter} from "./../../../../contracts/ChainlinkQuoter.sol";
 import {StrykeVaultInspector} from "./../../../../contracts/periphery/StrykeVaultInspector.sol";
-import {OrangeKyberswapProxy} from "./../../../../contracts/v2/OrangeKyberswapProxy.sol";
+import {OrangeKyberswapProxy} from "./../../../../contracts/swap-proxy/OrangeKyberswapProxy.sol";
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import {IBalancerVault} from "../../../../contracts/vendor/balancer/IBalancerVault.sol";
 import {IQuoter} from "@uniswap/v3-periphery/contracts/interfaces/IQuoter.sol";

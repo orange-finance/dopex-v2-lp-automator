@@ -3,9 +3,9 @@
 pragma solidity 0.8.19;
 
 import {BaseFixture} from "test/OrangeDopexV2LPAutomator/v2/fixture/BaseFixture.t.sol";
-import {OrangeKyberswapProxy} from "contracts/v2/OrangeKyberswapProxy.sol";
-import {OrangeSwapProxy} from "contracts/v2/OrangeSwapProxy.sol";
-import {IOrangeSwapProxy} from "contracts/v2/IOrangeSwapProxy.sol";
+import {OrangeKyberswapProxy} from "contracts/swap-proxy/OrangeKyberswapProxy.sol";
+import {OrangeSwapProxy} from "contracts/swap-proxy/OrangeSwapProxy.sol";
+import {IOrangeSwapProxy} from "contracts/swap-proxy/IOrangeSwapProxy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /* solhint-disable func-name-mixedcase */

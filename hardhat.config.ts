@@ -44,6 +44,7 @@ const config: HardhatUserConfig = {
     overrides: {
       'contracts/v2/OrangeStrykeLPAutomatorV2.sol': viaIR('0.8.19', 200),
       'contracts/v2/BCOrangeStrykeLPAutomatorV2.sol': viaIR('0.8.19', 200),
+      'contracts/v2/OrangeStrykeLPAutomatorV2_1.sol': viaIR('0.8.19', 200),
     },
   },
   namedAccounts: {
