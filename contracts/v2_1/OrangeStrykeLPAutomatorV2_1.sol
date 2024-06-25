@@ -23,7 +23,6 @@ import {IDopexV2PositionManager} from "../vendor/dopexV2/IDopexV2PositionManager
 import {IOrangeQuoter} from "./../interfaces/IOrangeQuoter.sol";
 import {UniswapV3SingleTickLiquidityLibV2} from "../lib/UniswapV3SingleTickLiquidityLibV2.sol";
 import {OrangeERC20Upgradeable} from "../OrangeERC20Upgradeable.sol";
-import {IERC20Decimals} from "../interfaces/IERC20Extended.sol";
 
 import {IOrangeStrykeLPAutomatorV2_1} from "./IOrangeStrykeLPAutomatorV2_1.sol";
 import {IOrangeSwapProxy} from "../swap-proxy/IOrangeSwapProxy.sol";
@@ -32,9 +31,12 @@ import {IUniswapV3PoolAdapter} from "../pool-adapter/IUniswapV3PoolAdapter.sol";
 import {IBalancerVault} from "../vendor/balancer/IBalancerVault.sol";
 import {IBalancerFlashLoanRecipient} from "../vendor/balancer/IBalancerFlashLoanRecipient.sol";
 
+/* solhint-disable func-name-mixedcase */
+
 /**
  * @title OrangeStrykeLPAutomatorV2
  * @dev Automate liquidity provision to Stryke CLAMM
+ * @dev v1, v2 initializers are removed because of the contract size limit. You need to deploy(upgrade) v2 contract, then call initializeV2_1 to upgrade to v2.1
  * @author Orange Finance
  */
 contract OrangeStrykeLPAutomatorV2_1 is
@@ -147,78 +149,10 @@ contract OrangeStrykeLPAutomatorV2_1 is
     function _authorizeUpgrade(address) internal override onlyOwner {}
 
     /**
-     * @dev Constructor arguments for OrangeDopexV2LPAutomatorV1 contract.
-     * @param name The name of the ERC20 token.
-     * @param symbol The symbol of the ERC20 token.
-     * @param admin The address of the admin role.
-     * @param manager The address of the DopexV2PositionManager contract.
-     * @param handler The address of the UniswapV3SingleTickLiquidityHandler contract.
-     * @param router The address of the SwapRouter contract.
-     * @param poolAdapter The address of the UniswapV3PoolAdapter contract.
-     * @param asset The address of the ERC20 token used as the deposit asset in this vault.
-     * @param minDepositAssets The minimum amount of assets that can be deposited.
+     * @dev used for upgrade from v2 to v2.1. This is a one-time operation.
      */
-    struct InitArgs {
-        string name;
-        string symbol;
-        address admin;
-        IDopexV2PositionManager manager;
-        IUniswapV3SingleTickLiquidityHandlerV2 handler;
-        address handlerHook;
-        IUniswapV3PoolAdapter adapter;
-        IERC20 asset;
-        IOrangeQuoter quoter;
-        address assetUsdFeed;
-        address counterAssetUsdFeed;
-        uint256 minDepositAssets;
-        IBalancerVault balancer;
-    }
-
-    function initialize(InitArgs memory args) public initializer {
-        if (args.asset != IERC20(args.adapter.token0()) && args.asset != IERC20(args.adapter.token1()))
-            revert TokenAddressMismatch();
-        if (args.assetUsdFeed == address(0) || args.counterAssetUsdFeed == address(0)) revert AddressZero();
-
-        __ERC20_init(args.name, args.symbol);
-
-        _decimals = IERC20Decimals(address(args.asset)).decimals();
-
-        quoter = args.quoter;
-        assetUsdFeed = args.assetUsdFeed;
-        counterAssetUsdFeed = args.counterAssetUsdFeed;
-
-        manager = args.manager;
-        handler = args.handler;
-        handlerHook = args.handlerHook;
-        asset = args.asset;
-        counterAsset = args.adapter.token0() == address(args.asset)
-            ? IERC20(args.adapter.token1())
-            : IERC20(args.adapter.token0());
-        poolTickSpacing = args.adapter.tickSpacing();
-
-        if (_decimals < 3) revert UnsupportedDecimals();
-        if (IERC20Decimals(address(counterAsset)).decimals() < 3) revert UnsupportedDecimals();
-
-        // The minimum deposit must be set to greater than 0.1% of the asset's value, otherwise, the transaction will result in zero shares being allocated.
-        if (args.minDepositAssets <= (10 ** _decimals / 1000)) revert MinDepositAssetsTooSmall();
-        // The minimum deposit should be set to 1e6 (equivalent to 100% in pip units). Failing to do so will result in a zero deposit fee for the recipient.
-        if (args.minDepositAssets < 1e6) revert MinDepositAssetsTooSmall();
-
-        minDepositAssets = args.minDepositAssets;
-
-        balancer = args.balancer;
-        swapInputDelta = 10; // initial delta is 10 (allow +-0.1% diff to the input amount)
-
-        args.asset.safeIncreaseAllowance(address(args.manager), type(uint256).max);
-        counterAsset.safeIncreaseAllowance(address(args.manager), type(uint256).max);
-
-        isOwner[args.admin] = true;
-    }
-
-    /// @dev used for upgrade from v1 to v2. This is a one-time operation.
-    function initializeV2(IBalancerVault balancer_) external reinitializer(2) onlyOwner {
-        balancer = balancer_;
-        swapInputDelta = 10; // initial delta is 10 (allow +-0.1% diff to the input amount)
+    function initializeV2_1(IUniswapV3PoolAdapter adapter_) external reinitializer(3) onlyOwner {
+        poolAdapter = adapter_;
     }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
