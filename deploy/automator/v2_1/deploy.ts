@@ -1,5 +1,5 @@
 import { DeployFunction } from 'hardhat-deploy/types'
-import { V2Parameters } from './params/schema'
+import { V2_1Parameters } from './schema'
 import { network } from 'hardhat'
 
 const PAIR = process.env.PAIR
@@ -17,33 +17,31 @@ const func: DeployFunction = async function (hre) {
 
   const paramsPath = `./params/${env}/${PAIR}`
 
-  const params = V2Parameters.parse(
+  const params = V2_1Parameters.parse(
     await import(paramsPath).then((m) => m.default),
   )
-
-  const proxy = await deployments.get('OrangeKyberswapProxy')
 
   const vaultDeployed = await deployments.get(params.id)
 
   // check the new implementation is upgrade safe
   await hre.upgrades.validateUpgrade(
     vaultDeployed.address,
-    await hre.ethers.getContractFactory('OrangeStrykeLPAutomatorV2'),
+    await hre.ethers.getContractFactory('OrangeStrykeLPAutomatorV2_1'),
     {
       kind: 'uups',
     },
   )
 
   const { address, implementation, newlyDeployed } = await deploy(params.id, {
-    contract: 'OrangeStrykeLPAutomatorV2',
+    contract: 'OrangeStrykeLPAutomatorV2_1',
     from: deployer,
     proxy: {
       proxyContract: 'UUPS',
-      upgradeIndex: 1, // v1 to v2
-      implementationName: `${params.id}V2_Implementation`,
+      upgradeIndex: 2, // v2 to v2_1
+      implementationName: `${params.id}V2_1_Implementation`,
       execute: {
-        methodName: 'initializeV2',
-        args: [params.balancer],
+        methodName: 'initializeV2_1',
+        args: [params.poolAdapter],
       },
     },
     log: true,
@@ -55,33 +53,48 @@ const func: DeployFunction = async function (hre) {
   // for future upgrade, export upgrade to OpenZeppelin upgrades plugin
   await hre.upgrades.forceImport(
     address,
-    await hre.ethers.getContractFactory('OrangeStrykeLPAutomatorV2'),
+    await hre.ethers.getContractFactory('OrangeStrykeLPAutomatorV2_1'),
     {
       kind: 'uups',
     },
   )
 
   // configurations
-  await execute(
-    params.id,
-    {
-      from: deployer,
-      log: true,
-    },
-    'setProxyWhitelist',
-    proxy.address,
-    true,
-  )
+  if (network.name === 'prod' && deployer !== params.admin) {
+    // set new owner
+    await execute(
+      params.id,
+      {
+        from: deployer,
+        log: true,
+      },
+      'setOwner',
+      params.admin,
+      true,
+    )
+
+    // renounce ownership
+    await execute(
+      params.id,
+      {
+        from: deployer,
+        log: true,
+      },
+      'setOwner',
+      deployer,
+      false,
+    )
+  }
 
   if (env !== 'hardhat') {
     await hre.tenderly.verify({
-      name: 'OrangeStrykeLPAutomatorV2',
+      name: 'OrangeStrykeLPAutomatorV2_1',
       address: implementation!,
     })
   }
 }
 
-func.tags = ['v2-vault']
-func.dependencies = ['base', 'v1-vault']
+func.tags = ['v2_1-vault']
+func.dependencies = ['base', 'v2-vault']
 
 export default func
