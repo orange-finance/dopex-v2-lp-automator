@@ -2,7 +2,7 @@ import { V1_1Parameters } from '../schema'
 
 const weth_usdc: V1_1Parameters = {
   id: 'Pancake-WETH-USDC',
-  pool: '0xd9e2a1a61B6E61b275cEc326465d417e52C1b95c',
+  pool: '0x30f5a93Fd8001F6A3108f16Ef593b75eF06C02Df',
   router: '0xE592427A0AEce92De3Edee1F18E0157C05861564',
   handler: '0x9ae336B61D7d2e19a47607f163A3fB0e46306b7b',
   hook: '0x0000000000000000000000000000000000000000',

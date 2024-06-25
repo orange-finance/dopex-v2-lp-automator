@@ -60,6 +60,18 @@
     {
       "address": "0x3D2692Bb38686d0Fb9B1FAa2A3e2e5620EF112A9",
       "kind": "uups"
+    },
+    {
+      "address": "0x5f6D5a7e8eccA2A53C6322a96e9a48907A8284e0",
+      "kind": "uups"
+    },
+    {
+      "address": "0xE32132282D181967960928b77236B3c472d5f396",
+      "kind": "uups"
+    },
+    {
+      "address": "0x22dd31a495CafB229131A16C54a8e5b2f43C1162",
+      "kind": "uups"
     }
   ],
   "impls": {
@@ -422,6 +434,9 @@
       },
       "allAddresses": [
         "0x072a890FBE70F5B57445BDA60bccE44642568C95",
+        "0x6e5FC61090BbbAf9a5441A1d2CAB03EC18992C73",
+        "0xB0e3Db94507c15A876Fd36535Bf858c18B8Dbf00",
+        "0x8226455872ff012a8c513c3b586E997aAD3c69E5",
         "0x6B3c2B2BCF630dA37bEbBCcF86c761B1a2B6E0E9",
         "0xC7d5a1c551E75E72c024b4688ECB067D35f7bE32",
         "0x2DD2c5Becad668C3F295EFBc198C4821fECbB5BD",
@@ -821,6 +836,9 @@
       },
       "allAddresses": [
         "0x8c5DaA7CAA1fFC627b4B9E1872cccBefa2975361",
+        "0xbe57b39BcD444559A811b5D948e5e74D76b4ed3a",
+        "0x936C6A30233Eb9A24141428D323f3238FA6858CE",
+        "0x87eea2FbA1F912a3CBBeF1cc797e8BE931a92E06",
         "0x4A599aB3cBce9D7C046BBCF20b96dF09F8c462FD",
         "0x20e507Faddf73fc81ad0d4A08eA60D0683Cb1E2A",
         "0xCE4156EDdf80ED1f1C3e2F6997C9c7cc1cC07FB6",

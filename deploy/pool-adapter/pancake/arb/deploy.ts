@@ -38,17 +38,17 @@ const func: DeployFunction = async function (hre) {
 
   if (hre.network.name !== 'hardhat') {
     await hre.tenderly.verify({
-      name: 'PancakeV3PoolAdapter_WETH_USDC_500',
+      name: 'PancakeV3PoolAdapter',
       address: wethUsdc500,
     })
 
     await hre.tenderly.verify({
-      name: 'PancakeV3PoolAdapter_ARB_USDC_500',
+      name: 'PancakeV3PoolAdapter',
       address: arbUsdc500,
     })
 
     await hre.tenderly.verify({
-      name: 'PancakeV3PoolAdapter_WBTC_USDC_500',
+      name: 'PancakeV3PoolAdapter',
       address: wbtcUsdc500,
     })
   }
