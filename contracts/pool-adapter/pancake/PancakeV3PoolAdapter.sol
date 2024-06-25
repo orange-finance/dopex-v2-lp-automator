@@ -5,7 +5,7 @@ import {IUniswapV3PoolAdapter} from "../IUniswapV3PoolAdapter.sol";
 import {IPancakeV3Pool} from "./interfaces/IPancakeV3Pool.sol";
 
 contract PancakeV3PoolAdapter is IUniswapV3PoolAdapter {
-    IPancakeV3Pool public pool;
+    IPancakeV3Pool public immutable pool;
 
     constructor(IPancakeV3Pool _pool) {
         pool = _pool;
