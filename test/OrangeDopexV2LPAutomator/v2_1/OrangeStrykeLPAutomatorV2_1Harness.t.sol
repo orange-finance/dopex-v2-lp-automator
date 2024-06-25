@@ -5,6 +5,7 @@ pragma solidity 0.8.19;
 /* solhint-disable const-name-snakecase */
 
 import {OrangeStrykeLPAutomatorV2} from "../../../contracts/v2/OrangeStrykeLPAutomatorV2.sol";
+import {OrangeStrykeLPAutomatorV2_1} from "../../../contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {Vm} from "forge-std/Vm.sol";
@@ -14,10 +15,13 @@ import {IUniswapV3SingleTickLiquidityHandlerV2} from "../../../contracts/vendor/
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import {IBalancerVault} from "../../../contracts/vendor/balancer/IBalancerVault.sol";
+import {IUniswapV3PoolAdapter} from "./../../../contracts/pool-adapter/IUniswapV3PoolAdapter.sol";
+
+/* solhint-disable contract-name-camelcase */
 
 Vm constant vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
 
-contract OrangeStrykeLPAutomatorV2Harness is OrangeStrykeLPAutomatorV2 {
+contract OrangeStrykeLPAutomatorV2_1Harness is OrangeStrykeLPAutomatorV2_1 {
     function pushActiveTick(int24 tick) external {
         EnumerableSet.add(_activeTicks, uint256(uint24(tick)));
     }
@@ -40,10 +44,11 @@ struct DeployArgs {
     IERC20 asset;
     uint256 minDepositAssets;
     uint256 depositCap;
+    IUniswapV3PoolAdapter poolAdapter;
 }
 
-function deployAutomatorHarness(DeployArgs memory args) returns (OrangeStrykeLPAutomatorV2Harness harness) {
-    address impl = address(new OrangeStrykeLPAutomatorV2Harness());
+function deployAutomatorHarness(DeployArgs memory args) returns (OrangeStrykeLPAutomatorV2_1Harness harness) {
+    address impl = address(new OrangeStrykeLPAutomatorV2());
     bytes memory initCall = abi.encodeCall(
         OrangeStrykeLPAutomatorV2.initialize,
         OrangeStrykeLPAutomatorV2.InitArgs({
@@ -65,7 +70,14 @@ function deployAutomatorHarness(DeployArgs memory args) returns (OrangeStrykeLPA
 
     address proxy = address(new ERC1967Proxy(impl, initCall));
 
-    harness = OrangeStrykeLPAutomatorV2Harness(proxy);
+    vm.startPrank(args.admin);
+    OrangeStrykeLPAutomatorV2(proxy).upgradeToAndCall(
+        address(new OrangeStrykeLPAutomatorV2_1Harness()),
+        abi.encodeCall(OrangeStrykeLPAutomatorV2_1.initializeV2_1, args.poolAdapter)
+    );
+    vm.stopPrank();
+
+    harness = OrangeStrykeLPAutomatorV2_1Harness(proxy);
 
     vm.startPrank(args.admin);
     harness.setDepositCap(args.depositCap);

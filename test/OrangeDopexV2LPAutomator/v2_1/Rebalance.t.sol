@@ -6,7 +6,7 @@ pragma solidity 0.8.19;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import {IOrangeStrykeLPAutomatorV2} from "../../../contracts/v2/IOrangeStrykeLPAutomatorV2.sol";
+import {IOrangeStrykeLPAutomatorV2_1} from "../../../contracts/v2_1/IOrangeStrykeLPAutomatorV2_1.sol";
 import {IOrangeSwapProxy} from "../../../contracts/swap-proxy/IOrangeSwapProxy.sol";
 import {IBalancerVault} from "../../../contracts/vendor/balancer/IBalancerVault.sol";
 import {IBalancerFlashLoanRecipient} from "../../../contracts/vendor/balancer/IBalancerFlashLoanRecipient.sol";
@@ -16,12 +16,14 @@ import {WETH_USDC_Fixture} from "./fixture/WETH_USDC_Fixture.t.sol";
 import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
 import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 
-contract TestOrangeStrykeLPAutomatorV2Rebalance is WETH_USDC_Fixture {
+/* solhint-disable contract-name-camelcase */
+
+contract TestOrangeStrykeLPAutomatorV2_1Rebalance is WETH_USDC_Fixture {
     using UniswapV3Helper for IUniswapV3Pool;
     using DopexV2Helper for IUniswapV3Pool;
 
-    IOrangeStrykeLPAutomatorV2.RebalanceTick[] public mintTicks;
-    IOrangeStrykeLPAutomatorV2.RebalanceTick[] public burnTicks;
+    IOrangeStrykeLPAutomatorV2_1.RebalanceTick[] public mintTicks;
+    IOrangeStrykeLPAutomatorV2_1.RebalanceTick[] public burnTicks;
 
     function setUp() public override {
         vm.createSelectFork("arb", 196444430);
@@ -160,7 +162,7 @@ contract TestOrangeStrykeLPAutomatorV2Rebalance is WETH_USDC_Fixture {
 
     function test_rebalance_onlyStrategist() public {
         vm.prank(alice);
-        vm.expectRevert(IOrangeStrykeLPAutomatorV2.Unauthorized.selector);
+        vm.expectRevert(IOrangeStrykeLPAutomatorV2_1.Unauthorized.selector);
         automator.rebalance(
             mintTicks,
             burnTicks,
@@ -184,7 +186,7 @@ contract TestOrangeStrykeLPAutomatorV2Rebalance is WETH_USDC_Fixture {
         bytes[] memory mintCalldata = new bytes[](1);
         bytes[] memory burnCalldata = new bytes[](1);
         bytes memory userData = abi.encode(
-            IOrangeStrykeLPAutomatorV2.FlashLoanUserData({
+            IOrangeStrykeLPAutomatorV2_1.FlashLoanUserData({
                 swapProxy: address(0),
                 swapRequest: IOrangeSwapProxy.SwapInputRequest({
                     provider: address(0),
@@ -199,7 +201,7 @@ contract TestOrangeStrykeLPAutomatorV2Rebalance is WETH_USDC_Fixture {
             })
         );
 
-        vm.expectRevert(IOrangeStrykeLPAutomatorV2.FlashLoan_Unauthorized.selector);
+        vm.expectRevert(IOrangeStrykeLPAutomatorV2_1.FlashLoan_Unauthorized.selector);
         vm.prank(address(balancer));
         automator.receiveFlashLoan(tokens, amounts, feeAmounts, userData);
     }
@@ -214,7 +216,7 @@ contract TestOrangeStrykeLPAutomatorV2Rebalance is WETH_USDC_Fixture {
             tick += 10;
         }
 
-        vm.expectRevert(IOrangeStrykeLPAutomatorV2.MaxTicksReached.selector);
+        vm.expectRevert(IOrangeStrykeLPAutomatorV2_1.MaxTicksReached.selector);
         aHandler.rebalanceSingleRight(tick, 1 ether);
     }
 
@@ -222,7 +224,7 @@ contract TestOrangeStrykeLPAutomatorV2Rebalance is WETH_USDC_Fixture {
         int24 tickLower,
         uint256 amount0,
         uint256 amount1
-    ) internal view returns (IOrangeStrykeLPAutomatorV2.RebalanceTick memory tick) {
+    ) internal view returns (IOrangeStrykeLPAutomatorV2_1.RebalanceTick memory tick) {
         int24 ct = pool.currentTick();
         uint128 liq = LiquidityAmounts.getLiquidityForAmounts(
             TickMath.getSqrtRatioAtTick(ct),
@@ -232,14 +234,14 @@ contract TestOrangeStrykeLPAutomatorV2Rebalance is WETH_USDC_Fixture {
             amount1
         );
 
-        tick = IOrangeStrykeLPAutomatorV2.RebalanceTick({tick: tickLower, liquidity: uint128(liq)});
+        tick = IOrangeStrykeLPAutomatorV2_1.RebalanceTick({tick: tickLower, liquidity: uint128(liq)});
     }
 
     function _tickInit(
         int24 tickLower,
         uint128 liquidity
-    ) internal pure returns (IOrangeStrykeLPAutomatorV2.RebalanceTick memory tick) {
-        tick = IOrangeStrykeLPAutomatorV2.RebalanceTick({tick: tickLower, liquidity: liquidity});
+    ) internal pure returns (IOrangeStrykeLPAutomatorV2_1.RebalanceTick memory tick) {
+        tick = IOrangeStrykeLPAutomatorV2_1.RebalanceTick({tick: tickLower, liquidity: liquidity});
     }
 
     function _expectFlashLoanCall(
@@ -254,7 +256,7 @@ contract TestOrangeStrykeLPAutomatorV2Rebalance is WETH_USDC_Fixture {
         uint256[] memory amounts = new uint256[](1);
         tokens[0] = IERC20(borrowToken);
         amounts[0] = amount;
-        IOrangeStrykeLPAutomatorV2.FlashLoanUserData memory ud = IOrangeStrykeLPAutomatorV2.FlashLoanUserData({
+        IOrangeStrykeLPAutomatorV2_1.FlashLoanUserData memory ud = IOrangeStrykeLPAutomatorV2_1.FlashLoanUserData({
             swapProxy: swapProxy,
             swapRequest: swapRequest,
             mintCalldata: mintCalldataBatch,

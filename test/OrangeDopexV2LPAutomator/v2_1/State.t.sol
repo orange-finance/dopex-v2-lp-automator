@@ -9,7 +9,7 @@ import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Po
 import {IUniswapV3SingleTickLiquidityHandlerV2} from "contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 
 /* solhint-disable func-name-mixedcase */
-contract TestAutomatorV2State is WETH_USDC_Fixture {
+contract TestOrangeStrykeLPAutomatorV2_1State is WETH_USDC_Fixture {
     using UniswapV3Helper for IUniswapV3Pool;
     using DopexV2Helper for IUniswapV3Pool;
 

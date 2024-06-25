@@ -10,7 +10,7 @@ import {IDopexV2PositionManager} from "./../../../../contracts/vendor/dopexV2/ID
 import {IUniswapV3SingleTickLiquidityHandlerV2} from "./../../../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 import {UniswapV3SingleTickLiquidityLib} from "./../../../../contracts/lib/UniswapV3SingleTickLiquidityLib.sol";
 import {ChainlinkQuoter} from "./../../../../contracts/ChainlinkQuoter.sol";
-import {StrykeVaultInspector} from "./../../../../contracts/periphery/StrykeVaultInspector.sol";
+import {StrykeVaultInspectorV2} from "./../../../../contracts/periphery/StrykeVaultInspectorV2.sol";
 import {OrangeKyberswapProxy} from "./../../../../contracts/swap-proxy/OrangeKyberswapProxy.sol";
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import {IBalancerVault} from "../../../../contracts/vendor/balancer/IBalancerVault.sol";
@@ -52,7 +52,7 @@ contract BaseFixture is Test {
 
     // base contracts
     ChainlinkQuoter public chainlinkQuoter;
-    StrykeVaultInspector public inspector;
+    StrykeVaultInspectorV2 public inspector;
     OrangeKyberswapProxy public kyberswapProxy;
 
     // mock contracts
@@ -62,7 +62,7 @@ contract BaseFixture is Test {
     function setUp() public virtual {
         chainlinkQuoter = new ChainlinkQuoter(address(0xFdB631F5EE196F0ed6FAa767959853A9F217697D));
 
-        inspector = new StrykeVaultInspector();
+        inspector = new StrykeVaultInspectorV2();
 
         kyberswapProxy = new OrangeKyberswapProxy();
         kyberswapProxy.setTrustedProvider(kyberswapRouter, true);

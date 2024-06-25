@@ -8,7 +8,7 @@ import {WETH_USDC_Fixture} from "./fixture/WETH_USDC_Fixture.t.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IOrangeStrykeLPAutomatorV2} from "contracts/v2/IOrangeStrykeLPAutomatorV2.sol";
 
-contract TestAutomatorV2Withdraw is WETH_USDC_Fixture {
+contract TestOrangeStrykeLPAutomatorV2_1Withdraw is WETH_USDC_Fixture {
     address public constant ARB = 0x912CE59144191C1204E64559FE8253a0e49E6548;
 
     function setUp() public override {

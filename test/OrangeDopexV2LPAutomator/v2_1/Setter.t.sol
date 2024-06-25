@@ -6,7 +6,7 @@ import {WETH_USDC_Fixture} from "./fixture/WETH_USDC_Fixture.t.sol";
 import {IOrangeStrykeLPAutomatorV2} from "../../../contracts/v2/IOrangeStrykeLPAutomatorV2.sol";
 
 /* solhint-disable func-name-mixedcase */
-contract TestAutomatorV2Setter is WETH_USDC_Fixture {
+contract TestOrangeStrykeLPAutomatorV2_1Setter is WETH_USDC_Fixture {
     function setUp() public override {
         vm.createSelectFork("arb", 196444430);
         super.setUp();

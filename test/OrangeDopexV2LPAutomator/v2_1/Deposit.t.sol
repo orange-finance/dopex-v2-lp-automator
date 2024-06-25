@@ -7,7 +7,7 @@ pragma solidity 0.8.19;
 import {WETH_USDC_Fixture} from "./fixture/WETH_USDC_Fixture.t.sol";
 import {FullMath} from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 
-contract TestAutomatorV2Deposit is WETH_USDC_Fixture {
+contract TestOrangeStrykeLPAutomatorV2_1Deposit is WETH_USDC_Fixture {
     function setUp() public override {
         vm.createSelectFork("arb", 196444430);
         super.setUp();

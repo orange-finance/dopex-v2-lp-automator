@@ -7,12 +7,14 @@ import {Test} from "forge-std/Test.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IDopexV2PositionManager} from "../../../contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
 import {IUniswapV3SingleTickLiquidityHandlerV2} from "../../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
-import {IOrangeStrykeLPAutomatorV2} from "../../../contracts/v2/IOrangeStrykeLPAutomatorV2.sol";
-import {IOrangeSwapProxy} from "../../../contracts/swap-proxy/IOrangeSwapProxy.sol";
+import {IOrangeStrykeLPAutomatorV2_1} from "../../../contracts/v2_1/IOrangeStrykeLPAutomatorV2_1.sol";
 import {OrangeStrykeLPAutomatorV2} from "../../../contracts/v2/OrangeStrykeLPAutomatorV2.sol";
+import {IOrangeSwapProxy} from "../../../contracts/swap-proxy/IOrangeSwapProxy.sol";
+import {OrangeStrykeLPAutomatorV2_1} from "../../../contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol";
 import {ChainlinkQuoter} from "../../../contracts/ChainlinkQuoter.sol";
 import {IBalancerVault} from "../../../contracts/vendor/balancer/IBalancerVault.sol";
-import {StrykeVaultInspector} from "../../../contracts/periphery/StrykeVaultInspector.sol";
+import {StrykeVaultInspectorV2} from "../../../contracts/periphery/StrykeVaultInspectorV2.sol";
+import {IUniswapV3PoolAdapter} from "../../../contracts/pool-adapter/IUniswapV3PoolAdapter.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
 import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
@@ -23,9 +25,11 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 
 import {parseTicks} from "./helper.t.sol";
 
-contract OrangeStrykeLPAutomatorV2Handler is Test {
-    OrangeStrykeLPAutomatorV2 public automator;
-    StrykeVaultInspector public inspector;
+/* solhint-disable contract-name-camelcase, private-vars-leading-underscore */
+
+contract OrangeStrykeLPAutomatorV2_1Handler is Test {
+    OrangeStrykeLPAutomatorV2_1 public automator;
+    StrykeVaultInspectorV2 public inspector;
     ISwapRouter public swapRouter;
     address public automatorOwner;
     address public strategist;
@@ -52,8 +56,9 @@ contract OrangeStrykeLPAutomatorV2Handler is Test {
         uint256 initialDeposit;
         address kyberswapProxy;
         address mockSwapProxy;
-        StrykeVaultInspector inspector;
+        StrykeVaultInspectorV2 inspector;
         ISwapRouter swapRouter;
+        IUniswapV3PoolAdapter poolAdapter;
     }
 
     struct SwapParams {
@@ -64,7 +69,7 @@ contract OrangeStrykeLPAutomatorV2Handler is Test {
     }
 
     constructor(InitArgs memory args) {
-        address impl = address(new OrangeStrykeLPAutomatorV2());
+        address implV2 = address(new OrangeStrykeLPAutomatorV2());
         bytes memory initCall = abi.encodeCall(
             OrangeStrykeLPAutomatorV2.initialize,
             OrangeStrykeLPAutomatorV2.InitArgs({
@@ -84,12 +89,19 @@ contract OrangeStrykeLPAutomatorV2Handler is Test {
             })
         );
 
-        address proxy = address(new ERC1967Proxy(impl, initCall));
+        address proxy = address(new ERC1967Proxy(implV2, initCall));
 
-        automator = OrangeStrykeLPAutomatorV2(proxy);
+        vm.startPrank(args.admin);
+        OrangeStrykeLPAutomatorV2(proxy).upgradeToAndCall(
+            address(new OrangeStrykeLPAutomatorV2_1()),
+            abi.encodeCall(OrangeStrykeLPAutomatorV2_1.initializeV2_1, args.poolAdapter)
+        );
+        vm.stopPrank();
+
+        automator = OrangeStrykeLPAutomatorV2_1(proxy);
         automatorOwner = args.admin;
         strategist = args.strategist;
-        inspector = new StrykeVaultInspector();
+        inspector = new StrykeVaultInspectorV2();
         swapRouter = args.swapRouter;
         kyberswapProxy = args.kyberswapProxy;
         mockSwapProxy = args.mockSwapProxy;
@@ -148,7 +160,7 @@ contract OrangeStrykeLPAutomatorV2Handler is Test {
         (uint256 token0, uint256 token1) = inspector.convertSharesToPairAssets(automator, shares);
         uint256 tokenIn;
 
-        if (automator.pool().token0() == address(automator.asset())) {
+        if (automator.poolAdapter().token0() == address(automator.asset())) {
             tokenIn = token1;
         } else {
             tokenIn = token0;
@@ -159,7 +171,7 @@ contract OrangeStrykeLPAutomatorV2Handler is Test {
             ISwapRouter.ExactInputSingleParams({
                 tokenIn: address(automator.counterAsset()),
                 tokenOut: address(automator.asset()),
-                fee: automator.pool().fee(),
+                fee: automator.poolAdapter().fee(),
                 recipient: address(automator),
                 deadline: block.timestamp + 300,
                 amountIn: tokenIn,
@@ -186,8 +198,8 @@ contract OrangeStrykeLPAutomatorV2Handler is Test {
             automator.setProxyWhitelist(swapProxy, true);
         }
 
-        IOrangeStrykeLPAutomatorV2.RebalanceTick[] memory mintTicks = parseTicks(ticksMint);
-        IOrangeStrykeLPAutomatorV2.RebalanceTick[] memory burnTicks = parseTicks(ticksBurn);
+        IOrangeStrykeLPAutomatorV2_1.RebalanceTick[] memory mintTicks = parseTicks(ticksMint);
+        IOrangeStrykeLPAutomatorV2_1.RebalanceTick[] memory burnTicks = parseTicks(ticksBurn);
 
         vm.prank(strategist);
         automator.rebalance(mintTicks, burnTicks, swapProxy, swapRequest, flashLoanData);
@@ -200,13 +212,14 @@ contract OrangeStrykeLPAutomatorV2Handler is Test {
             amount1
         );
 
-        IOrangeStrykeLPAutomatorV2.RebalanceTick[] memory mintTicks = new IOrangeStrykeLPAutomatorV2.RebalanceTick[](1);
-        mintTicks[0] = IOrangeStrykeLPAutomatorV2.RebalanceTick({tick: lowerTick, liquidity: liquidity});
+        IOrangeStrykeLPAutomatorV2_1.RebalanceTick[]
+            memory mintTicks = new IOrangeStrykeLPAutomatorV2_1.RebalanceTick[](1);
+        mintTicks[0] = IOrangeStrykeLPAutomatorV2_1.RebalanceTick({tick: lowerTick, liquidity: liquidity});
 
         vm.prank(strategist);
         automator.rebalance(
             mintTicks,
-            new IOrangeStrykeLPAutomatorV2.RebalanceTick[](0),
+            new IOrangeStrykeLPAutomatorV2_1.RebalanceTick[](0),
             address(0),
             IOrangeSwapProxy.SwapInputRequest({
                 provider: address(0),
@@ -227,13 +240,14 @@ contract OrangeStrykeLPAutomatorV2Handler is Test {
             amount0
         );
 
-        IOrangeStrykeLPAutomatorV2.RebalanceTick[] memory mintTicks = new IOrangeStrykeLPAutomatorV2.RebalanceTick[](1);
-        mintTicks[0] = IOrangeStrykeLPAutomatorV2.RebalanceTick({tick: lowerTick, liquidity: liquidity});
+        IOrangeStrykeLPAutomatorV2_1.RebalanceTick[]
+            memory mintTicks = new IOrangeStrykeLPAutomatorV2_1.RebalanceTick[](1);
+        mintTicks[0] = IOrangeStrykeLPAutomatorV2_1.RebalanceTick({tick: lowerTick, liquidity: liquidity});
 
         vm.prank(strategist);
         automator.rebalance(
             mintTicks,
-            new IOrangeStrykeLPAutomatorV2.RebalanceTick[](0),
+            new IOrangeStrykeLPAutomatorV2_1.RebalanceTick[](0),
             address(0),
             IOrangeSwapProxy.SwapInputRequest({
                 provider: address(0),
@@ -248,15 +262,15 @@ contract OrangeStrykeLPAutomatorV2Handler is Test {
     }
 
     function rebalanceWithMockSwap(
-        IOrangeStrykeLPAutomatorV2.RebalanceTick[] memory mintTicks,
-        IOrangeStrykeLPAutomatorV2.RebalanceTick[] memory burnTicks
+        IOrangeStrykeLPAutomatorV2_1.RebalanceTick[] memory mintTicks,
+        IOrangeStrykeLPAutomatorV2_1.RebalanceTick[] memory burnTicks
     ) external {
         SwapParams memory swapParams = calculateSwapParamsInRebalance(mintTicks, burnTicks);
 
         ISwapRouter.ExactInputSingleParams memory exactSingle = ISwapRouter.ExactInputSingleParams({
             tokenIn: swapParams.tokenIn,
             tokenOut: swapParams.tokenOut,
-            fee: automator.pool().fee(),
+            fee: automator.poolAdapter().fee(),
             recipient: address(automator),
             deadline: block.timestamp + 300,
             amountIn: swapParams.maxAmountIn,
@@ -288,20 +302,20 @@ contract OrangeStrykeLPAutomatorV2Handler is Test {
     }
 
     function calculateSwapParamsInRebalance(
-        IOrangeStrykeLPAutomatorV2.RebalanceTick[] memory ticksMint,
-        IOrangeStrykeLPAutomatorV2.RebalanceTick[] memory ticksBurn
+        IOrangeStrykeLPAutomatorV2_1.RebalanceTick[] memory ticksMint,
+        IOrangeStrykeLPAutomatorV2_1.RebalanceTick[] memory ticksBurn
     ) internal view returns (SwapParams memory swapParams) {
         uint256 _mintAssets;
         uint256 _mintCAssets;
         uint256 _burnAssets;
         uint256 _burnCAssets;
 
-        if (automator.pool().token0() == address(automator.asset())) {
-            (_mintAssets, _mintCAssets) = estimateTotalTokensFromPositions(automator.pool(), ticksMint);
-            (_burnAssets, _burnCAssets) = estimateTotalTokensFromPositions(automator.pool(), ticksBurn);
+        if (automator.poolAdapter().token0() == address(automator.asset())) {
+            (_mintAssets, _mintCAssets) = estimateTotalTokensFromPositions(automator.poolAdapter(), ticksMint);
+            (_burnAssets, _burnCAssets) = estimateTotalTokensFromPositions(automator.poolAdapter(), ticksBurn);
         } else {
-            (_mintCAssets, _mintAssets) = estimateTotalTokensFromPositions(automator.pool(), ticksMint);
-            (_burnCAssets, _burnAssets) = estimateTotalTokensFromPositions(automator.pool(), ticksBurn);
+            (_mintCAssets, _mintAssets) = estimateTotalTokensFromPositions(automator.poolAdapter(), ticksMint);
+            (_burnCAssets, _burnAssets) = estimateTotalTokensFromPositions(automator.poolAdapter(), ticksBurn);
         }
 
         uint256 _freeAssets = _burnAssets + automator.asset().balanceOf(address(automator));
@@ -336,14 +350,14 @@ contract OrangeStrykeLPAutomatorV2Handler is Test {
     }
 
     function estimateTotalTokensFromPositions(
-        IUniswapV3Pool pool,
-        IOrangeStrykeLPAutomatorV2.RebalanceTick[] memory positions
+        IUniswapV3PoolAdapter poolAdapter,
+        IOrangeStrykeLPAutomatorV2_1.RebalanceTick[] memory positions
     ) internal view returns (uint256 totalAmount0, uint256 totalAmount1) {
         uint256 _a0;
         uint256 _a1;
 
-        (, int24 _ct, , , , , ) = pool.slot0();
-        int24 _spacing = pool.tickSpacing();
+        (, int24 _ct, , , , , ) = poolAdapter.slot0();
+        int24 _spacing = poolAdapter.tickSpacing();
 
         uint256 _pLen = positions.length;
         for (uint256 i = 0; i < _pLen; i++) {

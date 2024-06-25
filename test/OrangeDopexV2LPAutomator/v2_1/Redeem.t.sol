@@ -9,7 +9,9 @@ import {UniswapV3Helper} from "../../helper/UniswapV3Helper.t.sol";
 import {DopexV2Helper} from "../../helper/DopexV2Helper.t.sol";
 import {WETH_USDC_Fixture} from "./fixture/WETH_USDC_Fixture.t.sol";
 
-contract TestOrangeStrykeLPAutomatorV2Redeem is WETH_USDC_Fixture {
+/* solhint-disable contract-name-camelcase */
+
+contract TestOrangeStrykeLPAutomatorV2_1Redeem is WETH_USDC_Fixture {
     using UniswapV3Helper for IUniswapV3Pool;
     using DopexV2Helper for IUniswapV3Pool;
 
