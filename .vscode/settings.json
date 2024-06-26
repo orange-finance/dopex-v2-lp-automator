@@ -12,6 +12,7 @@
     "concat",
     "Cooldown",
     "Cumulatives",
+    "delegatecall",
     "dopex",
     "Gelato",
     "IERC",
