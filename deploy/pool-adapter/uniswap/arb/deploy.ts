@@ -36,6 +36,16 @@ const func: DeployFunction = async function (hre) {
     },
   )
 
+  const { address: boopWeth10000 } = await deploy(
+    'UniswapV3PoolAdapter_BOOP_WETH_10000',
+    {
+      contract: 'UniswapV3PoolAdapter',
+      args: ['0xe24F62341D84D11078188d83cA3be118193D6389'],
+      from: deployer,
+      log: true,
+    },
+  )
+
   if (hre.network.name !== 'hardhat') {
     await hre.tenderly.verify({
       name: 'UniswapV3PoolAdapter',
@@ -48,6 +58,10 @@ const func: DeployFunction = async function (hre) {
     await hre.tenderly.verify({
       name: 'UniswapV3PoolAdapter',
       address: usdcArb500,
+    })
+    await hre.tenderly.verify({
+      name: 'UniswapV3PoolAdapter',
+      address: boopWeth10000,
     })
   }
 }

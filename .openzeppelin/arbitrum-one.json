@@ -104,6 +104,10 @@
     {
       "address": "0xEc44068C46DdE356d33Ae96e9588b38d821a2745",
       "kind": "uups"
+    },
+    {
+      "address": "0x1F010BeD7A08BafF63dAc7e7dCb4d491fA969cF3",
+      "kind": "uups"
     }
   ],
   "impls": {
@@ -466,6 +470,7 @@
       },
       "allAddresses": [
         "0x072a890FBE70F5B57445BDA60bccE44642568C95",
+        "0xD1E26525798C8371fB167d7cB0161ec794f1c044",
         "0xc9d024fCAAa1bd0F8c1B27029B4F822Dd63B978c",
         "0x0e365B5ADD7335b44172964Fc48B3324C1d2de40",
         "0xB833a14b7A80C185326fAe3d8d56e241DcC2C04E",
@@ -876,6 +881,7 @@
       },
       "allAddresses": [
         "0x8c5DaA7CAA1fFC627b4B9E1872cccBefa2975361",
+        "0x4e20229B16d7407Ed62cA21f495552571A6dD266",
         "0xba30566dFb056aCD9d4D5968FF3147CA97b197a2",
         "0xaEfA77A31eDD419604c0976a9eb7688183dDef22",
         "0x5b3a665cda2625631450Cd1fA0F53727F4615F00",
@@ -1294,6 +1300,7 @@
       },
       "allAddresses": [
         "0x5AfF3f2Ce23668D7e30358BE168BbC4C0377cf49",
+        "0x2CbcE523205868E8C0Cbc498d3B957FDd25de78c",
         "0x1b3f40ac793AA0AC1Fd2D2C1Af2011DbCb2feDCF",
         "0x3D14b331a76D8656Fe847D078F2D822AC3dEe5fa",
         "0x8B3C7447fFde3aa74EA4cab00171990DaeC5Ef90",
