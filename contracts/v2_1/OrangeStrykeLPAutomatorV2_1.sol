@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.19;
 
-/* solhint-disable contract-name-camelcase, max-states-count */
+/* solhint-disable contract-name-camelcase, max-states-count, func-name-mixedcase */
 
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
@@ -21,7 +21,7 @@ import {IUniswapV3SingleTickLiquidityHandlerV2} from "../vendor/dopexV2/IUniswap
 import {IDopexV2PositionManager} from "../vendor/dopexV2/IDopexV2PositionManager.sol";
 
 import {IOrangeQuoter} from "./../interfaces/IOrangeQuoter.sol";
-import {UniswapV3SingleTickLiquidityLibV2} from "../lib/UniswapV3SingleTickLiquidityLibV2.sol";
+import {UniswapV3SingleTickLiquidityLibV3} from "../lib/UniswapV3SingleTickLiquidityLibV3.sol";
 import {OrangeERC20Upgradeable} from "../OrangeERC20Upgradeable.sol";
 
 import {IOrangeStrykeLPAutomatorV2_1} from "./IOrangeStrykeLPAutomatorV2_1.sol";
@@ -30,8 +30,6 @@ import {IUniswapV3PoolAdapter} from "../pool-adapter/IUniswapV3PoolAdapter.sol";
 
 import {IBalancerVault} from "../vendor/balancer/IBalancerVault.sol";
 import {IBalancerFlashLoanRecipient} from "../vendor/balancer/IBalancerFlashLoanRecipient.sol";
-
-/* solhint-disable func-name-mixedcase */
 
 /**
  * @title OrangeStrykeLPAutomatorV2
@@ -50,7 +48,7 @@ contract OrangeStrykeLPAutomatorV2_1 is
     using SafeCast for uint256;
     using EnumerableSet for EnumerableSet.UintSet;
     using TickMath for int24;
-    using UniswapV3SingleTickLiquidityLibV2 for IUniswapV3SingleTickLiquidityHandlerV2;
+    using UniswapV3SingleTickLiquidityLibV3 for IUniswapV3SingleTickLiquidityHandlerV2;
     using Address for address;
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -262,7 +260,16 @@ contract OrangeStrykeLPAutomatorV2_1 is
             _ut = _lt + poolTickSpacing;
             _tid = handler.tokenId(poolAdapter.pool(), handlerHook, _lt, _ut);
 
-            (_liquidity, , , _fee0, _fee1) = handler.positionDetail(address(this), _tid);
+            (_liquidity, , , _fee0, _fee1) = UniswapV3SingleTickLiquidityLibV3.positionDetail(
+                UniswapV3SingleTickLiquidityLibV3.PositionDetailParams({
+                    handler: handler,
+                    pool: poolAdapter.pool(),
+                    hook: handlerHook,
+                    tickLower: _lt,
+                    tickUpper: _ut,
+                    owner: address(this)
+                })
+            );
 
             (_a0, _a1) = LiquidityAmounts.getAmountsForLiquidity(
                 _sqrtRatioX96,
@@ -454,10 +461,17 @@ contract OrangeStrykeLPAutomatorV2_1 is
 
             c.tokenId = handler.tokenId(poolAdapter.pool(), handlerHook, c.lowerTick, c.lowerTick + poolTickSpacing);
 
-            (, uint128 _redeemableLiquidity, uint128 _lockedLiquidity, , ) = handler.positionDetail(
-                address(this),
-                c.tokenId
-            );
+            (, uint128 _redeemableLiquidity, uint128 _lockedLiquidity, , ) = UniswapV3SingleTickLiquidityLibV3
+                .positionDetail(
+                    UniswapV3SingleTickLiquidityLibV3.PositionDetailParams({
+                        handler: handler,
+                        pool: poolAdapter.pool(),
+                        hook: handlerHook,
+                        tickLower: c.lowerTick,
+                        tickUpper: c.lowerTick + poolTickSpacing,
+                        owner: address(this)
+                    })
+                );
 
             // total supply before burn is used to calculate the precise share
             c.shareRedeemable = uint256(handler.convertToShares(_redeemableLiquidity, c.tokenId)).mulDiv(

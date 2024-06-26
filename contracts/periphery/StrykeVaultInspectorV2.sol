@@ -10,11 +10,11 @@ import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {IOrangeStrykeLPAutomatorV2_1} from "../v2_1/IOrangeStrykeLPAutomatorV2_1.sol";
 import {IUniswapV3SingleTickLiquidityHandlerV2} from "./../vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 import {IOrangeQuoter} from "./../interfaces/IOrangeQuoter.sol";
-import {UniswapV3SingleTickLiquidityLibV2} from "./../lib/UniswapV3SingleTickLiquidityLibV2.sol";
+import {UniswapV3SingleTickLiquidityLibV3} from "./../lib/UniswapV3SingleTickLiquidityLibV3.sol";
 import {IUniswapV3PoolAdapter} from "../pool-adapter/IUniswapV3PoolAdapter.sol";
 
 contract StrykeVaultInspectorV2 {
-    using UniswapV3SingleTickLiquidityLibV2 for IUniswapV3SingleTickLiquidityHandlerV2;
+    using UniswapV3SingleTickLiquidityLibV3 for IUniswapV3SingleTickLiquidityHandlerV2;
     using SafeCast for uint256;
     using TickMath for int24;
 
@@ -57,9 +57,15 @@ contract StrykeVaultInspectorV2 {
             _cache.lowerTick = _ticks[i];
             _cache.upperTick = _cache.lowerTick + _spacing;
 
-            (, _cache.liquidity, , _cache.swapFee0, _cache.swapFee1) = _handler.positionDetail(
-                address(automator),
-                _handler.tokenId(poolAdapter.pool(), _handlerHook, _cache.lowerTick, _cache.upperTick)
+            (, _cache.liquidity, , _cache.swapFee0, _cache.swapFee1) = UniswapV3SingleTickLiquidityLibV3.positionDetail(
+                UniswapV3SingleTickLiquidityLibV3.PositionDetailParams({
+                    handler: _handler,
+                    pool: poolAdapter.pool(),
+                    hook: _handlerHook,
+                    tickLower: _cache.lowerTick,
+                    tickUpper: _cache.upperTick,
+                    owner: address(automator)
+                })
             );
 
             (_cache.amount0, _cache.amount1) = LiquidityAmounts.getAmountsForLiquidity(
@@ -114,9 +120,15 @@ contract StrykeVaultInspectorV2 {
         address _handlerHook = automator.handlerHook();
         int24 _spacing = automator.poolTickSpacing();
 
-        (, freeLiquidity, , , ) = _handler.positionDetail(
-            address(automator),
-            _handler.tokenId(_pool, _handlerHook, tick, tick + _spacing)
+        (, freeLiquidity, , , ) = UniswapV3SingleTickLiquidityLibV3.positionDetail(
+            UniswapV3SingleTickLiquidityLibV3.PositionDetailParams({
+                handler: _handler,
+                pool: _pool,
+                hook: _handlerHook,
+                tickLower: tick,
+                tickUpper: tick + _spacing,
+                owner: address(automator)
+            })
         );
     }
 

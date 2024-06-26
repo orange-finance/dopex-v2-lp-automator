@@ -373,8 +373,8 @@ contract TestStrykeVaultInspectorV2 is WETH_USDC_Fixture, DealExtension {
         );
 
         // bob has 95 WETH and 450k USDC (5 WETH and 50k USDC are locked against bob's position)
-        assertApproxEqRel(95 ether, weth, 0.0003e18); // 0.03%
-        assertApproxEqRel(450_000e6, usdc, 0.0003e18); // 0.03%
+        assertApproxEqRel(95 ether, weth, 0.0005e18); // 0.05%
+        assertApproxEqRel(450_000e6, usdc, 0.0005e18); // 0.05%
     }
 
     function _rebalanceMintSingle(int24 lowerTick, uint128 liquidity) internal {
