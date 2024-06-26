@@ -76,6 +76,34 @@
     {
       "address": "0xa7a4C165c2BFb5e969dB6C58A613bad1c0cC0a21",
       "kind": "uups"
+    },
+    {
+      "address": "0xcbad4104aD5cf34C275F2073146CA7eDD4548c98",
+      "kind": "uups"
+    },
+    {
+      "address": "0x7462D41EC15244520FAD9A15386EeF4bF25Ca9a2",
+      "kind": "uups"
+    },
+    {
+      "address": "0xd3E1b33Fce5CaA348540981fDe171bd78B0DA5eE",
+      "kind": "uups"
+    },
+    {
+      "address": "0x73eb93D06D08855CbfcD418Ef78970eF15C99387",
+      "kind": "uups"
+    },
+    {
+      "address": "0x72C11b8Aa2594f98b93296ccBb3B0e92e379a3A8",
+      "kind": "uups"
+    },
+    {
+      "address": "0x292271383d45d288753bc0721643A61FaEcc881C",
+      "kind": "uups"
+    },
+    {
+      "address": "0xEc44068C46DdE356d33Ae96e9588b38d821a2745",
+      "kind": "uups"
     }
   ],
   "impls": {
@@ -438,6 +466,13 @@
       },
       "allAddresses": [
         "0x072a890FBE70F5B57445BDA60bccE44642568C95",
+        "0xc9d024fCAAa1bd0F8c1B27029B4F822Dd63B978c",
+        "0x0e365B5ADD7335b44172964Fc48B3324C1d2de40",
+        "0xB833a14b7A80C185326fAe3d8d56e241DcC2C04E",
+        "0x98CBec068ebeCe8073EA814295077C2148bd8F0a",
+        "0x294CA44C420Fa8F3F099441c731d2FC06a0fCf84",
+        "0x766cb1Bea3DA4295403E12f230667E699Da8F671",
+        "0x9FED1fEaCa526E12B1BC61d8fb530B1Eb3617C23",
         "0xA81C53754245a98902ce389c7A14Ac19fD3a5785",
         "0x6e5FC61090BbbAf9a5441A1d2CAB03EC18992C73",
         "0xB0e3Db94507c15A876Fd36535Bf858c18B8Dbf00",
@@ -841,6 +876,13 @@
       },
       "allAddresses": [
         "0x8c5DaA7CAA1fFC627b4B9E1872cccBefa2975361",
+        "0xba30566dFb056aCD9d4D5968FF3147CA97b197a2",
+        "0xaEfA77A31eDD419604c0976a9eb7688183dDef22",
+        "0x5b3a665cda2625631450Cd1fA0F53727F4615F00",
+        "0xE301Bc8e9879291304439a51B6cBCe5a2dFD9e2d",
+        "0x1DfA3c41601b7405D189AF9065bfb9Cc6d989F66",
+        "0xA048b91fba51A2b112171a4B01de27CF542c9e09",
+        "0xD771Bd4B05954782161C53959B9681e53b2933ec",
         "0xB6E5e746a8DF96Bb820762ee511Eab8C9a5C4091",
         "0xbe57b39BcD444559A811b5D948e5e74D76b4ed3a",
         "0x936C6A30233Eb9A24141428D323f3238FA6858CE",
@@ -1249,7 +1291,16 @@
           }
         },
         "namespaces": {}
-      }
+      },
+      "allAddresses": [
+        "0x5AfF3f2Ce23668D7e30358BE168BbC4C0377cf49",
+        "0x1b3f40ac793AA0AC1Fd2D2C1Af2011DbCb2feDCF",
+        "0x3D14b331a76D8656Fe847D078F2D822AC3dEe5fa",
+        "0x8B3C7447fFde3aa74EA4cab00171990DaeC5Ef90",
+        "0xD107B4e38F3513eA74623a488c3972b779FA4a07",
+        "0x8EBeF10B534c92B4dC95D0EeF80E9738B7da3193",
+        "0x7B86753cd57eD0e254C71400BcBb9df0442357C2"
+      ]
     }
   }
 }

@@ -1,8 +1,8 @@
 import { V2Parameters } from '../schema'
 
-const usdc_arb: V2Parameters = {
-  id: 'USDC-ARB',
+const weth_usdc: V2Parameters = {
+  id: 'Pancake-WETH-USDC',
   balancer: '0xBA12222222228d8Ba445958a75a0704d566BF2C8',
 }
 
-export default usdc_arb
+export default weth_usdc
