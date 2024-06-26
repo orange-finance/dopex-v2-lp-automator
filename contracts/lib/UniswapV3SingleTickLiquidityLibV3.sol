@@ -82,7 +82,7 @@ library UniswapV3SingleTickLiquidityLibV3 {
             params.tickLower,
             params.tickUpper,
             _tki.totalLiquidity,
-            all,
+            redeemable,
             _tki.tokensOwed0,
             _tki.tokensOwed1
         );
