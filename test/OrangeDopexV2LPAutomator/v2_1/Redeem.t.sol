@@ -26,7 +26,7 @@ contract TestOrangeStrykeLPAutomatorV2_1Redeem is WETH_USDC_Fixture {
         assertEq(automator.balanceOf(alice), 100 ether - 1e15);
         assertEq(WETH.balanceOf(alice), 0);
 
-        aHandler.redeem(100 ether - 1e15, "", alice);
+        aHandler.redeem(100 ether - 1e15, 100 ether - 1e15, alice);
 
         assertEq(automator.balanceOf(alice), 0);
         assertEq(WETH.balanceOf(alice), 100 ether - 1e15);
@@ -40,7 +40,7 @@ contract TestOrangeStrykeLPAutomatorV2_1Redeem is WETH_USDC_Fixture {
 
         deal(address(USDC), address(automator), 1_000_000e6);
 
-        aHandler.redeemWithMockSwap(100 ether - 1e15, alice);
+        aHandler.redeem(100 ether - 1e15, 100 ether - 1e15, alice);
 
         assertEq(automator.balanceOf(alice), 0);
         assertApproxEqRel(
@@ -65,7 +65,7 @@ contract TestOrangeStrykeLPAutomatorV2_1Redeem is WETH_USDC_Fixture {
         aHandler.rebalanceSingleRight(ct + 20, 25 ether);
         aHandler.rebalanceSingleRight(ct + 30, 25 ether);
 
-        aHandler.redeemWithMockSwap(100 ether - 1e15, alice);
+        aHandler.redeem(100 ether - 1e15, 100 ether - 1e15, alice);
 
         assertEq(automator.balanceOf(alice), 0);
         assertApproxEqRel(
@@ -93,7 +93,7 @@ contract TestOrangeStrykeLPAutomatorV2_1Redeem is WETH_USDC_Fixture {
         pool.useDopexPosition(address(0), ct - 20, pool.freeLiquidityOfTick(address(0), ct - 20));
         pool.useDopexPosition(address(0), ct + 30, pool.freeLiquidityOfTick(address(0), ct + 30));
 
-        aHandler.redeemWithMockSwap(100 ether - 1e15, alice);
+        aHandler.redeem(100 ether - 1e15, 100 ether - 1e15, alice);
 
         assertEq(automator.balanceOf(alice), 0);
         assertApproxEqRel(
@@ -131,7 +131,7 @@ contract TestOrangeStrykeLPAutomatorV2_1Redeem is WETH_USDC_Fixture {
         assertLt(pool.totalLiquidityOfTick(address(0), ct - 20), pool.usedLiquidityOfTick(address(0), ct - 20));
 
         // check if redeem works
-        aHandler.redeemWithMockSwap(100 ether - 1e15, alice);
+        aHandler.redeem(100 ether - 1e15, 100 ether - 1e15, alice);
 
         assertEq(automator.balanceOf(alice), 0);
         assertApproxEqRel(
@@ -155,7 +155,7 @@ contract TestOrangeStrykeLPAutomatorV2_1Redeem is WETH_USDC_Fixture {
 
         vm.mockCall(address(handlerV2), abi.encodeWithSignature("paused()"), abi.encode(true));
 
-        aHandler.redeemWithMockSwap(100 ether - 1e15, alice);
+        aHandler.redeem(100 ether - 1e15, 100 ether - 1e15, alice);
 
         // receive half of the assets
         assertApproxEqRel(

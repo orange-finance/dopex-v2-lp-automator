@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 
-// solhint-disable one-contract-per-file, custom-errors
+// solhint-disable one-contract-per-file, custom-errors, contract-name-camelcase, private-vars-leading-underscore, var-name-mixedcase
 pragma solidity 0.8.19;
 
 import {Test} from "forge-std/Test.sol";
@@ -10,6 +10,7 @@ import {IUniswapV3SingleTickLiquidityHandlerV2} from "../../../contracts/vendor/
 import {IOrangeStrykeLPAutomatorV2_1} from "../../../contracts/v2_1/IOrangeStrykeLPAutomatorV2_1.sol";
 import {OrangeStrykeLPAutomatorV2} from "../../../contracts/v2/OrangeStrykeLPAutomatorV2.sol";
 import {IOrangeSwapProxy} from "../../../contracts/swap-proxy/IOrangeSwapProxy.sol";
+import {OrangeStrykeLPAutomatorV1_1} from "../../../contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol";
 import {OrangeStrykeLPAutomatorV2_1} from "../../../contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol";
 import {ChainlinkQuoter} from "../../../contracts/ChainlinkQuoter.sol";
 import {IBalancerVault} from "../../../contracts/vendor/balancer/IBalancerVault.sol";
@@ -24,8 +25,6 @@ import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRoute
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 import {parseTicks} from "./helper.t.sol";
-
-/* solhint-disable contract-name-camelcase, private-vars-leading-underscore */
 
 contract OrangeStrykeLPAutomatorV2_1Handler is Test {
     OrangeStrykeLPAutomatorV2_1 public automator;
@@ -69,31 +68,39 @@ contract OrangeStrykeLPAutomatorV2_1Handler is Test {
     }
 
     constructor(InitArgs memory args) {
-        address implV2 = address(new OrangeStrykeLPAutomatorV2());
-        bytes memory initCall = abi.encodeCall(
-            OrangeStrykeLPAutomatorV2.initialize,
-            OrangeStrykeLPAutomatorV2.InitArgs({
+        address implV1 = address(new OrangeStrykeLPAutomatorV1_1());
+        bytes memory v1InitCall = abi.encodeCall(
+            OrangeStrykeLPAutomatorV1_1.initialize,
+            OrangeStrykeLPAutomatorV1_1.InitArgs({
                 name: args.name,
                 symbol: args.symbol,
                 admin: args.admin,
                 manager: args.manager,
                 handler: args.handler,
                 handlerHook: args.handlerHook,
+                router: args.swapRouter,
                 pool: args.pool,
                 asset: args.asset,
                 quoter: args.quoter,
                 assetUsdFeed: args.assetUsdFeed,
                 counterAssetUsdFeed: args.counterAssetUsdFeed,
-                minDepositAssets: args.minDepositAssets,
-                balancer: args.balancer
+                minDepositAssets: args.minDepositAssets
             })
         );
 
-        address proxy = address(new ERC1967Proxy(implV2, initCall));
+        address proxy = address(new ERC1967Proxy(implV1, v1InitCall));
 
         vm.startPrank(args.admin);
+        // upgrade to v2
+        address implV2 = address(new OrangeStrykeLPAutomatorV2());
+        OrangeStrykeLPAutomatorV1_1(proxy).upgradeToAndCall(
+            implV2,
+            abi.encodeCall(OrangeStrykeLPAutomatorV2.initializeV2, args.balancer)
+        );
+        // upgrade to v2.1
+        address implV2_1 = address(new OrangeStrykeLPAutomatorV2_1());
         OrangeStrykeLPAutomatorV2(proxy).upgradeToAndCall(
-            address(new OrangeStrykeLPAutomatorV2_1()),
+            implV2_1,
             abi.encodeCall(OrangeStrykeLPAutomatorV2_1.initializeV2_1, args.poolAdapter)
         );
         vm.stopPrank();
@@ -145,45 +152,9 @@ contract OrangeStrykeLPAutomatorV2_1Handler is Test {
         vm.stopPrank();
     }
 
-    function redeem(uint256 shares, bytes memory redeemData, address redeemer) external {
-        if (redeemData.length != 0) {
-            (address swapProxy, , ) = abi.decode(redeemData, (address, address, bytes));
-            vm.prank(automatorOwner);
-            automator.setProxyWhitelist(swapProxy, true);
-        }
-
+    function redeem(uint256 shares, uint256 minAssets, address redeemer) external {
         vm.prank(redeemer);
-        automator.redeem(shares, redeemData);
-    }
-
-    function redeemWithMockSwap(uint256 shares, address redeemer) external {
-        (uint256 token0, uint256 token1) = inspector.convertSharesToPairAssets(automator, shares);
-        uint256 tokenIn;
-
-        if (automator.poolAdapter().token0() == address(automator.asset())) {
-            tokenIn = token1;
-        } else {
-            tokenIn = token0;
-        }
-
-        bytes memory uniswapCalldata = abi.encodeWithSelector(
-            ISwapRouter.exactInputSingle.selector,
-            ISwapRouter.ExactInputSingleParams({
-                tokenIn: address(automator.counterAsset()),
-                tokenOut: address(automator.asset()),
-                fee: automator.poolAdapter().fee(),
-                recipient: address(automator),
-                deadline: block.timestamp + 300,
-                amountIn: tokenIn,
-                amountOutMinimum: 0,
-                sqrtPriceLimitX96: 0
-            })
-        );
-
-        bytes memory redeemData = abi.encode(mockSwapProxy, swapRouter, uniswapCalldata);
-
-        vm.prank(redeemer);
-        automator.redeem(shares, redeemData);
+        automator.redeem(shares, minAssets);
     }
 
     function rebalance(

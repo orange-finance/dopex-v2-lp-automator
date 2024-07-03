@@ -188,13 +188,13 @@ interface IOrangeStrykeLPAutomatorV2_1 {
     /**
      * @dev Redeems a specified number of shares and returns the redeemed assets along with the locked Dopex shares.
      * @param shares The number of shares to redeem.
-     * @param redeemData Additional data for the redemption.
+     * @param minAssets The minimum required assets to be redeemed.
      * @return assets The redeemed assets.
      * @return lockedDopexShares An array of locked Dopex shares.
      */
     function redeem(
         uint256 shares,
-        bytes calldata redeemData
+        uint256 minAssets
     ) external returns (uint256 assets, LockedDopexShares[] memory lockedDopexShares);
 
     /**
