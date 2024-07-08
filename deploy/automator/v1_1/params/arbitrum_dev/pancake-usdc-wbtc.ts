@@ -15,7 +15,7 @@ const usdc_wbtc: V1_1Parameters = {
   assetUsdFeed: '0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3', // USDC / USD
   counterAssetUsdFeed: '0xd0C7101eACbB49F3deCcCc166d238410D6D46d57', // WBTC /USD
   admin: '0x38E4157345Bd2c8Cf7Dbe4B0C75302c2038AB7Ec',
-  strategist: '0x12D1A136250131E37A607B0b78F6F109BF6a9fa3',
+  strategist: '0xb0c757bC94704246Ce0552b5Ccc1A547c0633914',
   depositFeePips: '1000',
   quoterType: 'chainlink',
 }
