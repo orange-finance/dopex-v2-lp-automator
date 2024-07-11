@@ -8,7 +8,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IDopexV2PositionManager} from "../../../contracts/vendor/dopexV2/IDopexV2PositionManager.sol";
 import {IUniswapV3SingleTickLiquidityHandlerV2} from "../../../contracts/vendor/dopexV2/IUniswapV3SingleTickLiquidityHandlerV2.sol";
 import {IOrangeStrykeLPAutomatorV2} from "../../../contracts/v2/IOrangeStrykeLPAutomatorV2.sol";
-import {IOrangeSwapProxy} from "./../../../contracts/v2/IOrangeSwapProxy.sol";
+import {IOrangeSwapProxy} from "../../../contracts/swap-proxy/IOrangeSwapProxy.sol";
 import {OrangeStrykeLPAutomatorV2} from "../../../contracts/v2/OrangeStrykeLPAutomatorV2.sol";
 import {ChainlinkQuoter} from "../../../contracts/ChainlinkQuoter.sol";
 import {IBalancerVault} from "../../../contracts/vendor/balancer/IBalancerVault.sol";

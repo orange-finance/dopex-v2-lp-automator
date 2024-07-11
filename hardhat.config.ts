@@ -43,7 +43,15 @@ const config: HardhatUserConfig = {
     ],
     overrides: {
       'contracts/v2/OrangeStrykeLPAutomatorV2.sol': viaIR('0.8.19', 200),
-      'contracts/v2/BCOrangeStrykeLPAutomatorV2.sol': viaIR('0.8.19', 200),
+      'contracts/v2/BackwardCompatibleOrangeStrykeLPAutomatorV2.sol': viaIR(
+        '0.8.19',
+        200,
+      ),
+      'contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol': viaIR('0.8.19', 200),
+      'contracts/v2_1/BackwardCompatibleOrangeStrykeLPAutomatorV2_1.sol': viaIR(
+        '0.8.19',
+        200,
+      ),
     },
   },
   namedAccounts: {
@@ -73,7 +81,7 @@ const config: HardhatUserConfig = {
       chainId: 42161,
       accounts: [DEV_ACCOUNT || ''],
     },
-    arbitrum_qa: {
+    arbitrum_dev: {
       url: ARB_RPC_URL,
       chainId: 42161,
       accounts: [DEV_ACCOUNT || ''],

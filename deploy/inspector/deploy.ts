@@ -6,8 +6,14 @@ const func: DeployFunction = async function (hre) {
 
   const { deployer } = await getNamedAccounts()
 
-  const { address } = await deploy('StrykeVaultInspector', {
+  const { address: v1 } = await deploy('StrykeVaultInspector', {
     contract: 'StrykeVaultInspector',
+    from: deployer,
+    log: true,
+  })
+
+  const { address: v2 } = await deploy('StrykeVaultInspectorV2', {
+    contract: 'StrykeVaultInspectorV2',
     from: deployer,
     log: true,
   })
@@ -15,7 +21,12 @@ const func: DeployFunction = async function (hre) {
   if (hre.network.name !== 'hardhat') {
     await hre.tenderly.verify({
       name: 'StrykeVaultInspector',
-      address,
+      address: v1,
+    })
+
+    await hre.tenderly.verify({
+      name: 'StrykeVaultInspectorV2',
+      address: v2,
     })
   }
 }

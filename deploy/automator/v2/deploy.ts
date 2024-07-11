@@ -73,32 +73,6 @@ const func: DeployFunction = async function (hre) {
     true,
   )
 
-  if (network.name === 'prod' && deployer !== params.admin) {
-    // set new owner
-    await execute(
-      params.id,
-      {
-        from: deployer,
-        log: true,
-      },
-      'setOwner',
-      params.admin,
-      true,
-    )
-
-    // renounce ownership
-    await execute(
-      params.id,
-      {
-        from: deployer,
-        log: true,
-      },
-      'setOwner',
-      deployer,
-      false,
-    )
-  }
-
   if (env !== 'hardhat') {
     await hre.tenderly.verify({
       name: 'OrangeStrykeLPAutomatorV2',

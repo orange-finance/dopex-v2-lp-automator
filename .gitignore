@@ -24,3 +24,5 @@ node_modules
 
 # slither
 slither.info
+
+*.log
