@@ -1,0 +1,624 @@
+{
+  "address": "0x1e58460e7333251f71Fb240b981B0e5F6A31bF24",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "contract IPancakeV3Pool",
+          "name": "pool_",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [],
+      "name": "factory",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "fee",
+      "outputs": [
+        {
+          "internalType": "uint24",
+          "name": "",
+          "type": "uint24"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "feeGrowthGlobal0X128",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "feeGrowthGlobal1X128",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "liquidity",
+      "outputs": [
+        {
+          "internalType": "uint128",
+          "name": "",
+          "type": "uint128"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "maxLiquidityPerTick",
+      "outputs": [
+        {
+          "internalType": "uint128",
+          "name": "",
+          "type": "uint128"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "index",
+          "type": "uint256"
+        }
+      ],
+      "name": "observations",
+      "outputs": [
+        {
+          "internalType": "uint32",
+          "name": "blockTimestamp",
+          "type": "uint32"
+        },
+        {
+          "internalType": "int56",
+          "name": "tickCumulative",
+          "type": "int56"
+        },
+        {
+          "internalType": "uint160",
+          "name": "secondsPerLiquidityCumulativeX128",
+          "type": "uint160"
+        },
+        {
+          "internalType": "bool",
+          "name": "initialized",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32[]",
+          "name": "secondsAgos",
+          "type": "uint32[]"
+        }
+      ],
+      "name": "observe",
+      "outputs": [
+        {
+          "internalType": "int56[]",
+          "name": "tickCumulatives",
+          "type": "int56[]"
+        },
+        {
+          "internalType": "uint160[]",
+          "name": "secondsPerLiquidityCumulativeX128s",
+          "type": "uint160[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "pool",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "key",
+          "type": "bytes32"
+        }
+      ],
+      "name": "positions",
+      "outputs": [
+        {
+          "internalType": "uint128",
+          "name": "_liquidity",
+          "type": "uint128"
+        },
+        {
+          "internalType": "uint256",
+          "name": "feeGrowthInside0LastX128",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "feeGrowthInside1LastX128",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint128",
+          "name": "tokensOwed0",
+          "type": "uint128"
+        },
+        {
+          "internalType": "uint128",
+          "name": "tokensOwed1",
+          "type": "uint128"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "protocolFees",
+      "outputs": [
+        {
+          "internalType": "uint128",
+          "name": "_token0",
+          "type": "uint128"
+        },
+        {
+          "internalType": "uint128",
+          "name": "_token1",
+          "type": "uint128"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "slot0",
+      "outputs": [
+        {
+          "internalType": "uint160",
+          "name": "sqrtPriceX96",
+          "type": "uint160"
+        },
+        {
+          "internalType": "int24",
+          "name": "tick",
+          "type": "int24"
+        },
+        {
+          "internalType": "uint16",
+          "name": "observationIndex",
+          "type": "uint16"
+        },
+        {
+          "internalType": "uint16",
+          "name": "observationCardinality",
+          "type": "uint16"
+        },
+        {
+          "internalType": "uint16",
+          "name": "observationCardinalityNext",
+          "type": "uint16"
+        },
+        {
+          "internalType": "uint8",
+          "name": "feeProtocol",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bool",
+          "name": "unlocked",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int24",
+          "name": "tickLower",
+          "type": "int24"
+        },
+        {
+          "internalType": "int24",
+          "name": "tickUpper",
+          "type": "int24"
+        }
+      ],
+      "name": "snapshotCumulativesInside",
+      "outputs": [
+        {
+          "internalType": "int56",
+          "name": "tickCumulativeInside",
+          "type": "int56"
+        },
+        {
+          "internalType": "uint160",
+          "name": "secondsPerLiquidityInsideX128",
+          "type": "uint160"
+        },
+        {
+          "internalType": "uint32",
+          "name": "secondsInside",
+          "type": "uint32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int16",
+          "name": "wordPosition",
+          "type": "int16"
+        }
+      ],
+      "name": "tickBitmap",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "tickSpacing",
+      "outputs": [
+        {
+          "internalType": "int24",
+          "name": "",
+          "type": "int24"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int24",
+          "name": "tick",
+          "type": "int24"
+        }
+      ],
+      "name": "ticks",
+      "outputs": [
+        {
+          "internalType": "uint128",
+          "name": "liquidityGross",
+          "type": "uint128"
+        },
+        {
+          "internalType": "int128",
+          "name": "liquidityNet",
+          "type": "int128"
+        },
+        {
+          "internalType": "uint256",
+          "name": "feeGrowthOutside0X128",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "feeGrowthOutside1X128",
+          "type": "uint256"
+        },
+        {
+          "internalType": "int56",
+          "name": "tickCumulativeOutside",
+          "type": "int56"
+        },
+        {
+          "internalType": "uint160",
+          "name": "secondsPerLiquidityOutsideX128",
+          "type": "uint160"
+        },
+        {
+          "internalType": "uint32",
+          "name": "secondsOutside",
+          "type": "uint32"
+        },
+        {
+          "internalType": "bool",
+          "name": "initialized",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "token0",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "token1",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0xf15f796bd7df40f7810eb3c6a0b4e9b8d3646bb5ec1cdba034823604a8b10417",
+  "receipt": {
+    "to": null,
+    "from": "0x12D1A136250131E37A607B0b78F6F109BF6a9fa3",
+    "contractAddress": "0x1e58460e7333251f71Fb240b981B0e5F6A31bF24",
+    "transactionIndex": 3,
+    "gasUsed": "1390956",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x1ebc835ba91a1fd7af100d14661ef6899f3ebf7006de0508d2edb05d1062f2aa",
+    "transactionHash": "0xf15f796bd7df40f7810eb3c6a0b4e9b8d3646bb5ec1cdba034823604a8b10417",
+    "logs": [],
+    "blockNumber": 230569517,
+    "cumulativeGasUsed": "1859592",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": ["0xd9e2a1a61B6E61b275cEc326465d417e52C1b95c"],
+  "numDeployments": 2,
+  "solcInputHash": "ebc6d9c78415a33e45406163804fd34f",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.19+commit.7dd6d404\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"contract IPancakeV3Pool\",\"name\":\"pool_\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"factory\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"fee\",\"outputs\":[{\"internalType\":\"uint24\",\"name\":\"\",\"type\":\"uint24\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"feeGrowthGlobal0X128\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"feeGrowthGlobal1X128\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"liquidity\",\"outputs\":[{\"internalType\":\"uint128\",\"name\":\"\",\"type\":\"uint128\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"maxLiquidityPerTick\",\"outputs\":[{\"internalType\":\"uint128\",\"name\":\"\",\"type\":\"uint128\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"}],\"name\":\"observations\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"blockTimestamp\",\"type\":\"uint32\"},{\"internalType\":\"int56\",\"name\":\"tickCumulative\",\"type\":\"int56\"},{\"internalType\":\"uint160\",\"name\":\"secondsPerLiquidityCumulativeX128\",\"type\":\"uint160\"},{\"internalType\":\"bool\",\"name\":\"initialized\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32[]\",\"name\":\"secondsAgos\",\"type\":\"uint32[]\"}],\"name\":\"observe\",\"outputs\":[{\"internalType\":\"int56[]\",\"name\":\"tickCumulatives\",\"type\":\"int56[]\"},{\"internalType\":\"uint160[]\",\"name\":\"secondsPerLiquidityCumulativeX128s\",\"type\":\"uint160[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"pool\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"key\",\"type\":\"bytes32\"}],\"name\":\"positions\",\"outputs\":[{\"internalType\":\"uint128\",\"name\":\"_liquidity\",\"type\":\"uint128\"},{\"internalType\":\"uint256\",\"name\":\"feeGrowthInside0LastX128\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"feeGrowthInside1LastX128\",\"type\":\"uint256\"},{\"internalType\":\"uint128\",\"name\":\"tokensOwed0\",\"type\":\"uint128\"},{\"internalType\":\"uint128\",\"name\":\"tokensOwed1\",\"type\":\"uint128\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"protocolFees\",\"outputs\":[{\"internalType\":\"uint128\",\"name\":\"_token0\",\"type\":\"uint128\"},{\"internalType\":\"uint128\",\"name\":\"_token1\",\"type\":\"uint128\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"slot0\",\"outputs\":[{\"internalType\":\"uint160\",\"name\":\"sqrtPriceX96\",\"type\":\"uint160\"},{\"internalType\":\"int24\",\"name\":\"tick\",\"type\":\"int24\"},{\"internalType\":\"uint16\",\"name\":\"observationIndex\",\"type\":\"uint16\"},{\"internalType\":\"uint16\",\"name\":\"observationCardinality\",\"type\":\"uint16\"},{\"internalType\":\"uint16\",\"name\":\"observationCardinalityNext\",\"type\":\"uint16\"},{\"internalType\":\"uint8\",\"name\":\"feeProtocol\",\"type\":\"uint8\"},{\"internalType\":\"bool\",\"name\":\"unlocked\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"int24\",\"name\":\"tickLower\",\"type\":\"int24\"},{\"internalType\":\"int24\",\"name\":\"tickUpper\",\"type\":\"int24\"}],\"name\":\"snapshotCumulativesInside\",\"outputs\":[{\"internalType\":\"int56\",\"name\":\"tickCumulativeInside\",\"type\":\"int56\"},{\"internalType\":\"uint160\",\"name\":\"secondsPerLiquidityInsideX128\",\"type\":\"uint160\"},{\"internalType\":\"uint32\",\"name\":\"secondsInside\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"int16\",\"name\":\"wordPosition\",\"type\":\"int16\"}],\"name\":\"tickBitmap\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"tickSpacing\",\"outputs\":[{\"internalType\":\"int24\",\"name\":\"\",\"type\":\"int24\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"int24\",\"name\":\"tick\",\"type\":\"int24\"}],\"name\":\"ticks\",\"outputs\":[{\"internalType\":\"uint128\",\"name\":\"liquidityGross\",\"type\":\"uint128\"},{\"internalType\":\"int128\",\"name\":\"liquidityNet\",\"type\":\"int128\"},{\"internalType\":\"uint256\",\"name\":\"feeGrowthOutside0X128\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"feeGrowthOutside1X128\",\"type\":\"uint256\"},{\"internalType\":\"int56\",\"name\":\"tickCumulativeOutside\",\"type\":\"int56\"},{\"internalType\":\"uint160\",\"name\":\"secondsPerLiquidityOutsideX128\",\"type\":\"uint160\"},{\"internalType\":\"uint32\",\"name\":\"secondsOutside\",\"type\":\"uint32\"},{\"internalType\":\"bool\",\"name\":\"initialized\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"token0\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"token1\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"factory()\":{\"returns\":{\"_0\":\"The contract address\"}},\"fee()\":{\"returns\":{\"_0\":\"The fee\"}},\"feeGrowthGlobal0X128()\":{\"details\":\"This value can overflow the uint256\"},\"feeGrowthGlobal1X128()\":{\"details\":\"This value can overflow the uint256\"},\"liquidity()\":{\"details\":\"This value has no relationship to the total liquidity across all ticks\",\"returns\":{\"_0\":\"The liquidity at the current price of the pool\"}},\"maxLiquidityPerTick()\":{\"details\":\"This parameter is enforced per tick to prevent liquidity from overflowing a uint128 at any point, and also prevents out-of-range liquidity from being used to prevent adding in-range liquidity to a pool\",\"returns\":{\"_0\":\"The max amount of liquidity per tick\"}},\"observations(uint256)\":{\"details\":\"You most likely want to use #observe() instead of this method to get an observation as of some amount of time ago, rather than at a specific index in the array.\",\"params\":{\"index\":\"The element of the observations array to fetch\"},\"returns\":{\"blockTimestamp\":\"The timestamp of the observation,\",\"initialized\":\"whether the observation has been initialized and the values are safe to use\",\"secondsPerLiquidityCumulativeX128\":\"the seconds per in range liquidity for the life of the pool as of the observation timestamp,\",\"tickCumulative\":\"the tick multiplied by seconds elapsed for the life of the pool as of the observation timestamp,\"}},\"observe(uint32[])\":{\"details\":\"To get a time weighted average tick or liquidity-in-range, you must call this with two values, one representing the beginning of the period and another for the end of the period. E.g., to get the last hour time-weighted average tick, you must call it with secondsAgos = [3600, 0].The time weighted average tick represents the geometric time weighted average price of the pool, in log base sqrt(1.0001) of token1 / token0. The TickMath library can be used to go from a tick value to a ratio.\",\"params\":{\"secondsAgos\":\"From how long ago each cumulative tick and liquidity value should be returned\"},\"returns\":{\"secondsPerLiquidityCumulativeX128s\":\"Cumulative seconds per liquidity-in-range value as of each `secondsAgos` from the current block timestamp\",\"tickCumulatives\":\"Cumulative tick values as of each `secondsAgos` from the current block timestamp\"}},\"pool()\":{\"details\":\"Returns the address of actual amm contract (e.g. UniswapV3, PancakeV3...)\",\"returns\":{\"_0\":\"pool The address of the amm contract.\"}},\"positions(bytes32)\":{\"params\":{\"key\":\"The position's key is a hash of a preimage composed by the owner, tickLower and tickUpper\"},\"returns\":{\"_liquidity\":\"The amount of liquidity in the position,\",\"feeGrowthInside0LastX128\":\"fee growth of token0 inside the tick range as of the last mint/burn/poke,\",\"feeGrowthInside1LastX128\":\"fee growth of token1 inside the tick range as of the last mint/burn/poke,\",\"tokensOwed0\":\"the computed amount of token0 owed to the position as of the last mint/burn/poke,\",\"tokensOwed1\":\"the computed amount of token1 owed to the position as of the last mint/burn/poke\"}},\"protocolFees()\":{\"details\":\"Protocol fees will never exceed uint128 max in either token\"},\"slot0()\":{\"returns\":{\"feeProtocol\":\"The protocol fee for both tokens of the pool. Encoded as two 4 bit values, where the protocol fee of token1 is shifted 4 bits and the protocol fee of token0 is the lower 4 bits. Used as the denominator of a fraction of the swap fee, e.g. 4 means 1/4th of the swap fee. unlocked Whether the pool is currently locked to reentrancy\",\"observationCardinality\":\"The current maximum number of observations stored in the pool,\",\"observationCardinalityNext\":\"The next maximum number of observations, to be updated when the observation.\",\"observationIndex\":\"The index of the last oracle observation that was written,\",\"sqrtPriceX96\":\"The current price of the pool as a sqrt(token1/token0) Q64.96 value\",\"tick\":\"The current tick of the pool, i.e. according to the last tick transition that was run. This value may not always be equal to SqrtTickMath.getTickAtSqrtRatio(sqrtPriceX96) if the price is on a tick boundary.\"}},\"snapshotCumulativesInside(int24,int24)\":{\"details\":\"Snapshots must only be compared to other snapshots, taken over a period for which a position existed. I.e., snapshots cannot be compared if a position is not held for the entire period between when the first snapshot is taken and the second snapshot is taken.\",\"params\":{\"tickLower\":\"The lower tick of the range\",\"tickUpper\":\"The upper tick of the range\"},\"returns\":{\"secondsInside\":\"The snapshot of seconds per liquidity for the range\",\"secondsPerLiquidityInsideX128\":\"The snapshot of seconds per liquidity for the range\",\"tickCumulativeInside\":\"The snapshot of the tick accumulator for the range\"}},\"tickSpacing()\":{\"details\":\"Ticks can only be used at multiples of this value, minimum of 1 and always positive e.g.: a tickSpacing of 3 means ticks can be initialized every 3rd tick, i.e., ..., -6, -3, 0, 3, 6, ... This value is an int24 to avoid casting even though it is always positive.\",\"returns\":{\"_0\":\"The tick spacing\"}},\"ticks(int24)\":{\"params\":{\"tick\":\"The tick to look up\"},\"returns\":{\"feeGrowthOutside0X128\":\"the fee growth on the other side of the tick from the current tick in token0,\",\"feeGrowthOutside1X128\":\"the fee growth on the other side of the tick from the current tick in token1,\",\"initialized\":\"Set to true if the tick is initialized, i.e. liquidityGross is greater than 0, otherwise equal to false. Outside values can only be used if the tick is initialized, i.e. if liquidityGross is greater than 0. In addition, these values are only relative and must be used only in comparison to previous snapshots for a specific position.\",\"liquidityGross\":\"the total amount of position liquidity that uses the pool either as tick lower or tick upper\",\"liquidityNet\":\"how much liquidity changes when the pool price crosses the tick,\",\"secondsOutside\":\"the seconds spent on the other side of the tick from the current tick,\",\"secondsPerLiquidityOutsideX128\":\"the seconds spent per liquidity on the other side of the tick from the current tick,\",\"tickCumulativeOutside\":\"the cumulative tick value on the other side of the tick from the current tick\"}},\"token0()\":{\"returns\":{\"_0\":\"The token contract address\"}},\"token1()\":{\"returns\":{\"_0\":\"The token contract address\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"factory()\":{\"notice\":\"The contract that deployed the pool, which must adhere to the IUniswapV3Factory interface\"},\"fee()\":{\"notice\":\"The pool's fee in hundredths of a bip, i.e. 1e-6\"},\"feeGrowthGlobal0X128()\":{\"notice\":\"The fee growth as a Q128.128 fees of token0 collected per unit of liquidity for the entire life of the pool\"},\"feeGrowthGlobal1X128()\":{\"notice\":\"The fee growth as a Q128.128 fees of token1 collected per unit of liquidity for the entire life of the pool\"},\"liquidity()\":{\"notice\":\"The currently in range liquidity available to the pool\"},\"maxLiquidityPerTick()\":{\"notice\":\"The maximum amount of position liquidity that can use any tick in the range\"},\"observations(uint256)\":{\"notice\":\"Returns data about a specific observation index\"},\"observe(uint32[])\":{\"notice\":\"Returns the cumulative tick and liquidity as of each timestamp `secondsAgo` from the current block timestamp\"},\"positions(bytes32)\":{\"notice\":\"Returns the information about a position by the position's key\"},\"protocolFees()\":{\"notice\":\"The amounts of token0 and token1 that are owed to the protocol\"},\"slot0()\":{\"notice\":\"The 0th storage slot in the pool stores many values, and is exposed as a single method to save gas when accessed externally.\"},\"snapshotCumulativesInside(int24,int24)\":{\"notice\":\"Returns a snapshot of the tick cumulative, seconds per liquidity and seconds inside a tick range\"},\"tickBitmap(int16)\":{\"notice\":\"Returns 256 packed tick initialized boolean values. See TickBitmap for more information\"},\"tickSpacing()\":{\"notice\":\"The pool tick spacing\"},\"ticks(int24)\":{\"notice\":\"Look up information about a specific tick in the pool\"},\"token0()\":{\"notice\":\"The first of the two tokens of the pool, sorted by address\"},\"token1()\":{\"notice\":\"The second of the two tokens of the pool, sorted by address\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/pool-adapter/pancake/PancakeV3PoolAdapter.sol\":\"PancakeV3PoolAdapter\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"@uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-2.0-or-later\\npragma solidity >=0.5.0;\\n\\n/// @title Pool state that is not stored\\n/// @notice Contains view functions to provide information about the pool that is computed rather than stored on the\\n/// blockchain. The functions here may have variable gas costs.\\ninterface IUniswapV3PoolDerivedState {\\n    /// @notice Returns the cumulative tick and liquidity as of each timestamp `secondsAgo` from the current block timestamp\\n    /// @dev To get a time weighted average tick or liquidity-in-range, you must call this with two values, one representing\\n    /// the beginning of the period and another for the end of the period. E.g., to get the last hour time-weighted average tick,\\n    /// you must call it with secondsAgos = [3600, 0].\\n    /// @dev The time weighted average tick represents the geometric time weighted average price of the pool, in\\n    /// log base sqrt(1.0001) of token1 / token0. The TickMath library can be used to go from a tick value to a ratio.\\n    /// @param secondsAgos From how long ago each cumulative tick and liquidity value should be returned\\n    /// @return tickCumulatives Cumulative tick values as of each `secondsAgos` from the current block timestamp\\n    /// @return secondsPerLiquidityCumulativeX128s Cumulative seconds per liquidity-in-range value as of each `secondsAgos` from the current block\\n    /// timestamp\\n    function observe(uint32[] calldata secondsAgos)\\n        external\\n        view\\n        returns (int56[] memory tickCumulatives, uint160[] memory secondsPerLiquidityCumulativeX128s);\\n\\n    /// @notice Returns a snapshot of the tick cumulative, seconds per liquidity and seconds inside a tick range\\n    /// @dev Snapshots must only be compared to other snapshots, taken over a period for which a position existed.\\n    /// I.e., snapshots cannot be compared if a position is not held for the entire period between when the first\\n    /// snapshot is taken and the second snapshot is taken.\\n    /// @param tickLower The lower tick of the range\\n    /// @param tickUpper The upper tick of the range\\n    /// @return tickCumulativeInside The snapshot of the tick accumulator for the range\\n    /// @return secondsPerLiquidityInsideX128 The snapshot of seconds per liquidity for the range\\n    /// @return secondsInside The snapshot of seconds per liquidity for the range\\n    function snapshotCumulativesInside(int24 tickLower, int24 tickUpper)\\n        external\\n        view\\n        returns (\\n            int56 tickCumulativeInside,\\n            uint160 secondsPerLiquidityInsideX128,\\n            uint32 secondsInside\\n        );\\n}\\n\",\"keccak256\":\"0xe603ac5b17ecdee73ba2b27efdf386c257a19c14206e87eee77e2017b742d9e5\",\"license\":\"GPL-2.0-or-later\"},\"@uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolImmutables.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-2.0-or-later\\npragma solidity >=0.5.0;\\n\\n/// @title Pool state that never changes\\n/// @notice These parameters are fixed for a pool forever, i.e., the methods will always return the same values\\ninterface IUniswapV3PoolImmutables {\\n    /// @notice The contract that deployed the pool, which must adhere to the IUniswapV3Factory interface\\n    /// @return The contract address\\n    function factory() external view returns (address);\\n\\n    /// @notice The first of the two tokens of the pool, sorted by address\\n    /// @return The token contract address\\n    function token0() external view returns (address);\\n\\n    /// @notice The second of the two tokens of the pool, sorted by address\\n    /// @return The token contract address\\n    function token1() external view returns (address);\\n\\n    /// @notice The pool's fee in hundredths of a bip, i.e. 1e-6\\n    /// @return The fee\\n    function fee() external view returns (uint24);\\n\\n    /// @notice The pool tick spacing\\n    /// @dev Ticks can only be used at multiples of this value, minimum of 1 and always positive\\n    /// e.g.: a tickSpacing of 3 means ticks can be initialized every 3rd tick, i.e., ..., -6, -3, 0, 3, 6, ...\\n    /// This value is an int24 to avoid casting even though it is always positive.\\n    /// @return The tick spacing\\n    function tickSpacing() external view returns (int24);\\n\\n    /// @notice The maximum amount of position liquidity that can use any tick in the range\\n    /// @dev This parameter is enforced per tick to prevent liquidity from overflowing a uint128 at any point, and\\n    /// also prevents out-of-range liquidity from being used to prevent adding in-range liquidity to a pool\\n    /// @return The max amount of liquidity per tick\\n    function maxLiquidityPerTick() external view returns (uint128);\\n}\\n\",\"keccak256\":\"0xf6e5d2cd1139c4c276bdbc8e1d2b256e456c866a91f1b868da265c6d2685c3f7\",\"license\":\"GPL-2.0-or-later\"},\"@uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolState.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-2.0-or-later\\npragma solidity >=0.5.0;\\n\\n/// @title Pool state that can change\\n/// @notice These methods compose the pool's state, and can change with any frequency including multiple times\\n/// per transaction\\ninterface IUniswapV3PoolState {\\n    /// @notice The 0th storage slot in the pool stores many values, and is exposed as a single method to save gas\\n    /// when accessed externally.\\n    /// @return sqrtPriceX96 The current price of the pool as a sqrt(token1/token0) Q64.96 value\\n    /// @return tick The current tick of the pool, i.e. according to the last tick transition that was run.\\n    /// This value may not always be equal to SqrtTickMath.getTickAtSqrtRatio(sqrtPriceX96) if the price is on a tick\\n    /// boundary.\\n    /// @return observationIndex The index of the last oracle observation that was written,\\n    /// @return observationCardinality The current maximum number of observations stored in the pool,\\n    /// @return observationCardinalityNext The next maximum number of observations, to be updated when the observation.\\n    /// @return feeProtocol The protocol fee for both tokens of the pool.\\n    /// Encoded as two 4 bit values, where the protocol fee of token1 is shifted 4 bits and the protocol fee of token0\\n    /// is the lower 4 bits. Used as the denominator of a fraction of the swap fee, e.g. 4 means 1/4th of the swap fee.\\n    /// unlocked Whether the pool is currently locked to reentrancy\\n    function slot0()\\n        external\\n        view\\n        returns (\\n            uint160 sqrtPriceX96,\\n            int24 tick,\\n            uint16 observationIndex,\\n            uint16 observationCardinality,\\n            uint16 observationCardinalityNext,\\n            uint8 feeProtocol,\\n            bool unlocked\\n        );\\n\\n    /// @notice The fee growth as a Q128.128 fees of token0 collected per unit of liquidity for the entire life of the pool\\n    /// @dev This value can overflow the uint256\\n    function feeGrowthGlobal0X128() external view returns (uint256);\\n\\n    /// @notice The fee growth as a Q128.128 fees of token1 collected per unit of liquidity for the entire life of the pool\\n    /// @dev This value can overflow the uint256\\n    function feeGrowthGlobal1X128() external view returns (uint256);\\n\\n    /// @notice The amounts of token0 and token1 that are owed to the protocol\\n    /// @dev Protocol fees will never exceed uint128 max in either token\\n    function protocolFees() external view returns (uint128 token0, uint128 token1);\\n\\n    /// @notice The currently in range liquidity available to the pool\\n    /// @dev This value has no relationship to the total liquidity across all ticks\\n    /// @return The liquidity at the current price of the pool\\n    function liquidity() external view returns (uint128);\\n\\n    /// @notice Look up information about a specific tick in the pool\\n    /// @param tick The tick to look up\\n    /// @return liquidityGross the total amount of position liquidity that uses the pool either as tick lower or\\n    /// tick upper\\n    /// @return liquidityNet how much liquidity changes when the pool price crosses the tick,\\n    /// @return feeGrowthOutside0X128 the fee growth on the other side of the tick from the current tick in token0,\\n    /// @return feeGrowthOutside1X128 the fee growth on the other side of the tick from the current tick in token1,\\n    /// @return tickCumulativeOutside the cumulative tick value on the other side of the tick from the current tick\\n    /// @return secondsPerLiquidityOutsideX128 the seconds spent per liquidity on the other side of the tick from the current tick,\\n    /// @return secondsOutside the seconds spent on the other side of the tick from the current tick,\\n    /// @return initialized Set to true if the tick is initialized, i.e. liquidityGross is greater than 0, otherwise equal to false.\\n    /// Outside values can only be used if the tick is initialized, i.e. if liquidityGross is greater than 0.\\n    /// In addition, these values are only relative and must be used only in comparison to previous snapshots for\\n    /// a specific position.\\n    function ticks(int24 tick)\\n        external\\n        view\\n        returns (\\n            uint128 liquidityGross,\\n            int128 liquidityNet,\\n            uint256 feeGrowthOutside0X128,\\n            uint256 feeGrowthOutside1X128,\\n            int56 tickCumulativeOutside,\\n            uint160 secondsPerLiquidityOutsideX128,\\n            uint32 secondsOutside,\\n            bool initialized\\n        );\\n\\n    /// @notice Returns 256 packed tick initialized boolean values. See TickBitmap for more information\\n    function tickBitmap(int16 wordPosition) external view returns (uint256);\\n\\n    /// @notice Returns the information about a position by the position's key\\n    /// @param key The position's key is a hash of a preimage composed by the owner, tickLower and tickUpper\\n    /// @return liquidity The amount of liquidity in the position,\\n    /// @return feeGrowthInside0LastX128 fee growth of token0 inside the tick range as of the last mint/burn/poke,\\n    /// @return feeGrowthInside1LastX128 fee growth of token1 inside the tick range as of the last mint/burn/poke,\\n    /// @return tokensOwed0 the computed amount of token0 owed to the position as of the last mint/burn/poke,\\n    /// @return tokensOwed1 the computed amount of token1 owed to the position as of the last mint/burn/poke\\n    function positions(bytes32 key)\\n        external\\n        view\\n        returns (\\n            uint128 liquidity,\\n            uint256 feeGrowthInside0LastX128,\\n            uint256 feeGrowthInside1LastX128,\\n            uint128 tokensOwed0,\\n            uint128 tokensOwed1\\n        );\\n\\n    /// @notice Returns data about a specific observation index\\n    /// @param index The element of the observations array to fetch\\n    /// @dev You most likely want to use #observe() instead of this method to get an observation as of some amount of time\\n    /// ago, rather than at a specific index in the array.\\n    /// @return blockTimestamp The timestamp of the observation,\\n    /// @return tickCumulative the tick multiplied by seconds elapsed for the life of the pool as of the observation timestamp,\\n    /// @return secondsPerLiquidityCumulativeX128 the seconds per in range liquidity for the life of the pool as of the observation timestamp,\\n    /// @return initialized whether the observation has been initialized and the values are safe to use\\n    function observations(uint256 index)\\n        external\\n        view\\n        returns (\\n            uint32 blockTimestamp,\\n            int56 tickCumulative,\\n            uint160 secondsPerLiquidityCumulativeX128,\\n            bool initialized\\n        );\\n}\\n\",\"keccak256\":\"0x44fa2ce1182f6c2f6bead3d1737804bf7e112252ae86e0f2e92f9b8249603f43\",\"license\":\"GPL-2.0-or-later\"},\"contracts/pool-adapter/IUniswapV3PoolAdapter.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0\\npragma solidity 0.8.19;\\n\\nimport {IUniswapV3PoolState} from \\\"@uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolState.sol\\\";\\nimport {IUniswapV3PoolImmutables} from \\\"@uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolImmutables.sol\\\";\\nimport {IUniswapV3PoolDerivedState} from \\\"@uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol\\\";\\n\\ninterface IUniswapV3PoolAdapter is IUniswapV3PoolState, IUniswapV3PoolImmutables, IUniswapV3PoolDerivedState {\\n    /**\\n     * @dev Returns the address of actual amm contract (e.g. UniswapV3, PancakeV3...)\\n     * @return pool The address of the amm contract.\\n     */\\n    function pool() external view returns (address);\\n}\\n\",\"keccak256\":\"0x53d586bb862ed825aabe05c24cca7054a542ecb53b72ed46fc9d3bbade59247e\",\"license\":\"GPL-3.0\"},\"contracts/pool-adapter/pancake/PancakeV3PoolAdapter.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0\\npragma solidity 0.8.19;\\n\\nimport {IUniswapV3PoolAdapter} from \\\"../IUniswapV3PoolAdapter.sol\\\";\\nimport {IPancakeV3Pool} from \\\"./interfaces/IPancakeV3Pool.sol\\\";\\n\\ncontract PancakeV3PoolAdapter is IUniswapV3PoolAdapter {\\n    IPancakeV3Pool internal immutable _pool;\\n\\n    constructor(IPancakeV3Pool pool_) {\\n        _pool = pool_;\\n    }\\n\\n    function pool() external view returns (address) {\\n        return address(_pool);\\n    }\\n\\n    function slot0()\\n        external\\n        view\\n        returns (\\n            uint160 sqrtPriceX96,\\n            int24 tick,\\n            uint16 observationIndex,\\n            uint16 observationCardinality,\\n            uint16 observationCardinalityNext,\\n            uint8 feeProtocol,\\n            bool unlocked\\n        )\\n    {\\n        // PancakeV3 Pool has uint32 feeProtocol, but UniswapV3PoolAdapter uses uint8\\n        // We set the value to zero as we don't use this value\\n        feeProtocol = 0;\\n        (sqrtPriceX96, tick, observationIndex, observationCardinality, observationCardinalityNext, , unlocked) = _pool\\n            .slot0();\\n    }\\n\\n    function feeGrowthGlobal0X128() external view returns (uint256) {\\n        return _pool.feeGrowthGlobal0X128();\\n    }\\n\\n    function feeGrowthGlobal1X128() external view returns (uint256) {\\n        return _pool.feeGrowthGlobal1X128();\\n    }\\n\\n    function protocolFees() external view returns (uint128 _token0, uint128 _token1) {\\n        return _pool.protocolFees();\\n    }\\n\\n    // @dev This value has no relationship to the total liquidity across all ticks\\n    function liquidity() external view returns (uint128) {\\n        return _pool.liquidity();\\n    }\\n\\n    function ticks(\\n        int24 tick\\n    )\\n        external\\n        view\\n        returns (\\n            uint128 liquidityGross,\\n            int128 liquidityNet,\\n            uint256 feeGrowthOutside0X128,\\n            uint256 feeGrowthOutside1X128,\\n            int56 tickCumulativeOutside,\\n            uint160 secondsPerLiquidityOutsideX128,\\n            uint32 secondsOutside,\\n            bool initialized\\n        )\\n    {\\n        return _pool.ticks(tick);\\n    }\\n\\n    function tickBitmap(int16 wordPosition) external view returns (uint256) {\\n        return _pool.tickBitmap(wordPosition);\\n    }\\n\\n    function positions(\\n        bytes32 key\\n    )\\n        external\\n        view\\n        returns (\\n            uint128 _liquidity,\\n            uint256 feeGrowthInside0LastX128,\\n            uint256 feeGrowthInside1LastX128,\\n            uint128 tokensOwed0,\\n            uint128 tokensOwed1\\n        )\\n    {\\n        return _pool.positions(key);\\n    }\\n\\n    function observations(\\n        uint256 index\\n    )\\n        external\\n        view\\n        returns (\\n            uint32 blockTimestamp,\\n            int56 tickCumulative,\\n            uint160 secondsPerLiquidityCumulativeX128,\\n            bool initialized\\n        )\\n    {\\n        return _pool.observations(index);\\n    }\\n\\n    function factory() external view returns (address) {\\n        return _pool.factory();\\n    }\\n\\n    function token0() external view returns (address) {\\n        return _pool.token0();\\n    }\\n\\n    function token1() external view returns (address) {\\n        return _pool.token1();\\n    }\\n\\n    function fee() external view returns (uint24) {\\n        return _pool.fee();\\n    }\\n\\n    function tickSpacing() external view returns (int24) {\\n        return _pool.tickSpacing();\\n    }\\n\\n    function maxLiquidityPerTick() external view returns (uint128) {\\n        return _pool.maxLiquidityPerTick();\\n    }\\n\\n    function observe(\\n        uint32[] calldata secondsAgos\\n    ) external view returns (int56[] memory tickCumulatives, uint160[] memory secondsPerLiquidityCumulativeX128s) {\\n        return _pool.observe(secondsAgos);\\n    }\\n\\n    function snapshotCumulativesInside(\\n        int24 tickLower,\\n        int24 tickUpper\\n    ) external view returns (int56 tickCumulativeInside, uint160 secondsPerLiquidityInsideX128, uint32 secondsInside) {\\n        return _pool.snapshotCumulativesInside(tickLower, tickUpper);\\n    }\\n}\\n\",\"keccak256\":\"0xd934b272669327109f4189aa286ab2ace883fc75075688099e5fbddd8ab0fcc2\",\"license\":\"GPL-3.0\"},\"contracts/pool-adapter/pancake/interfaces/IPancakeV3Pool.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-2.0-or-later\\npragma solidity ^0.8.0;\\n\\nimport {IPancakeV3PoolImmutables} from \\\"./IPancakeV3PoolImmutables.sol\\\";\\nimport {IPancakeV3PoolState} from \\\"./IPancakeV3PoolState.sol\\\";\\nimport {IPancakeV3PoolDerivedState} from \\\"./IPancakeV3PoolDerivedState.sol\\\";\\nimport {IPancakeV3PoolActions} from \\\"./IPancakeV3PoolActions.sol\\\";\\nimport {IPancakeV3PoolOwnerActions} from \\\"./IPancakeV3PoolOwnerActions.sol\\\";\\nimport {IPancakeV3PoolEvents} from \\\"./IPancakeV3PoolEvents.sol\\\";\\n\\n/* solhint-disable no-empty-blocks */\\n\\n/// @title The interface for a PancakeSwap V3 Pool\\n/// @notice A PancakeSwap pool facilitates swapping and automated market making between any two assets that strictly conform\\n/// to the ERC20 specification\\n/// @dev The pool interface is broken up into many smaller pieces\\ninterface IPancakeV3Pool is\\n    IPancakeV3PoolImmutables,\\n    IPancakeV3PoolState,\\n    IPancakeV3PoolDerivedState,\\n    IPancakeV3PoolActions,\\n    IPancakeV3PoolOwnerActions,\\n    IPancakeV3PoolEvents\\n{}\\n\",\"keccak256\":\"0x97e8504221cc1fcf66715b6dc8ac0bb3ab1f15dba8fe825d9b5a32ea74dabf77\",\"license\":\"GPL-2.0-or-later\"},\"contracts/pool-adapter/pancake/interfaces/IPancakeV3PoolActions.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-2.0-or-later\\npragma solidity ^0.8.0;\\n\\n/// @title Permissionless pool actions\\n/// @notice Contains pool methods that can be called by anyone\\ninterface IPancakeV3PoolActions {\\n    /// @notice Sets the initial price for the pool\\n    /// @dev Price is represented as a sqrt(amountToken1/amountToken0) Q64.96 value\\n    /// @param sqrtPriceX96 the initial sqrt price of the pool as a Q64.96\\n    function initialize(uint160 sqrtPriceX96) external;\\n\\n    /// @notice Adds liquidity for the given recipient/tickLower/tickUpper position\\n    /// @dev The caller of this method receives a callback in the form of IPancakeV3MintCallback#pancakeV3MintCallback\\n    /// in which they must pay any token0 or token1 owed for the liquidity. The amount of token0/token1 due depends\\n    /// on tickLower, tickUpper, the amount of liquidity, and the current price.\\n    /// @param recipient The address for which the liquidity will be created\\n    /// @param tickLower The lower tick of the position in which to add liquidity\\n    /// @param tickUpper The upper tick of the position in which to add liquidity\\n    /// @param amount The amount of liquidity to mint\\n    /// @param data Any data that should be passed through to the callback\\n    /// @return amount0 The amount of token0 that was paid to mint the given amount of liquidity. Matches the value in the callback\\n    /// @return amount1 The amount of token1 that was paid to mint the given amount of liquidity. Matches the value in the callback\\n    function mint(\\n        address recipient,\\n        int24 tickLower,\\n        int24 tickUpper,\\n        uint128 amount,\\n        bytes calldata data\\n    ) external returns (uint256 amount0, uint256 amount1);\\n\\n    /// @notice Collects tokens owed to a position\\n    /// @dev Does not recompute fees earned, which must be done either via mint or burn of any amount of liquidity.\\n    /// Collect must be called by the position owner. To withdraw only token0 or only token1, amount0Requested or\\n    /// amount1Requested may be set to zero. To withdraw all tokens owed, caller may pass any value greater than the\\n    /// actual tokens owed, e.g. type(uint128).max. Tokens owed may be from accumulated swap fees or burned liquidity.\\n    /// @param recipient The address which should receive the fees collected\\n    /// @param tickLower The lower tick of the position for which to collect fees\\n    /// @param tickUpper The upper tick of the position for which to collect fees\\n    /// @param amount0Requested How much token0 should be withdrawn from the fees owed\\n    /// @param amount1Requested How much token1 should be withdrawn from the fees owed\\n    /// @return amount0 The amount of fees collected in token0\\n    /// @return amount1 The amount of fees collected in token1\\n    function collect(\\n        address recipient,\\n        int24 tickLower,\\n        int24 tickUpper,\\n        uint128 amount0Requested,\\n        uint128 amount1Requested\\n    ) external returns (uint128 amount0, uint128 amount1);\\n\\n    /// @notice Burn liquidity from the sender and account tokens owed for the liquidity to the position\\n    /// @dev Can be used to trigger a recalculation of fees owed to a position by calling with an amount of 0\\n    /// @dev Fees must be collected separately via a call to #collect\\n    /// @param tickLower The lower tick of the position for which to burn liquidity\\n    /// @param tickUpper The upper tick of the position for which to burn liquidity\\n    /// @param amount How much liquidity to burn\\n    /// @return amount0 The amount of token0 sent to the recipient\\n    /// @return amount1 The amount of token1 sent to the recipient\\n    function burn(int24 tickLower, int24 tickUpper, uint128 amount) external returns (uint256 amount0, uint256 amount1);\\n\\n    /// @notice Swap token0 for token1, or token1 for token0\\n    /// @dev The caller of this method receives a callback in the form of IPancakeV3SwapCallback#pancakeV3SwapCallback\\n    /// @param recipient The address to receive the output of the swap\\n    /// @param zeroForOne The direction of the swap, true for token0 to token1, false for token1 to token0\\n    /// @param amountSpecified The amount of the swap, which implicitly configures the swap as exact input (positive), or exact output (negative)\\n    /// @param sqrtPriceLimitX96 The Q64.96 sqrt price limit. If zero for one, the price cannot be less than this\\n    /// value after the swap. If one for zero, the price cannot be greater than this value after the swap\\n    /// @param data Any data to be passed through to the callback\\n    /// @return amount0 The delta of the balance of token0 of the pool, exact when negative, minimum when positive\\n    /// @return amount1 The delta of the balance of token1 of the pool, exact when negative, minimum when positive\\n    function swap(\\n        address recipient,\\n        bool zeroForOne,\\n        int256 amountSpecified,\\n        uint160 sqrtPriceLimitX96,\\n        bytes calldata data\\n    ) external returns (int256 amount0, int256 amount1);\\n\\n    /// @notice Receive token0 and/or token1 and pay it back, plus a fee, in the callback\\n    /// @dev The caller of this method receives a callback in the form of IPancakeV3FlashCallback#pancakeV3FlashCallback\\n    /// @dev Can be used to donate underlying tokens pro-rata to currently in-range liquidity providers by calling\\n    /// with 0 amount{0,1} and sending the donation amount(s) from the callback\\n    /// @param recipient The address which will receive the token0 and token1 amounts\\n    /// @param amount0 The amount of token0 to send\\n    /// @param amount1 The amount of token1 to send\\n    /// @param data Any data to be passed through to the callback\\n    function flash(address recipient, uint256 amount0, uint256 amount1, bytes calldata data) external;\\n\\n    /// @notice Increase the maximum number of price and liquidity observations that this pool will store\\n    /// @dev This method is no-op if the pool already has an observationCardinalityNext greater than or equal to\\n    /// the input observationCardinalityNext.\\n    /// @param observationCardinalityNext The desired minimum number of observations for the pool to store\\n    function increaseObservationCardinalityNext(uint16 observationCardinalityNext) external;\\n}\\n\",\"keccak256\":\"0x1d16d7145cbd86f18edf9e455d53b252b7d2bd0b0e3a986fee85705d85f7022e\",\"license\":\"GPL-2.0-or-later\"},\"contracts/pool-adapter/pancake/interfaces/IPancakeV3PoolDerivedState.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-2.0-or-later\\npragma solidity ^0.8.0;\\n\\n/// @title Pool state that is not stored\\n/// @notice Contains view functions to provide information about the pool that is computed rather than stored on the\\n/// blockchain. The functions here may have variable gas costs.\\ninterface IPancakeV3PoolDerivedState {\\n    /// @notice Returns the cumulative tick and liquidity as of each timestamp `secondsAgo` from the current block timestamp\\n    /// @dev To get a time weighted average tick or liquidity-in-range, you must call this with two values, one representing\\n    /// the beginning of the period and another for the end of the period. E.g., to get the last hour time-weighted average tick,\\n    /// you must call it with secondsAgos = [3600, 0].\\n    /// @dev The time weighted average tick represents the geometric time weighted average price of the pool, in\\n    /// log base sqrt(1.0001) of token1 / token0. The TickMath library can be used to go from a tick value to a ratio.\\n    /// @param secondsAgos From how long ago each cumulative tick and liquidity value should be returned\\n    /// @return tickCumulatives Cumulative tick values as of each `secondsAgos` from the current block timestamp\\n    /// @return secondsPerLiquidityCumulativeX128s Cumulative seconds per liquidity-in-range value as of each `secondsAgos` from the current block\\n    /// timestamp\\n    function observe(\\n        uint32[] calldata secondsAgos\\n    ) external view returns (int56[] memory tickCumulatives, uint160[] memory secondsPerLiquidityCumulativeX128s);\\n\\n    /// @notice Returns a snapshot of the tick cumulative, seconds per liquidity and seconds inside a tick range\\n    /// @dev Snapshots must only be compared to other snapshots, taken over a period for which a position existed.\\n    /// I.e., snapshots cannot be compared if a position is not held for the entire period between when the first\\n    /// snapshot is taken and the second snapshot is taken.\\n    /// @param tickLower The lower tick of the range\\n    /// @param tickUpper The upper tick of the range\\n    /// @return tickCumulativeInside The snapshot of the tick accumulator for the range\\n    /// @return secondsPerLiquidityInsideX128 The snapshot of seconds per liquidity for the range\\n    /// @return secondsInside The snapshot of seconds per liquidity for the range\\n    function snapshotCumulativesInside(\\n        int24 tickLower,\\n        int24 tickUpper\\n    ) external view returns (int56 tickCumulativeInside, uint160 secondsPerLiquidityInsideX128, uint32 secondsInside);\\n}\\n\",\"keccak256\":\"0x05a53b0dd2ad357012535963e8d4c0fa5f94d067765fa21d03ad045b18d6c8df\",\"license\":\"GPL-2.0-or-later\"},\"contracts/pool-adapter/pancake/interfaces/IPancakeV3PoolEvents.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-2.0-or-later\\npragma solidity ^0.8.0;\\n\\n/// @title Events emitted by a pool\\n/// @notice Contains all events emitted by the pool\\ninterface IPancakeV3PoolEvents {\\n    /// @notice Emitted exactly once by a pool when #initialize is first called on the pool\\n    /// @dev Mint/Burn/Swap cannot be emitted by the pool before Initialize\\n    /// @param sqrtPriceX96 The initial sqrt price of the pool, as a Q64.96\\n    /// @param tick The initial tick of the pool, i.e. log base 1.0001 of the starting price of the pool\\n    event Initialize(uint160 sqrtPriceX96, int24 tick);\\n\\n    /// @notice Emitted when liquidity is minted for a given position\\n    /// @param sender The address that minted the liquidity\\n    /// @param owner The owner of the position and recipient of any minted liquidity\\n    /// @param tickLower The lower tick of the position\\n    /// @param tickUpper The upper tick of the position\\n    /// @param amount The amount of liquidity minted to the position range\\n    /// @param amount0 How much token0 was required for the minted liquidity\\n    /// @param amount1 How much token1 was required for the minted liquidity\\n    event Mint(\\n        address sender,\\n        address indexed owner,\\n        int24 indexed tickLower,\\n        int24 indexed tickUpper,\\n        uint128 amount,\\n        uint256 amount0,\\n        uint256 amount1\\n    );\\n\\n    /// @notice Emitted when fees are collected by the owner of a position\\n    /// @dev Collect events may be emitted with zero amount0 and amount1 when the caller chooses not to collect fees\\n    /// @param owner The owner of the position for which fees are collected\\n    /// @param tickLower The lower tick of the position\\n    /// @param tickUpper The upper tick of the position\\n    /// @param amount0 The amount of token0 fees collected\\n    /// @param amount1 The amount of token1 fees collected\\n    event Collect(\\n        address indexed owner,\\n        address recipient,\\n        int24 indexed tickLower,\\n        int24 indexed tickUpper,\\n        uint128 amount0,\\n        uint128 amount1\\n    );\\n\\n    /// @notice Emitted when a position's liquidity is removed\\n    /// @dev Does not withdraw any fees earned by the liquidity position, which must be withdrawn via #collect\\n    /// @param owner The owner of the position for which liquidity is removed\\n    /// @param tickLower The lower tick of the position\\n    /// @param tickUpper The upper tick of the position\\n    /// @param amount The amount of liquidity to remove\\n    /// @param amount0 The amount of token0 withdrawn\\n    /// @param amount1 The amount of token1 withdrawn\\n    event Burn(\\n        address indexed owner,\\n        int24 indexed tickLower,\\n        int24 indexed tickUpper,\\n        uint128 amount,\\n        uint256 amount0,\\n        uint256 amount1\\n    );\\n\\n    /// @notice Emitted by the pool for any swaps between token0 and token1\\n    /// @param sender The address that initiated the swap call, and that received the callback\\n    /// @param recipient The address that received the output of the swap\\n    /// @param amount0 The delta of the token0 balance of the pool\\n    /// @param amount1 The delta of the token1 balance of the pool\\n    /// @param sqrtPriceX96 The sqrt(price) of the pool after the swap, as a Q64.96\\n    /// @param liquidity The liquidity of the pool after the swap\\n    /// @param tick The log base 1.0001 of price of the pool after the swap\\n    /// @param protocolFeesToken0 The protocol fee of token0 in the swap\\n    /// @param protocolFeesToken1 The protocol fee of token1 in the swap\\n    event Swap(\\n        address indexed sender,\\n        address indexed recipient,\\n        int256 amount0,\\n        int256 amount1,\\n        uint160 sqrtPriceX96,\\n        uint128 liquidity,\\n        int24 tick,\\n        uint128 protocolFeesToken0,\\n        uint128 protocolFeesToken1\\n    );\\n\\n    /// @notice Emitted by the pool for any flashes of token0/token1\\n    /// @param sender The address that initiated the swap call, and that received the callback\\n    /// @param recipient The address that received the tokens from flash\\n    /// @param amount0 The amount of token0 that was flashed\\n    /// @param amount1 The amount of token1 that was flashed\\n    /// @param paid0 The amount of token0 paid for the flash, which can exceed the amount0 plus the fee\\n    /// @param paid1 The amount of token1 paid for the flash, which can exceed the amount1 plus the fee\\n    event Flash(\\n        address indexed sender,\\n        address indexed recipient,\\n        uint256 amount0,\\n        uint256 amount1,\\n        uint256 paid0,\\n        uint256 paid1\\n    );\\n\\n    /// @notice Emitted by the pool for increases to the number of observations that can be stored\\n    /// @dev observationCardinalityNext is not the observation cardinality until an observation is written at the index\\n    /// just before a mint/swap/burn.\\n    /// @param observationCardinalityNextOld The previous value of the next observation cardinality\\n    /// @param observationCardinalityNextNew The updated value of the next observation cardinality\\n    event IncreaseObservationCardinalityNext(\\n        uint16 observationCardinalityNextOld,\\n        uint16 observationCardinalityNextNew\\n    );\\n\\n    /// @notice Emitted when the protocol fee is changed by the pool\\n    /// @param feeProtocol0Old The previous value of the token0 protocol fee\\n    /// @param feeProtocol1Old The previous value of the token1 protocol fee\\n    /// @param feeProtocol0New The updated value of the token0 protocol fee\\n    /// @param feeProtocol1New The updated value of the token1 protocol fee\\n    event SetFeeProtocol(\\n        uint32 feeProtocol0Old,\\n        uint32 feeProtocol1Old,\\n        uint32 feeProtocol0New,\\n        uint32 feeProtocol1New\\n    );\\n\\n    /// @notice Emitted when the collected protocol fees are withdrawn by the factory owner\\n    /// @param sender The address that collects the protocol fees\\n    /// @param recipient The address that receives the collected protocol fees\\n    /// @param amount0 The amount of token0 protocol fees that is withdrawn\\n    /// @param amount0 The amount of token1 protocol fees that is withdrawn\\n    event CollectProtocol(address indexed sender, address indexed recipient, uint128 amount0, uint128 amount1);\\n}\\n\",\"keccak256\":\"0x3f5f268cabea4583ab138b8408bf876831becb2eda3c3399142539cad4c1b7f8\",\"license\":\"GPL-2.0-or-later\"},\"contracts/pool-adapter/pancake/interfaces/IPancakeV3PoolImmutables.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-2.0-or-later\\npragma solidity ^0.8.0;\\n\\n/// @title Pool state that never changes\\n/// @notice These parameters are fixed for a pool forever, i.e., the methods will always return the same values\\ninterface IPancakeV3PoolImmutables {\\n    /// @notice The contract that deployed the pool, which must adhere to the IPancakeV3Factory interface\\n    /// @return The contract address\\n    function factory() external view returns (address);\\n\\n    /// @notice The first of the two tokens of the pool, sorted by address\\n    /// @return The token contract address\\n    function token0() external view returns (address);\\n\\n    /// @notice The second of the two tokens of the pool, sorted by address\\n    /// @return The token contract address\\n    function token1() external view returns (address);\\n\\n    /// @notice The pool's fee in hundredths of a bip, i.e. 1e-6\\n    /// @return The fee\\n    function fee() external view returns (uint24);\\n\\n    /// @notice The pool tick spacing\\n    /// @dev Ticks can only be used at multiples of this value, minimum of 1 and always positive\\n    /// e.g.: a tickSpacing of 3 means ticks can be initialized every 3rd tick, i.e., ..., -6, -3, 0, 3, 6, ...\\n    /// This value is an int24 to avoid casting even though it is always positive.\\n    /// @return The tick spacing\\n    function tickSpacing() external view returns (int24);\\n\\n    /// @notice The maximum amount of position liquidity that can use any tick in the range\\n    /// @dev This parameter is enforced per tick to prevent liquidity from overflowing a uint128 at any point, and\\n    /// also prevents out-of-range liquidity from being used to prevent adding in-range liquidity to a pool\\n    /// @return The max amount of liquidity per tick\\n    function maxLiquidityPerTick() external view returns (uint128);\\n}\\n\",\"keccak256\":\"0x9166871e1f206ff9002fe1864fcc4c7ecde3e745f3a7740485569c9edd2960f2\",\"license\":\"GPL-2.0-or-later\"},\"contracts/pool-adapter/pancake/interfaces/IPancakeV3PoolOwnerActions.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-2.0-or-later\\npragma solidity ^0.8.0;\\n\\n/// @title Permissioned pool actions\\n/// @notice Contains pool methods that may only be called by the factory owner\\ninterface IPancakeV3PoolOwnerActions {\\n    /// @notice Set the denominator of the protocol's % share of the fees\\n    /// @param feeProtocol0 new protocol fee for token0 of the pool\\n    /// @param feeProtocol1 new protocol fee for token1 of the pool\\n    function setFeeProtocol(uint32 feeProtocol0, uint32 feeProtocol1) external;\\n\\n    /// @notice Collect the protocol fee accrued to the pool\\n    /// @param recipient The address to which collected protocol fees should be sent\\n    /// @param amount0Requested The maximum amount of token0 to send, can be 0 to collect fees in only token1\\n    /// @param amount1Requested The maximum amount of token1 to send, can be 0 to collect fees in only token0\\n    /// @return amount0 The protocol fee collected in token0\\n    /// @return amount1 The protocol fee collected in token1\\n    function collectProtocol(\\n        address recipient,\\n        uint128 amount0Requested,\\n        uint128 amount1Requested\\n    ) external returns (uint128 amount0, uint128 amount1);\\n\\n    /// @notice Set the LM pool to enable liquidity mining\\n    function setLmPool(address lmPool) external;\\n}\\n\",\"keccak256\":\"0xb28a50116de98147bb91e35eaeb51b29a7899c16d3d1a99941cd4f13b565550b\",\"license\":\"GPL-2.0-or-later\"},\"contracts/pool-adapter/pancake/interfaces/IPancakeV3PoolState.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-2.0-or-later\\npragma solidity ^0.8.0;\\n\\n/// @title Pool state that can change\\n/// @notice These methods compose the pool's state, and can change with any frequency including multiple times\\n/// per transaction\\ninterface IPancakeV3PoolState {\\n    /// @notice The 0th storage slot in the pool stores many values, and is exposed as a single method to save gas\\n    /// when accessed externally.\\n    /// @return sqrtPriceX96 The current price of the pool as a sqrt(token1/token0) Q64.96 value\\n    /// tick The current tick of the pool, i.e. according to the last tick transition that was run.\\n    /// This value may not always be equal to SqrtTickMath.getTickAtSqrtRatio(sqrtPriceX96) if the price is on a tick\\n    /// boundary.\\n    /// observationIndex The index of the last oracle observation that was written,\\n    /// observationCardinality The current maximum number of observations stored in the pool,\\n    /// observationCardinalityNext The next maximum number of observations, to be updated when the observation.\\n    /// feeProtocol The protocol fee for both tokens of the pool.\\n    /// Encoded as two 4 bit values, where the protocol fee of token1 is shifted 4 bits and the protocol fee of token0\\n    /// is the lower 4 bits. Used as the denominator of a fraction of the swap fee, e.g. 4 means 1/4th of the swap fee.\\n    /// unlocked Whether the pool is currently locked to reentrancy\\n    function slot0()\\n        external\\n        view\\n        returns (\\n            uint160 sqrtPriceX96,\\n            int24 tick,\\n            uint16 observationIndex,\\n            uint16 observationCardinality,\\n            uint16 observationCardinalityNext,\\n            uint32 feeProtocol,\\n            bool unlocked\\n        );\\n\\n    /// @notice The fee growth as a Q128.128 fees of token0 collected per unit of liquidity for the entire life of the pool\\n    /// @dev This value can overflow the uint256\\n    function feeGrowthGlobal0X128() external view returns (uint256);\\n\\n    /// @notice The fee growth as a Q128.128 fees of token1 collected per unit of liquidity for the entire life of the pool\\n    /// @dev This value can overflow the uint256\\n    function feeGrowthGlobal1X128() external view returns (uint256);\\n\\n    /// @notice The amounts of token0 and token1 that are owed to the protocol\\n    /// @dev Protocol fees will never exceed uint128 max in either token\\n    function protocolFees() external view returns (uint128 token0, uint128 token1);\\n\\n    /// @notice The currently in range liquidity available to the pool\\n    /// @dev This value has no relationship to the total liquidity across all ticks\\n    function liquidity() external view returns (uint128);\\n\\n    /// @notice Look up information about a specific tick in the pool\\n    /// @param tick The tick to look up\\n    /// @return liquidityGross the total amount of position liquidity that uses the pool either as tick lower or\\n    /// tick upper,\\n    /// liquidityNet how much liquidity changes when the pool price crosses the tick,\\n    /// feeGrowthOutside0X128 the fee growth on the other side of the tick from the current tick in token0,\\n    /// feeGrowthOutside1X128 the fee growth on the other side of the tick from the current tick in token1,\\n    /// tickCumulativeOutside the cumulative tick value on the other side of the tick from the current tick\\n    /// secondsPerLiquidityOutsideX128 the seconds spent per liquidity on the other side of the tick from the current tick,\\n    /// secondsOutside the seconds spent on the other side of the tick from the current tick,\\n    /// initialized Set to true if the tick is initialized, i.e. liquidityGross is greater than 0, otherwise equal to false.\\n    /// Outside values can only be used if the tick is initialized, i.e. if liquidityGross is greater than 0.\\n    /// In addition, these values are only relative and must be used only in comparison to previous snapshots for\\n    /// a specific position.\\n    function ticks(\\n        int24 tick\\n    )\\n        external\\n        view\\n        returns (\\n            uint128 liquidityGross,\\n            int128 liquidityNet,\\n            uint256 feeGrowthOutside0X128,\\n            uint256 feeGrowthOutside1X128,\\n            int56 tickCumulativeOutside,\\n            uint160 secondsPerLiquidityOutsideX128,\\n            uint32 secondsOutside,\\n            bool initialized\\n        );\\n\\n    /// @notice Returns 256 packed tick initialized boolean values. See TickBitmap for more information\\n    function tickBitmap(int16 wordPosition) external view returns (uint256);\\n\\n    /// @notice Returns the information about a position by the position's key\\n    /// @param key The position's key is a hash of a preimage composed by the owner, tickLower and tickUpper\\n    /// @return _liquidity The amount of liquidity in the position,\\n    /// Returns feeGrowthInside0LastX128 fee growth of token0 inside the tick range as of the last mint/burn/poke,\\n    /// Returns feeGrowthInside1LastX128 fee growth of token1 inside the tick range as of the last mint/burn/poke,\\n    /// Returns tokensOwed0 the computed amount of token0 owed to the position as of the last mint/burn/poke,\\n    /// Returns tokensOwed1 the computed amount of token1 owed to the position as of the last mint/burn/poke\\n    function positions(\\n        bytes32 key\\n    )\\n        external\\n        view\\n        returns (\\n            uint128 _liquidity,\\n            uint256 feeGrowthInside0LastX128,\\n            uint256 feeGrowthInside1LastX128,\\n            uint128 tokensOwed0,\\n            uint128 tokensOwed1\\n        );\\n\\n    /// @notice Returns data about a specific observation index\\n    /// @param index The element of the observations array to fetch\\n    /// @dev You most likely want to use #observe() instead of this method to get an observation as of some amount of time\\n    /// ago, rather than at a specific index in the array.\\n    /// @return blockTimestamp The timestamp of the observation,\\n    /// Returns tickCumulative the tick multiplied by seconds elapsed for the life of the pool as of the observation timestamp,\\n    /// Returns secondsPerLiquidityCumulativeX128 the seconds per in range liquidity for the life of the pool as of the observation timestamp,\\n    /// Returns initialized whether the observation has been initialized and the values are safe to use\\n    function observations(\\n        uint256 index\\n    )\\n        external\\n        view\\n        returns (\\n            uint32 blockTimestamp,\\n            int56 tickCumulative,\\n            uint160 secondsPerLiquidityCumulativeX128,\\n            bool initialized\\n        );\\n}\\n\",\"keccak256\":\"0x4536e7637889f7e38a4aee87f7c29fe6865c11c465982a64a76000be3d21f3ed\",\"license\":\"GPL-2.0-or-later\"}},\"version\":1}",
+  "bytecode": "0x60a060405234801561001057600080fd5b5060405161153e38038061153e83398101604081905261002f91610040565b6001600160a01b0316608052610070565b60006020828403121561005257600080fd5b81516001600160a01b038116811461006957600080fd5b9392505050565b60805161143c61010260003960008181610142015281816103f20152818161047b015281816105000152818161058f0152818161063b015281816106d6015281816107600152818161081b01528181610898015281816108f9015281816109c501528181610a4101528181610aa101528181610b2501528181610b8501528181610c090152610c73015261143c6000f3fe608060405234801561001057600080fd5b50600436106101165760003560e01c806370cf754a116100a2578063d0c93a7c11610071578063d0c93a7c14610338578063d21220a714610353578063ddca3f431461035b578063f305839914610377578063f30dba931461037f57600080fd5b806370cf754a146102c6578063883bdbfd146102ce578063a38807f2146102ef578063c45a01551461033057600080fd5b8063252c09d7116100e9578063252c09d7146101ae5780633850c7bd146101fb5780634614131914610254578063514ea4bf1461026a5780635339c296146102b357600080fd5b80630dfe16811461011b57806316f0115b146101405780631a686502146101665780631ad8b03b14610186575b600080fd5b6101236103ee565b6040516001600160a01b0390911681526020015b60405180910390f35b7f0000000000000000000000000000000000000000000000000000000000000000610123565b61016e610477565b6040516001600160801b039091168152602001610137565b61018e6104fb565b604080516001600160801b03938416815292909116602083015201610137565b6101c16101bc366004610d23565b610587565b6040805163ffffffff909516855260069390930b60208501526001600160a01b039091169183019190915215156060820152608001610137565b61020361062b565b604080516001600160a01b03909816885260029690960b602088015261ffff94851695870195909552918316606086015291909116608084015260ff1660a0830152151560c082015260e001610137565b61025c6106d2565b604051908152602001610137565b61027d610278366004610d23565b610756565b604080516001600160801b039687168152602081019590955284019290925283166060830152909116608082015260a001610137565b61025c6102c1366004610d3c565b6107ff565b61016e610894565b6102e16102dc366004610d66565b6108f4565b604051610137929190610ddb565b6103026102fd366004610e74565b610995565b6040805160069490940b84526001600160a01b03909216602084015263ffffffff1690820152606001610137565b610123610a3d565b610340610a9d565b60405160029190910b8152602001610137565b610123610b21565b610363610b81565b60405162ffffff9091168152602001610137565b61025c610c05565b61039261038d366004610ead565b610c65565b604080516001600160801b039099168952600f9790970b602089015295870194909452606086019290925260060b60808501526001600160a01b031660a084015263ffffffff1660c0830152151560e082015261010001610137565b60007f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316630dfe16816040518163ffffffff1660e01b8152600401602060405180830381865afa15801561044e573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906104729190610edf565b905090565b60007f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316631a6865026040518163ffffffff1660e01b8152600401602060405180830381865afa1580156104d7573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906104729190610f18565b6000807f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316631ad8b03b6040518163ffffffff1660e01b81526004016040805180830381865afa15801561055b573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061057f9190610f33565b915091509091565b6000806000807f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663252c09d7866040518263ffffffff1660e01b81526004016105db91815260200190565b608060405180830381865afa1580156105f8573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061061c9190610f9a565b93509350935093509193509193565b60008060008060008060008091507f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316633850c7bd6040518163ffffffff1660e01b815260040160e060405180830381865afa158015610697573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906106bb9190611004565b959d949c50929a5090985096509394509092509050565b60007f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663461413196040518163ffffffff1660e01b8152600401602060405180830381865afa158015610732573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906104729190611091565b60008060008060007f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663514ea4bf876040518263ffffffff1660e01b81526004016107ac91815260200190565b60a060405180830381865afa1580156107c9573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906107ed91906110aa565b939a9299509097509550909350915050565b60405163299ce14b60e11b8152600182900b60048201526000907f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031690635339c29690602401602060405180830381865afa15801561086a573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061088e9190611091565b92915050565b60007f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03166370cf754a6040518163ffffffff1660e01b8152600401602060405180830381865afa1580156104d7573d6000803e3d6000fd5b6060807f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663883bdbfd85856040518363ffffffff1660e01b8152600401610945929190611101565b600060405180830381865afa158015610962573d6000803e3d6000fd5b505050506040513d6000823e601f3d908101601f1916820160405261098a9190810190611220565b915091509250929050565b6040516351c403f960e11b8152600283810b600483015282900b6024820152600090819081906001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000169063a38807f290604401606060405180830381865afa158015610a0c573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190610a3091906112e3565b9250925092509250925092565b60007f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663c45a01556040518163ffffffff1660e01b8152600401602060405180830381865afa15801561044e573d6000803e3d6000fd5b60007f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663d0c93a7c6040518163ffffffff1660e01b8152600401602060405180830381865afa158015610afd573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190610472919061132d565b60007f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663d21220a76040518163ffffffff1660e01b8152600401602060405180830381865afa15801561044e573d6000803e3d6000fd5b60007f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663ddca3f436040518163ffffffff1660e01b8152600401602060405180830381865afa158015610be1573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190610472919061134a565b60007f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663f30583996040518163ffffffff1660e01b8152600401602060405180830381865afa158015610732573d6000803e3d6000fd5b6000806000806000806000807f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663f30dba938a6040518263ffffffff1660e01b8152600401610cc6919060029190910b815260200190565b61010060405180830381865afa158015610ce4573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190610d08919061136f565b97509750975097509750975097509750919395975091939597565b600060208284031215610d3557600080fd5b5035919050565b600060208284031215610d4e57600080fd5b81358060010b8114610d5f57600080fd5b9392505050565b60008060208385031215610d7957600080fd5b823567ffffffffffffffff80821115610d9157600080fd5b818501915085601f830112610da557600080fd5b813581811115610db457600080fd5b8660208260051b8501011115610dc957600080fd5b60209290920196919550909350505050565b604080825283519082018190526000906020906060840190828701845b82811015610e1757815160060b84529284019290840190600101610df8565b5050508381038285015284518082528583019183019060005b81811015610e555783516001600160a01b031683529284019291840191600101610e30565b5090979650505050505050565b8060020b8114610e7157600080fd5b50565b60008060408385031215610e8757600080fd5b8235610e9281610e62565b91506020830135610ea281610e62565b809150509250929050565b600060208284031215610ebf57600080fd5b8135610d5f81610e62565b6001600160a01b0381168114610e7157600080fd5b600060208284031215610ef157600080fd5b8151610d5f81610eca565b80516001600160801b0381168114610f1357600080fd5b919050565b600060208284031215610f2a57600080fd5b610d5f82610efc565b60008060408385031215610f4657600080fd5b610f4f83610efc565b9150610f5d60208401610efc565b90509250929050565b63ffffffff81168114610e7157600080fd5b8051600681900b8114610f1357600080fd5b80518015158114610f1357600080fd5b60008060008060808587031215610fb057600080fd5b8451610fbb81610f66565b9350610fc960208601610f78565b92506040850151610fd981610eca565b9150610fe760608601610f8a565b905092959194509250565b805161ffff81168114610f1357600080fd5b600080600080600080600060e0888a03121561101f57600080fd5b875161102a81610eca565b602089015190975061103b81610e62565b955061104960408901610ff2565b945061105760608901610ff2565b935061106560808901610ff2565b925060a088015161107581610f66565b915061108360c08901610f8a565b905092959891949750929550565b6000602082840312156110a357600080fd5b5051919050565b600080600080600060a086880312156110c257600080fd5b6110cb86610efc565b945060208601519350604086015192506110e760608701610efc565b91506110f560808701610efc565b90509295509295909350565b60208082528181018390526000908460408401835b8681101561114157823561112981610f66565b63ffffffff1682529183019190830190600101611116565b509695505050505050565b634e487b7160e01b600052604160045260246000fd5b604051601f8201601f1916810167ffffffffffffffff8111828210171561118b5761118b61114c565b604052919050565b600067ffffffffffffffff8211156111ad576111ad61114c565b5060051b60200190565b600082601f8301126111c857600080fd5b815160206111dd6111d883611193565b611162565b82815260059290921b840181019181810190868411156111fc57600080fd5b8286015b8481101561114157805161121381610eca565b8352918301918301611200565b6000806040838503121561123357600080fd5b825167ffffffffffffffff8082111561124b57600080fd5b818501915085601f83011261125f57600080fd5b8151602061126f6111d883611193565b82815260059290921b8401810191818101908984111561128e57600080fd5b948201945b838610156112b3576112a486610f78565b82529482019490820190611293565b918801519196509093505050808211156112cc57600080fd5b506112d9858286016111b7565b9150509250929050565b6000806000606084860312156112f857600080fd5b61130184610f78565b9250602084015161131181610eca565b604085015190925061132281610f66565b809150509250925092565b60006020828403121561133f57600080fd5b8151610d5f81610e62565b60006020828403121561135c57600080fd5b815162ffffff81168114610d5f57600080fd5b600080600080600080600080610100898b03121561138c57600080fd5b61139589610efc565b9750602089015180600f0b81146113ab57600080fd5b60408a015160608b0151919850965094506113c860808a01610f78565b935060a08901516113d881610eca565b60c08a01519093506113e981610f66565b91506113f760e08a01610f8a565b9050929598509295989093965056fea2646970667358221220785951648612ac40bd4c022d9fcc193b05fb37427aebee07be6bc9ac3fd3a55564736f6c63430008130033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106101165760003560e01c806370cf754a116100a2578063d0c93a7c11610071578063d0c93a7c14610338578063d21220a714610353578063ddca3f431461035b578063f305839914610377578063f30dba931461037f57600080fd5b806370cf754a146102c6578063883bdbfd146102ce578063a38807f2146102ef578063c45a01551461033057600080fd5b8063252c09d7116100e9578063252c09d7146101ae5780633850c7bd146101fb5780634614131914610254578063514ea4bf1461026a5780635339c296146102b357600080fd5b80630dfe16811461011b57806316f0115b146101405780631a686502146101665780631ad8b03b14610186575b600080fd5b6101236103ee565b6040516001600160a01b0390911681526020015b60405180910390f35b7f0000000000000000000000000000000000000000000000000000000000000000610123565b61016e610477565b6040516001600160801b039091168152602001610137565b61018e6104fb565b604080516001600160801b03938416815292909116602083015201610137565b6101c16101bc366004610d23565b610587565b6040805163ffffffff909516855260069390930b60208501526001600160a01b039091169183019190915215156060820152608001610137565b61020361062b565b604080516001600160a01b03909816885260029690960b602088015261ffff94851695870195909552918316606086015291909116608084015260ff1660a0830152151560c082015260e001610137565b61025c6106d2565b604051908152602001610137565b61027d610278366004610d23565b610756565b604080516001600160801b039687168152602081019590955284019290925283166060830152909116608082015260a001610137565b61025c6102c1366004610d3c565b6107ff565b61016e610894565b6102e16102dc366004610d66565b6108f4565b604051610137929190610ddb565b6103026102fd366004610e74565b610995565b6040805160069490940b84526001600160a01b03909216602084015263ffffffff1690820152606001610137565b610123610a3d565b610340610a9d565b60405160029190910b8152602001610137565b610123610b21565b610363610b81565b60405162ffffff9091168152602001610137565b61025c610c05565b61039261038d366004610ead565b610c65565b604080516001600160801b039099168952600f9790970b602089015295870194909452606086019290925260060b60808501526001600160a01b031660a084015263ffffffff1660c0830152151560e082015261010001610137565b60007f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316630dfe16816040518163ffffffff1660e01b8152600401602060405180830381865afa15801561044e573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906104729190610edf565b905090565b60007f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316631a6865026040518163ffffffff1660e01b8152600401602060405180830381865afa1580156104d7573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906104729190610f18565b6000807f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316631ad8b03b6040518163ffffffff1660e01b81526004016040805180830381865afa15801561055b573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061057f9190610f33565b915091509091565b6000806000807f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663252c09d7866040518263ffffffff1660e01b81526004016105db91815260200190565b608060405180830381865afa1580156105f8573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061061c9190610f9a565b93509350935093509193509193565b60008060008060008060008091507f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316633850c7bd6040518163ffffffff1660e01b815260040160e060405180830381865afa158015610697573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906106bb9190611004565b959d949c50929a5090985096509394509092509050565b60007f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663461413196040518163ffffffff1660e01b8152600401602060405180830381865afa158015610732573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906104729190611091565b60008060008060007f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663514ea4bf876040518263ffffffff1660e01b81526004016107ac91815260200190565b60a060405180830381865afa1580156107c9573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906107ed91906110aa565b939a9299509097509550909350915050565b60405163299ce14b60e11b8152600182900b60048201526000907f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031690635339c29690602401602060405180830381865afa15801561086a573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061088e9190611091565b92915050565b60007f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03166370cf754a6040518163ffffffff1660e01b8152600401602060405180830381865afa1580156104d7573d6000803e3d6000fd5b6060807f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663883bdbfd85856040518363ffffffff1660e01b8152600401610945929190611101565b600060405180830381865afa158015610962573d6000803e3d6000fd5b505050506040513d6000823e601f3d908101601f1916820160405261098a9190810190611220565b915091509250929050565b6040516351c403f960e11b8152600283810b600483015282900b6024820152600090819081906001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000169063a38807f290604401606060405180830381865afa158015610a0c573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190610a3091906112e3565b9250925092509250925092565b60007f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663c45a01556040518163ffffffff1660e01b8152600401602060405180830381865afa15801561044e573d6000803e3d6000fd5b60007f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663d0c93a7c6040518163ffffffff1660e01b8152600401602060405180830381865afa158015610afd573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190610472919061132d565b60007f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663d21220a76040518163ffffffff1660e01b8152600401602060405180830381865afa15801561044e573d6000803e3d6000fd5b60007f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663ddca3f436040518163ffffffff1660e01b8152600401602060405180830381865afa158015610be1573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190610472919061134a565b60007f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663f30583996040518163ffffffff1660e01b8152600401602060405180830381865afa158015610732573d6000803e3d6000fd5b6000806000806000806000807f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663f30dba938a6040518263ffffffff1660e01b8152600401610cc6919060029190910b815260200190565b61010060405180830381865afa158015610ce4573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190610d08919061136f565b97509750975097509750975097509750919395975091939597565b600060208284031215610d3557600080fd5b5035919050565b600060208284031215610d4e57600080fd5b81358060010b8114610d5f57600080fd5b9392505050565b60008060208385031215610d7957600080fd5b823567ffffffffffffffff80821115610d9157600080fd5b818501915085601f830112610da557600080fd5b813581811115610db457600080fd5b8660208260051b8501011115610dc957600080fd5b60209290920196919550909350505050565b604080825283519082018190526000906020906060840190828701845b82811015610e1757815160060b84529284019290840190600101610df8565b5050508381038285015284518082528583019183019060005b81811015610e555783516001600160a01b031683529284019291840191600101610e30565b5090979650505050505050565b8060020b8114610e7157600080fd5b50565b60008060408385031215610e8757600080fd5b8235610e9281610e62565b91506020830135610ea281610e62565b809150509250929050565b600060208284031215610ebf57600080fd5b8135610d5f81610e62565b6001600160a01b0381168114610e7157600080fd5b600060208284031215610ef157600080fd5b8151610d5f81610eca565b80516001600160801b0381168114610f1357600080fd5b919050565b600060208284031215610f2a57600080fd5b610d5f82610efc565b60008060408385031215610f4657600080fd5b610f4f83610efc565b9150610f5d60208401610efc565b90509250929050565b63ffffffff81168114610e7157600080fd5b8051600681900b8114610f1357600080fd5b80518015158114610f1357600080fd5b60008060008060808587031215610fb057600080fd5b8451610fbb81610f66565b9350610fc960208601610f78565b92506040850151610fd981610eca565b9150610fe760608601610f8a565b905092959194509250565b805161ffff81168114610f1357600080fd5b600080600080600080600060e0888a03121561101f57600080fd5b875161102a81610eca565b602089015190975061103b81610e62565b955061104960408901610ff2565b945061105760608901610ff2565b935061106560808901610ff2565b925060a088015161107581610f66565b915061108360c08901610f8a565b905092959891949750929550565b6000602082840312156110a357600080fd5b5051919050565b600080600080600060a086880312156110c257600080fd5b6110cb86610efc565b945060208601519350604086015192506110e760608701610efc565b91506110f560808701610efc565b90509295509295909350565b60208082528181018390526000908460408401835b8681101561114157823561112981610f66565b63ffffffff1682529183019190830190600101611116565b509695505050505050565b634e487b7160e01b600052604160045260246000fd5b604051601f8201601f1916810167ffffffffffffffff8111828210171561118b5761118b61114c565b604052919050565b600067ffffffffffffffff8211156111ad576111ad61114c565b5060051b60200190565b600082601f8301126111c857600080fd5b815160206111dd6111d883611193565b611162565b82815260059290921b840181019181810190868411156111fc57600080fd5b8286015b8481101561114157805161121381610eca565b8352918301918301611200565b6000806040838503121561123357600080fd5b825167ffffffffffffffff8082111561124b57600080fd5b818501915085601f83011261125f57600080fd5b8151602061126f6111d883611193565b82815260059290921b8401810191818101908984111561128e57600080fd5b948201945b838610156112b3576112a486610f78565b82529482019490820190611293565b918801519196509093505050808211156112cc57600080fd5b506112d9858286016111b7565b9150509250929050565b6000806000606084860312156112f857600080fd5b61130184610f78565b9250602084015161131181610eca565b604085015190925061132281610f66565b809150509250925092565b60006020828403121561133f57600080fd5b8151610d5f81610e62565b60006020828403121561135c57600080fd5b815162ffffff81168114610d5f57600080fd5b600080600080600080600080610100898b03121561138c57600080fd5b61139589610efc565b9750602089015180600f0b81146113ab57600080fd5b60408a015160608b0151919850965094506113c860808a01610f78565b935060a08901516113d881610eca565b60c08a01519093506113e981610f66565b91506113f760e08a01610f8a565b9050929598509295989093965056fea2646970667358221220785951648612ac40bd4c022d9fcc193b05fb37427aebee07be6bc9ac3fd3a55564736f6c63430008130033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {
+      "factory()": {
+        "returns": {
+          "_0": "The contract address"
+        }
+      },
+      "fee()": {
+        "returns": {
+          "_0": "The fee"
+        }
+      },
+      "feeGrowthGlobal0X128()": {
+        "details": "This value can overflow the uint256"
+      },
+      "feeGrowthGlobal1X128()": {
+        "details": "This value can overflow the uint256"
+      },
+      "liquidity()": {
+        "details": "This value has no relationship to the total liquidity across all ticks",
+        "returns": {
+          "_0": "The liquidity at the current price of the pool"
+        }
+      },
+      "maxLiquidityPerTick()": {
+        "details": "This parameter is enforced per tick to prevent liquidity from overflowing a uint128 at any point, and also prevents out-of-range liquidity from being used to prevent adding in-range liquidity to a pool",
+        "returns": {
+          "_0": "The max amount of liquidity per tick"
+        }
+      },
+      "observations(uint256)": {
+        "details": "You most likely want to use #observe() instead of this method to get an observation as of some amount of time ago, rather than at a specific index in the array.",
+        "params": {
+          "index": "The element of the observations array to fetch"
+        },
+        "returns": {
+          "blockTimestamp": "The timestamp of the observation,",
+          "initialized": "whether the observation has been initialized and the values are safe to use",
+          "secondsPerLiquidityCumulativeX128": "the seconds per in range liquidity for the life of the pool as of the observation timestamp,",
+          "tickCumulative": "the tick multiplied by seconds elapsed for the life of the pool as of the observation timestamp,"
+        }
+      },
+      "observe(uint32[])": {
+        "details": "To get a time weighted average tick or liquidity-in-range, you must call this with two values, one representing the beginning of the period and another for the end of the period. E.g., to get the last hour time-weighted average tick, you must call it with secondsAgos = [3600, 0].The time weighted average tick represents the geometric time weighted average price of the pool, in log base sqrt(1.0001) of token1 / token0. The TickMath library can be used to go from a tick value to a ratio.",
+        "params": {
+          "secondsAgos": "From how long ago each cumulative tick and liquidity value should be returned"
+        },
+        "returns": {
+          "secondsPerLiquidityCumulativeX128s": "Cumulative seconds per liquidity-in-range value as of each `secondsAgos` from the current block timestamp",
+          "tickCumulatives": "Cumulative tick values as of each `secondsAgos` from the current block timestamp"
+        }
+      },
+      "pool()": {
+        "details": "Returns the address of actual amm contract (e.g. UniswapV3, PancakeV3...)",
+        "returns": {
+          "_0": "pool The address of the amm contract."
+        }
+      },
+      "positions(bytes32)": {
+        "params": {
+          "key": "The position's key is a hash of a preimage composed by the owner, tickLower and tickUpper"
+        },
+        "returns": {
+          "_liquidity": "The amount of liquidity in the position,",
+          "feeGrowthInside0LastX128": "fee growth of token0 inside the tick range as of the last mint/burn/poke,",
+          "feeGrowthInside1LastX128": "fee growth of token1 inside the tick range as of the last mint/burn/poke,",
+          "tokensOwed0": "the computed amount of token0 owed to the position as of the last mint/burn/poke,",
+          "tokensOwed1": "the computed amount of token1 owed to the position as of the last mint/burn/poke"
+        }
+      },
+      "protocolFees()": {
+        "details": "Protocol fees will never exceed uint128 max in either token"
+      },
+      "slot0()": {
+        "returns": {
+          "feeProtocol": "The protocol fee for both tokens of the pool. Encoded as two 4 bit values, where the protocol fee of token1 is shifted 4 bits and the protocol fee of token0 is the lower 4 bits. Used as the denominator of a fraction of the swap fee, e.g. 4 means 1/4th of the swap fee. unlocked Whether the pool is currently locked to reentrancy",
+          "observationCardinality": "The current maximum number of observations stored in the pool,",
+          "observationCardinalityNext": "The next maximum number of observations, to be updated when the observation.",
+          "observationIndex": "The index of the last oracle observation that was written,",
+          "sqrtPriceX96": "The current price of the pool as a sqrt(token1/token0) Q64.96 value",
+          "tick": "The current tick of the pool, i.e. according to the last tick transition that was run. This value may not always be equal to SqrtTickMath.getTickAtSqrtRatio(sqrtPriceX96) if the price is on a tick boundary."
+        }
+      },
+      "snapshotCumulativesInside(int24,int24)": {
+        "details": "Snapshots must only be compared to other snapshots, taken over a period for which a position existed. I.e., snapshots cannot be compared if a position is not held for the entire period between when the first snapshot is taken and the second snapshot is taken.",
+        "params": {
+          "tickLower": "The lower tick of the range",
+          "tickUpper": "The upper tick of the range"
+        },
+        "returns": {
+          "secondsInside": "The snapshot of seconds per liquidity for the range",
+          "secondsPerLiquidityInsideX128": "The snapshot of seconds per liquidity for the range",
+          "tickCumulativeInside": "The snapshot of the tick accumulator for the range"
+        }
+      },
+      "tickSpacing()": {
+        "details": "Ticks can only be used at multiples of this value, minimum of 1 and always positive e.g.: a tickSpacing of 3 means ticks can be initialized every 3rd tick, i.e., ..., -6, -3, 0, 3, 6, ... This value is an int24 to avoid casting even though it is always positive.",
+        "returns": {
+          "_0": "The tick spacing"
+        }
+      },
+      "ticks(int24)": {
+        "params": {
+          "tick": "The tick to look up"
+        },
+        "returns": {
+          "feeGrowthOutside0X128": "the fee growth on the other side of the tick from the current tick in token0,",
+          "feeGrowthOutside1X128": "the fee growth on the other side of the tick from the current tick in token1,",
+          "initialized": "Set to true if the tick is initialized, i.e. liquidityGross is greater than 0, otherwise equal to false. Outside values can only be used if the tick is initialized, i.e. if liquidityGross is greater than 0. In addition, these values are only relative and must be used only in comparison to previous snapshots for a specific position.",
+          "liquidityGross": "the total amount of position liquidity that uses the pool either as tick lower or tick upper",
+          "liquidityNet": "how much liquidity changes when the pool price crosses the tick,",
+          "secondsOutside": "the seconds spent on the other side of the tick from the current tick,",
+          "secondsPerLiquidityOutsideX128": "the seconds spent per liquidity on the other side of the tick from the current tick,",
+          "tickCumulativeOutside": "the cumulative tick value on the other side of the tick from the current tick"
+        }
+      },
+      "token0()": {
+        "returns": {
+          "_0": "The token contract address"
+        }
+      },
+      "token1()": {
+        "returns": {
+          "_0": "The token contract address"
+        }
+      }
+    },
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {
+      "factory()": {
+        "notice": "The contract that deployed the pool, which must adhere to the IUniswapV3Factory interface"
+      },
+      "fee()": {
+        "notice": "The pool's fee in hundredths of a bip, i.e. 1e-6"
+      },
+      "feeGrowthGlobal0X128()": {
+        "notice": "The fee growth as a Q128.128 fees of token0 collected per unit of liquidity for the entire life of the pool"
+      },
+      "feeGrowthGlobal1X128()": {
+        "notice": "The fee growth as a Q128.128 fees of token1 collected per unit of liquidity for the entire life of the pool"
+      },
+      "liquidity()": {
+        "notice": "The currently in range liquidity available to the pool"
+      },
+      "maxLiquidityPerTick()": {
+        "notice": "The maximum amount of position liquidity that can use any tick in the range"
+      },
+      "observations(uint256)": {
+        "notice": "Returns data about a specific observation index"
+      },
+      "observe(uint32[])": {
+        "notice": "Returns the cumulative tick and liquidity as of each timestamp `secondsAgo` from the current block timestamp"
+      },
+      "positions(bytes32)": {
+        "notice": "Returns the information about a position by the position's key"
+      },
+      "protocolFees()": {
+        "notice": "The amounts of token0 and token1 that are owed to the protocol"
+      },
+      "slot0()": {
+        "notice": "The 0th storage slot in the pool stores many values, and is exposed as a single method to save gas when accessed externally."
+      },
+      "snapshotCumulativesInside(int24,int24)": {
+        "notice": "Returns a snapshot of the tick cumulative, seconds per liquidity and seconds inside a tick range"
+      },
+      "tickBitmap(int16)": {
+        "notice": "Returns 256 packed tick initialized boolean values. See TickBitmap for more information"
+      },
+      "tickSpacing()": {
+        "notice": "The pool tick spacing"
+      },
+      "ticks(int24)": {
+        "notice": "Look up information about a specific tick in the pool"
+      },
+      "token0()": {
+        "notice": "The first of the two tokens of the pool, sorted by address"
+      },
+      "token1()": {
+        "notice": "The second of the two tokens of the pool, sorted by address"
+      }
+    },
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [],
+    "types": null
+  }
+}

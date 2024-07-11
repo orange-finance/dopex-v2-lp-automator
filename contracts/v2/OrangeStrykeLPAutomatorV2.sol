@@ -27,7 +27,7 @@ import {IERC20Decimals} from "../interfaces/IERC20Extended.sol";
 
 import {IOrangeStrykeLPAutomatorV2} from "./IOrangeStrykeLPAutomatorV2.sol";
 import {IOrangeStrykeLPAutomatorState} from "./../interfaces/IOrangeStrykeLPAutomatorState.sol";
-import {IOrangeSwapProxy} from "./IOrangeSwapProxy.sol";
+import {IOrangeSwapProxy} from "../swap-proxy/IOrangeSwapProxy.sol";
 
 import {IBalancerVault} from "../vendor/balancer/IBalancerVault.sol";
 import {IBalancerFlashLoanRecipient} from "../vendor/balancer/IBalancerFlashLoanRecipient.sol";

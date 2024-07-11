@@ -3,7 +3,7 @@
 pragma solidity 0.8.19;
 
 import {IOrangeStrykeLPAutomatorState} from "./../interfaces/IOrangeStrykeLPAutomatorState.sol";
-import {IOrangeSwapProxy} from "./IOrangeSwapProxy.sol";
+import {IOrangeSwapProxy} from "../swap-proxy/IOrangeSwapProxy.sol";
 
 /**
  * @title IOrangeDopexV2LPAutomator

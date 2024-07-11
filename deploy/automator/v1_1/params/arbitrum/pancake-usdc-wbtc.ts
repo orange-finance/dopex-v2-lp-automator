@@ -2,8 +2,8 @@ import { V1_1Parameters } from '../schema'
 
 const usdc_wbtc: V1_1Parameters = {
   id: 'Pancake-USDC-WBTC',
-  pool: '0x843aC8dc6D34AEB07a56812b8b36429eE46BDd07', // WBTC/USDC
-  router: '0xE592427A0AEce92De3Edee1F18E0157C05861564',
+  pool: '0xCD1bEE81404125128Fad59Cc30f2E8E9f92F6f93', // WBTC/USDC
+  router: '0x1b81D678ffb9C0263b24A97847620C99d213eB14',
   handler: '0x9ae336B61D7d2e19a47607f163A3fB0e46306b7b',
   hook: '0x0000000000000000000000000000000000000000',
   manager: '0xE4bA6740aF4c666325D49B3112E4758371386aDc',
@@ -14,7 +14,7 @@ const usdc_wbtc: V1_1Parameters = {
   unit: 6,
   assetUsdFeed: '0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3', // USDC / USD
   counterAssetUsdFeed: '0xd0C7101eACbB49F3deCcCc166d238410D6D46d57', // WBTC /USD
-  admin: '0x12D1A136250131E37A607B0b78F6F109BF6a9fa3',
+  admin: '0x38E4157345Bd2c8Cf7Dbe4B0C75302c2038AB7Ec',
   strategist: '0x12D1A136250131E37A607B0b78F6F109BF6a9fa3',
   depositFeePips: '1000',
   quoterType: 'chainlink',

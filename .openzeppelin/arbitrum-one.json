@@ -30,10 +30,6 @@
       "kind": "uups"
     },
     {
-      "address": "0x7cDAC80d07c135c87634a79E78042f8dAAbb0DC8",
-      "kind": "uups"
-    },
-    {
       "address": "0x1Bd652aebe790FEB0373DA2824a3036f396F795F",
       "kind": "uups"
     },
@@ -58,7 +54,111 @@
       "kind": "uups"
     },
     {
+      "address": "0xa7a4C165c2BFb5e969dB6C58A613bad1c0cC0a21",
+      "kind": "uups"
+    },
+    {
+      "address": "0xcbad4104aD5cf34C275F2073146CA7eDD4548c98",
+      "kind": "uups"
+    },
+    {
+      "address": "0x7462D41EC15244520FAD9A15386EeF4bF25Ca9a2",
+      "kind": "uups"
+    },
+    {
+      "address": "0xd3E1b33Fce5CaA348540981fDe171bd78B0DA5eE",
+      "kind": "uups"
+    },
+    {
+      "address": "0x73eb93D06D08855CbfcD418Ef78970eF15C99387",
+      "kind": "uups"
+    },
+    {
+      "address": "0x72C11b8Aa2594f98b93296ccBb3B0e92e379a3A8",
+      "kind": "uups"
+    },
+    {
+      "address": "0x292271383d45d288753bc0721643A61FaEcc881C",
+      "kind": "uups"
+    },
+    {
+      "address": "0xEc44068C46DdE356d33Ae96e9588b38d821a2745",
+      "kind": "uups"
+    },
+    {
+      "address": "0x1F010BeD7A08BafF63dAc7e7dCb4d491fA969cF3",
+      "kind": "uups"
+    },
+    {
+      "address": "0x3885c9086Af984404D0051E86aa7e2879d813806",
+      "kind": "uups"
+    },
+    {
+      "address": "0x4B8Ed82c4C19d06533998B3b3FF9B095e5169B37",
+      "kind": "uups"
+    },
+    {
+      "address": "0xf828491D8e4f155E0c9434BC2F9db14A2DbD9b46",
+      "kind": "uups"
+    },
+    {
+      "address": "0x4FF5Ce3456Ed2160B22afD9c4aeaF4Ce3C46A5F7",
+      "kind": "uups"
+    },
+    {
+      "address": "0x2e44e5c3C26705cbce48aE998AE8361Bbb354214",
+      "kind": "uups"
+    },
+    {
+      "address": "0x311c79F1e1BB2Da477a312e9137e86fDe82a905C",
+      "kind": "uups"
+    },
+    {
+      "address": "0x677285525032F9F484F742d35bC51B62b0370284",
+      "kind": "uups"
+    },
+    {
+      "address": "0x853506E93F24105820F353215793ca84993e9d2A",
+      "kind": "uups"
+    },
+    {
+      "address": "0x77826C01303Bed9DE74d275dEA1179ed36D7455F",
+      "kind": "uups"
+    },
+    {
+      "address": "0x7cDAC80d07c135c87634a79E78042f8dAAbb0DC8",
+      "kind": "uups"
+    },
+    {
+      "address": "0x2215EdeF1D5bD770909f049A8B8C7DD4D93708d1",
+      "kind": "uups"
+    },
+    {
+      "address": "0xE32132282D181967960928b77236B3c472d5f396",
+      "kind": "uups"
+    },
+    {
+      "address": "0x22dd31a495CafB229131A16C54a8e5b2f43C1162",
+      "kind": "uups"
+    },
+    {
+      "address": "0x5f6D5a7e8eccA2A53C6322a96e9a48907A8284e0",
+      "kind": "uups"
+    },
+    {
       "address": "0x3D2692Bb38686d0Fb9B1FAa2A3e2e5620EF112A9",
+      "kind": "uups"
+    },
+    {
+      "address": "0x708790D732c5886D56b0cBBEd7b60ABF47848FaA",
+      "kind": "uups"
+    },
+    {
+      "address": "0x01E371c500C49beA2fa985334f46A8Dc906253Ea",
+      "kind": "uups"
+    },
+    {
+      "address": "0xe1B68841E764Cc31be1Eb1e59d156a4ED1217c2C",
       "kind": "uups"
     }
   ],
@@ -422,6 +522,26 @@
       },
       "allAddresses": [
         "0x072a890FBE70F5B57445BDA60bccE44642568C95",
+        "0xe370B3Ee3a0b2148B58Fa49ebEb9C6988a68CE53",
+        "0x3B890ab23FcbE7F144B28610502708458E069Ccc",
+        "0x035aF6b3295dB28c6A20aabd9848A5969F36b0a0",
+        "0x8f962b2B4Cbc9b49eca5dE431724E2098eA448Aa",
+        "0xE8793eca3eC9cF399A4E5a37711cFE3f2C3ca9CE",
+        "0x1D9FC8850903A6Fbe2f3B6ee2D65f177e2cF6473",
+        "0xc046B7E3F74775d2D2dCc0f2F3DF8F8F1b3843d5",
+        "0x0a0bA75B6636aBCACc841Dd14819fC22ad82E5DA",
+        "0xD1E26525798C8371fB167d7cB0161ec794f1c044",
+        "0xc9d024fCAAa1bd0F8c1B27029B4F822Dd63B978c",
+        "0x0e365B5ADD7335b44172964Fc48B3324C1d2de40",
+        "0xB833a14b7A80C185326fAe3d8d56e241DcC2C04E",
+        "0x98CBec068ebeCe8073EA814295077C2148bd8F0a",
+        "0x294CA44C420Fa8F3F099441c731d2FC06a0fCf84",
+        "0x766cb1Bea3DA4295403E12f230667E699Da8F671",
+        "0x9FED1fEaCa526E12B1BC61d8fb530B1Eb3617C23",
+        "0xA81C53754245a98902ce389c7A14Ac19fD3a5785",
+        "0x6e5FC61090BbbAf9a5441A1d2CAB03EC18992C73",
+        "0xB0e3Db94507c15A876Fd36535Bf858c18B8Dbf00",
+        "0x8226455872ff012a8c513c3b586E997aAD3c69E5",
         "0x6B3c2B2BCF630dA37bEbBCcF86c761B1a2B6E0E9",
         "0xC7d5a1c551E75E72c024b4688ECB067D35f7bE32",
         "0x2DD2c5Becad668C3F295EFBc198C4821fECbB5BD",
@@ -616,7 +736,7 @@
             "label": "handler",
             "offset": 0,
             "slot": "161",
-            "type": "t_contract(IUniswapV3SingleTickLiquidityHandlerV2)9495",
+            "type": "t_contract(IUniswapV3SingleTickLiquidityHandlerV2)9545",
             "contract": "OrangeStrykeLPAutomatorV2",
             "src": "contracts/v2/OrangeStrykeLPAutomatorV2.sol:82"
           },
@@ -746,7 +866,7 @@
             "label": "contract IUniswapV3Pool",
             "numberOfBytes": "20"
           },
-          "t_contract(IUniswapV3SingleTickLiquidityHandlerV2)9495": {
+          "t_contract(IUniswapV3SingleTickLiquidityHandlerV2)9545": {
             "label": "contract IUniswapV3SingleTickLiquidityHandlerV2",
             "numberOfBytes": "20"
           },
@@ -821,6 +941,26 @@
       },
       "allAddresses": [
         "0x8c5DaA7CAA1fFC627b4B9E1872cccBefa2975361",
+        "0x13cbcB12F151ffb8109ba443DE1932C6C8534eC0",
+        "0xcA50C50bb7eA2176Da3dcDA6EE7a5BAc1007C1d0",
+        "0xACF41A898C33CA124BE7F7940D20c6cA40f2fA1E",
+        "0xBad39a051e26385b70D56C75EB6C8deA81801F74",
+        "0x6C1fB6Ae21a6eC3DE222221c3e3a46e348104b70",
+        "0xFEc24272AFf8019eefd65C0E2F28B4f18fFA6530",
+        "0xF94Ee2021931cdFFBAA50D7d13D1bc77516D9e86",
+        "0xDd269a109ae7B4667c0e631C97582331AABeD8dA",
+        "0x4e20229B16d7407Ed62cA21f495552571A6dD266",
+        "0xba30566dFb056aCD9d4D5968FF3147CA97b197a2",
+        "0xaEfA77A31eDD419604c0976a9eb7688183dDef22",
+        "0x5b3a665cda2625631450Cd1fA0F53727F4615F00",
+        "0xE301Bc8e9879291304439a51B6cBCe5a2dFD9e2d",
+        "0x1DfA3c41601b7405D189AF9065bfb9Cc6d989F66",
+        "0xA048b91fba51A2b112171a4B01de27CF542c9e09",
+        "0xD771Bd4B05954782161C53959B9681e53b2933ec",
+        "0xB6E5e746a8DF96Bb820762ee511Eab8C9a5C4091",
+        "0xbe57b39BcD444559A811b5D948e5e74D76b4ed3a",
+        "0x936C6A30233Eb9A24141428D323f3238FA6858CE",
+        "0x87eea2FbA1F912a3CBBeF1cc797e8BE931a92E06",
         "0x4A599aB3cBce9D7C046BBCF20b96dF09F8c462FD",
         "0x20e507Faddf73fc81ad0d4A08eA60D0683Cb1E2A",
         "0xCE4156EDdf80ED1f1C3e2F6997C9c7cc1cC07FB6",
@@ -830,6 +970,1209 @@
         "0x2A57dcc667cB4851afF0e746a00E575D41c26Dd9",
         "0x6edDBCf2044A3e8Fe2cd42dB329A090925Ae22fa",
         "0x2A4eF486Ba55D1C2c98D35222f9c10Da501F6616"
+      ]
+    },
+    "0861d61e15e0e00bab6308b2df15463dacaef4bc6074d49ad27dc6780845bbef": {
+      "address": "0x5AfF3f2Ce23668D7e30358BE168BbC4C0377cf49",
+      "layout": {
+        "solcVersion": "0.8.19",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC1967UpgradeUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol:169"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "UUPSUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:111"
+          },
+          {
+            "label": "_balances",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "OrangeERC20Upgradeable",
+            "src": "contracts/OrangeERC20Upgradeable.sol:50"
+          },
+          {
+            "label": "_allowances",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
+            "contract": "OrangeERC20Upgradeable",
+            "src": "contracts/OrangeERC20Upgradeable.sol:52"
+          },
+          {
+            "label": "_totalSupply",
+            "offset": 0,
+            "slot": "103",
+            "type": "t_uint256",
+            "contract": "OrangeERC20Upgradeable",
+            "src": "contracts/OrangeERC20Upgradeable.sol:54"
+          },
+          {
+            "label": "_name",
+            "offset": 0,
+            "slot": "104",
+            "type": "t_string_storage",
+            "contract": "OrangeERC20Upgradeable",
+            "src": "contracts/OrangeERC20Upgradeable.sol:56"
+          },
+          {
+            "label": "_symbol",
+            "offset": 0,
+            "slot": "105",
+            "type": "t_string_storage",
+            "contract": "OrangeERC20Upgradeable",
+            "src": "contracts/OrangeERC20Upgradeable.sol:57"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "106",
+            "type": "t_array(t_uint256)45_storage",
+            "contract": "OrangeERC20Upgradeable",
+            "src": "contracts/OrangeERC20Upgradeable.sol:337"
+          },
+          {
+            "label": "asset",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_contract(IERC20)1301",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:63"
+          },
+          {
+            "label": "counterAsset",
+            "offset": 0,
+            "slot": "152",
+            "type": "t_contract(IERC20)1301",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:64"
+          },
+          {
+            "label": "minDepositAssets",
+            "offset": 0,
+            "slot": "153",
+            "type": "t_uint256",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:66"
+          },
+          {
+            "label": "depositCap",
+            "offset": 0,
+            "slot": "154",
+            "type": "t_uint256",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:67"
+          },
+          {
+            "label": "depositFeePips",
+            "offset": 0,
+            "slot": "155",
+            "type": "t_uint24",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:70"
+          },
+          {
+            "label": "depositFeeRecipient",
+            "offset": 3,
+            "slot": "155",
+            "type": "t_address",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:71"
+          },
+          {
+            "label": "isOwner",
+            "offset": 0,
+            "slot": "156",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:73"
+          },
+          {
+            "label": "isStrategist",
+            "offset": 0,
+            "slot": "157",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:74"
+          },
+          {
+            "label": "_activeTicks",
+            "offset": 0,
+            "slot": "158",
+            "type": "t_struct(UintSet)4122_storage",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:76"
+          },
+          {
+            "label": "_decimals",
+            "offset": 0,
+            "slot": "160",
+            "type": "t_uint8",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:78"
+          },
+          {
+            "label": "manager",
+            "offset": 1,
+            "slot": "160",
+            "type": "t_contract(IDopexV2PositionManager)8953",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:83"
+          },
+          {
+            "label": "handler",
+            "offset": 0,
+            "slot": "161",
+            "type": "t_contract(IUniswapV3SingleTickLiquidityHandlerV2)9283",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:84"
+          },
+          {
+            "label": "handlerHook",
+            "offset": 0,
+            "slot": "162",
+            "type": "t_address",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:85"
+          },
+          {
+            "label": "quoter",
+            "offset": 0,
+            "slot": "163",
+            "type": "t_contract(IOrangeQuoter)6351",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:90"
+          },
+          {
+            "label": "assetUsdFeed",
+            "offset": 0,
+            "slot": "164",
+            "type": "t_address",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:91"
+          },
+          {
+            "label": "counterAssetUsdFeed",
+            "offset": 0,
+            "slot": "165",
+            "type": "t_address",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:92"
+          },
+          {
+            "label": "_pool",
+            "offset": 0,
+            "slot": "166",
+            "type": "t_contract(IUniswapV3Pool)4284",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:98",
+            "renamedFrom": "pool"
+          },
+          {
+            "label": "router",
+            "offset": 0,
+            "slot": "167",
+            "type": "t_address",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:100"
+          },
+          {
+            "label": "poolTickSpacing",
+            "offset": 20,
+            "slot": "167",
+            "type": "t_int24",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:101"
+          },
+          {
+            "label": "balancer",
+            "offset": 0,
+            "slot": "168",
+            "type": "t_contract(IBalancerVault)8877",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:106"
+          },
+          {
+            "label": "_flashLoanHash",
+            "offset": 0,
+            "slot": "169",
+            "type": "t_bytes32",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:107"
+          },
+          {
+            "label": "swapInputDelta",
+            "offset": 0,
+            "slot": "170",
+            "type": "t_uint256",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:108"
+          },
+          {
+            "label": "poolAdapter",
+            "offset": 0,
+            "slot": "171",
+            "type": "t_contract(IUniswapV3PoolAdapter)6541",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:113"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_bytes32)dyn_storage": {
+            "label": "bytes32[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)45_storage": {
+            "label": "uint256[45]",
+            "numberOfBytes": "1440"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IBalancerVault)8877": {
+            "label": "contract IBalancerVault",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IDopexV2PositionManager)8953": {
+            "label": "contract IDopexV2PositionManager",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IERC20)1301": {
+            "label": "contract IERC20",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IOrangeQuoter)6351": {
+            "label": "contract IOrangeQuoter",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IUniswapV3Pool)4284": {
+            "label": "contract IUniswapV3Pool",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IUniswapV3PoolAdapter)6541": {
+            "label": "contract IUniswapV3PoolAdapter",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IUniswapV3SingleTickLiquidityHandlerV2)9283": {
+            "label": "contract IUniswapV3SingleTickLiquidityHandlerV2",
+            "numberOfBytes": "20"
+          },
+          "t_int24": {
+            "label": "int24",
+            "numberOfBytes": "3"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
+            "label": "mapping(address => mapping(address => uint256))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_uint256)": {
+            "label": "mapping(bytes32 => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_string_storage": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_struct(Set)3650_storage": {
+            "label": "struct EnumerableSet.Set",
+            "members": [
+              {
+                "label": "_values",
+                "type": "t_array(t_bytes32)dyn_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_indexes",
+                "type": "t_mapping(t_bytes32,t_uint256)",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(UintSet)4122_storage": {
+            "label": "struct EnumerableSet.UintSet",
+            "members": [
+              {
+                "label": "_inner",
+                "type": "t_struct(Set)3650_storage",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint24": {
+            "label": "uint24",
+            "numberOfBytes": "3"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      },
+      "allAddresses": [
+        "0x5AfF3f2Ce23668D7e30358BE168BbC4C0377cf49",
+        "0x2CbcE523205868E8C0Cbc498d3B957FDd25de78c",
+        "0x1b3f40ac793AA0AC1Fd2D2C1Af2011DbCb2feDCF",
+        "0x3D14b331a76D8656Fe847D078F2D822AC3dEe5fa",
+        "0x8B3C7447fFde3aa74EA4cab00171990DaeC5Ef90",
+        "0xD107B4e38F3513eA74623a488c3972b779FA4a07",
+        "0x8EBeF10B534c92B4dC95D0EeF80E9738B7da3193",
+        "0x7B86753cd57eD0e254C71400BcBb9df0442357C2"
+      ]
+    },
+    "0dd8db9806cf857f05812b8f387714ea4fa30374ee95ffaf7f5b3b9e1eda929e": {
+      "address": "0xcC593e53A79ce40C705Df220Beec65e3deC4B25E",
+      "layout": {
+        "solcVersion": "0.8.19",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC1967UpgradeUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol:169"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "UUPSUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:111"
+          },
+          {
+            "label": "_balances",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "OrangeERC20Upgradeable",
+            "src": "contracts/OrangeERC20Upgradeable.sol:50"
+          },
+          {
+            "label": "_allowances",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
+            "contract": "OrangeERC20Upgradeable",
+            "src": "contracts/OrangeERC20Upgradeable.sol:52"
+          },
+          {
+            "label": "_totalSupply",
+            "offset": 0,
+            "slot": "103",
+            "type": "t_uint256",
+            "contract": "OrangeERC20Upgradeable",
+            "src": "contracts/OrangeERC20Upgradeable.sol:54"
+          },
+          {
+            "label": "_name",
+            "offset": 0,
+            "slot": "104",
+            "type": "t_string_storage",
+            "contract": "OrangeERC20Upgradeable",
+            "src": "contracts/OrangeERC20Upgradeable.sol:56"
+          },
+          {
+            "label": "_symbol",
+            "offset": 0,
+            "slot": "105",
+            "type": "t_string_storage",
+            "contract": "OrangeERC20Upgradeable",
+            "src": "contracts/OrangeERC20Upgradeable.sol:57"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "106",
+            "type": "t_array(t_uint256)45_storage",
+            "contract": "OrangeERC20Upgradeable",
+            "src": "contracts/OrangeERC20Upgradeable.sol:337"
+          },
+          {
+            "label": "asset",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_contract(IERC20)1301",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:62"
+          },
+          {
+            "label": "counterAsset",
+            "offset": 0,
+            "slot": "152",
+            "type": "t_contract(IERC20)1301",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:63"
+          },
+          {
+            "label": "minDepositAssets",
+            "offset": 0,
+            "slot": "153",
+            "type": "t_uint256",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:65"
+          },
+          {
+            "label": "depositCap",
+            "offset": 0,
+            "slot": "154",
+            "type": "t_uint256",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:66"
+          },
+          {
+            "label": "depositFeePips",
+            "offset": 0,
+            "slot": "155",
+            "type": "t_uint24",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:69"
+          },
+          {
+            "label": "depositFeeRecipient",
+            "offset": 3,
+            "slot": "155",
+            "type": "t_address",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:70"
+          },
+          {
+            "label": "isOwner",
+            "offset": 0,
+            "slot": "156",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:72"
+          },
+          {
+            "label": "isStrategist",
+            "offset": 0,
+            "slot": "157",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:73"
+          },
+          {
+            "label": "_activeTicks",
+            "offset": 0,
+            "slot": "158",
+            "type": "t_struct(UintSet)4122_storage",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:75"
+          },
+          {
+            "label": "_decimals",
+            "offset": 0,
+            "slot": "160",
+            "type": "t_uint8",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:77"
+          },
+          {
+            "label": "manager",
+            "offset": 1,
+            "slot": "160",
+            "type": "t_contract(IDopexV2PositionManager)9114",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:82"
+          },
+          {
+            "label": "handler",
+            "offset": 0,
+            "slot": "161",
+            "type": "t_contract(IUniswapV3SingleTickLiquidityHandlerV2)9444",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:83"
+          },
+          {
+            "label": "handlerHook",
+            "offset": 0,
+            "slot": "162",
+            "type": "t_address",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:84"
+          },
+          {
+            "label": "quoter",
+            "offset": 0,
+            "slot": "163",
+            "type": "t_contract(IOrangeQuoter)6465",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:89"
+          },
+          {
+            "label": "assetUsdFeed",
+            "offset": 0,
+            "slot": "164",
+            "type": "t_address",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:90"
+          },
+          {
+            "label": "counterAssetUsdFeed",
+            "offset": 0,
+            "slot": "165",
+            "type": "t_address",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:91"
+          },
+          {
+            "label": "_pool",
+            "offset": 0,
+            "slot": "166",
+            "type": "t_contract(IUniswapV3Pool)4284",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:97",
+            "renamedFrom": "pool"
+          },
+          {
+            "label": "router",
+            "offset": 0,
+            "slot": "167",
+            "type": "t_contract(ISwapRouter)5579",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:98"
+          },
+          {
+            "label": "poolTickSpacing",
+            "offset": 20,
+            "slot": "167",
+            "type": "t_int24",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:99"
+          },
+          {
+            "label": "balancer",
+            "offset": 0,
+            "slot": "168",
+            "type": "t_contract(IBalancerVault)9038",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:104"
+          },
+          {
+            "label": "_flashLoanHash",
+            "offset": 0,
+            "slot": "169",
+            "type": "t_bytes32",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:105"
+          },
+          {
+            "label": "swapInputDelta",
+            "offset": 0,
+            "slot": "170",
+            "type": "t_uint256",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:107"
+          },
+          {
+            "label": "poolAdapter",
+            "offset": 0,
+            "slot": "171",
+            "type": "t_contract(IUniswapV3PoolAdapter)6791",
+            "contract": "OrangeStrykeLPAutomatorV2_1",
+            "src": "contracts/v2_1/OrangeStrykeLPAutomatorV2_1.sol:112"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_bytes32)dyn_storage": {
+            "label": "bytes32[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)45_storage": {
+            "label": "uint256[45]",
+            "numberOfBytes": "1440"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IBalancerVault)9038": {
+            "label": "contract IBalancerVault",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IDopexV2PositionManager)9114": {
+            "label": "contract IDopexV2PositionManager",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IERC20)1301": {
+            "label": "contract IERC20",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IOrangeQuoter)6465": {
+            "label": "contract IOrangeQuoter",
+            "numberOfBytes": "20"
+          },
+          "t_contract(ISwapRouter)5579": {
+            "label": "contract ISwapRouter",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IUniswapV3Pool)4284": {
+            "label": "contract IUniswapV3Pool",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IUniswapV3PoolAdapter)6791": {
+            "label": "contract IUniswapV3PoolAdapter",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IUniswapV3SingleTickLiquidityHandlerV2)9444": {
+            "label": "contract IUniswapV3SingleTickLiquidityHandlerV2",
+            "numberOfBytes": "20"
+          },
+          "t_int24": {
+            "label": "int24",
+            "numberOfBytes": "3"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
+            "label": "mapping(address => mapping(address => uint256))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_uint256)": {
+            "label": "mapping(bytes32 => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_string_storage": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_struct(Set)3650_storage": {
+            "label": "struct EnumerableSet.Set",
+            "members": [
+              {
+                "label": "_values",
+                "type": "t_array(t_bytes32)dyn_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_indexes",
+                "type": "t_mapping(t_bytes32,t_uint256)",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(UintSet)4122_storage": {
+            "label": "struct EnumerableSet.UintSet",
+            "members": [
+              {
+                "label": "_inner",
+                "type": "t_struct(Set)3650_storage",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint24": {
+            "label": "uint24",
+            "numberOfBytes": "3"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      },
+      "allAddresses": [
+        "0xcC593e53A79ce40C705Df220Beec65e3deC4B25E",
+        "0x4dC5baA7A96245F7c0C8C46aA90FF8259454A95c",
+        "0xc07af135d0944C7ee0FBa226D322B2E2cECd442C",
+        "0xe401c9A46B4804Ee3807D31e09C31E4e88BafEbf",
+        "0x65659D53B69C21ae41283691Dd5D1E3E6ba76CA4",
+        "0x89926e74B4e6cb9c4970C6f3331b62B894ffC04D",
+        "0x1E1a9F12B1A9767a9209398660cbf71d274Abd83",
+        "0x3328b411Fba1cF341dbf1aa9dAd4Df548784007C",
+        "0xF99b772c0622d62a54aac8832E89cA7A0436E7fF",
+        "0xC855034a82b94EA493614416c9B020dAE22d5522",
+        "0xaBD5052c661D96794B17524b7F2FEF8d8d66b51E"
+      ]
+    },
+    "d1533ef8b45e6ed8136e08b6edd1746178ffba21acd62a6bde1c6726a1aec502": {
+      "address": "0x701437C0fe899c5e983Db01EDee3c631788624c3",
+      "layout": {
+        "solcVersion": "0.8.19",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC1967UpgradeUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol:169"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "UUPSUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:111"
+          },
+          {
+            "label": "_balances",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "OrangeERC20Upgradeable",
+            "src": "contracts/OrangeERC20Upgradeable.sol:50"
+          },
+          {
+            "label": "_allowances",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
+            "contract": "OrangeERC20Upgradeable",
+            "src": "contracts/OrangeERC20Upgradeable.sol:52"
+          },
+          {
+            "label": "_totalSupply",
+            "offset": 0,
+            "slot": "103",
+            "type": "t_uint256",
+            "contract": "OrangeERC20Upgradeable",
+            "src": "contracts/OrangeERC20Upgradeable.sol:54"
+          },
+          {
+            "label": "_name",
+            "offset": 0,
+            "slot": "104",
+            "type": "t_string_storage",
+            "contract": "OrangeERC20Upgradeable",
+            "src": "contracts/OrangeERC20Upgradeable.sol:56"
+          },
+          {
+            "label": "_symbol",
+            "offset": 0,
+            "slot": "105",
+            "type": "t_string_storage",
+            "contract": "OrangeERC20Upgradeable",
+            "src": "contracts/OrangeERC20Upgradeable.sol:57"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "106",
+            "type": "t_array(t_uint256)45_storage",
+            "contract": "OrangeERC20Upgradeable",
+            "src": "contracts/OrangeERC20Upgradeable.sol:337"
+          },
+          {
+            "label": "asset",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_contract(IERC20)1298",
+            "contract": "BackwardCompatibleOrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/BackwardCompatibleOrangeStrykeLPAutomatorV2.sol:62"
+          },
+          {
+            "label": "counterAsset",
+            "offset": 0,
+            "slot": "152",
+            "type": "t_contract(IERC20)1298",
+            "contract": "BackwardCompatibleOrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/BackwardCompatibleOrangeStrykeLPAutomatorV2.sol:63"
+          },
+          {
+            "label": "minDepositAssets",
+            "offset": 0,
+            "slot": "153",
+            "type": "t_uint256",
+            "contract": "BackwardCompatibleOrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/BackwardCompatibleOrangeStrykeLPAutomatorV2.sol:65"
+          },
+          {
+            "label": "depositCap",
+            "offset": 0,
+            "slot": "154",
+            "type": "t_uint256",
+            "contract": "BackwardCompatibleOrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/BackwardCompatibleOrangeStrykeLPAutomatorV2.sol:66"
+          },
+          {
+            "label": "depositFeePips",
+            "offset": 0,
+            "slot": "155",
+            "type": "t_uint24",
+            "contract": "BackwardCompatibleOrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/BackwardCompatibleOrangeStrykeLPAutomatorV2.sol:69"
+          },
+          {
+            "label": "depositFeeRecipient",
+            "offset": 3,
+            "slot": "155",
+            "type": "t_address",
+            "contract": "BackwardCompatibleOrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/BackwardCompatibleOrangeStrykeLPAutomatorV2.sol:70"
+          },
+          {
+            "label": "isOwner",
+            "offset": 0,
+            "slot": "156",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "BackwardCompatibleOrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/BackwardCompatibleOrangeStrykeLPAutomatorV2.sol:72"
+          },
+          {
+            "label": "isStrategist",
+            "offset": 0,
+            "slot": "157",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "BackwardCompatibleOrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/BackwardCompatibleOrangeStrykeLPAutomatorV2.sol:73"
+          },
+          {
+            "label": "_activeTicks",
+            "offset": 0,
+            "slot": "158",
+            "type": "t_struct(UintSet)4119_storage",
+            "contract": "BackwardCompatibleOrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/BackwardCompatibleOrangeStrykeLPAutomatorV2.sol:75"
+          },
+          {
+            "label": "_decimals",
+            "offset": 0,
+            "slot": "160",
+            "type": "t_uint8",
+            "contract": "BackwardCompatibleOrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/BackwardCompatibleOrangeStrykeLPAutomatorV2.sol:77"
+          },
+          {
+            "label": "manager",
+            "offset": 1,
+            "slot": "160",
+            "type": "t_contract(IDopexV2PositionManager)8950",
+            "contract": "BackwardCompatibleOrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/BackwardCompatibleOrangeStrykeLPAutomatorV2.sol:82"
+          },
+          {
+            "label": "handler",
+            "offset": 0,
+            "slot": "161",
+            "type": "t_contract(IUniswapV3SingleTickLiquidityHandlerV2)9280",
+            "contract": "BackwardCompatibleOrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/BackwardCompatibleOrangeStrykeLPAutomatorV2.sol:83"
+          },
+          {
+            "label": "handlerHook",
+            "offset": 0,
+            "slot": "162",
+            "type": "t_address",
+            "contract": "BackwardCompatibleOrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/BackwardCompatibleOrangeStrykeLPAutomatorV2.sol:84"
+          },
+          {
+            "label": "quoter",
+            "offset": 0,
+            "slot": "163",
+            "type": "t_contract(IOrangeQuoter)6348",
+            "contract": "BackwardCompatibleOrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/BackwardCompatibleOrangeStrykeLPAutomatorV2.sol:89"
+          },
+          {
+            "label": "assetUsdFeed",
+            "offset": 0,
+            "slot": "164",
+            "type": "t_address",
+            "contract": "BackwardCompatibleOrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/BackwardCompatibleOrangeStrykeLPAutomatorV2.sol:90"
+          },
+          {
+            "label": "counterAssetUsdFeed",
+            "offset": 0,
+            "slot": "165",
+            "type": "t_address",
+            "contract": "BackwardCompatibleOrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/BackwardCompatibleOrangeStrykeLPAutomatorV2.sol:91"
+          },
+          {
+            "label": "pool",
+            "offset": 0,
+            "slot": "166",
+            "type": "t_contract(IUniswapV3Pool)4281",
+            "contract": "BackwardCompatibleOrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/BackwardCompatibleOrangeStrykeLPAutomatorV2.sol:96"
+          },
+          {
+            "label": "router",
+            "offset": 0,
+            "slot": "167",
+            "type": "t_address",
+            "contract": "BackwardCompatibleOrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/BackwardCompatibleOrangeStrykeLPAutomatorV2.sol:98"
+          },
+          {
+            "label": "poolTickSpacing",
+            "offset": 20,
+            "slot": "167",
+            "type": "t_int24",
+            "contract": "BackwardCompatibleOrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/BackwardCompatibleOrangeStrykeLPAutomatorV2.sol:99"
+          },
+          {
+            "label": "balancer",
+            "offset": 0,
+            "slot": "168",
+            "type": "t_contract(IBalancerVault)8874",
+            "contract": "BackwardCompatibleOrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/BackwardCompatibleOrangeStrykeLPAutomatorV2.sol:104"
+          },
+          {
+            "label": "_flashLoanHash",
+            "offset": 0,
+            "slot": "169",
+            "type": "t_bytes32",
+            "contract": "BackwardCompatibleOrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/BackwardCompatibleOrangeStrykeLPAutomatorV2.sol:105"
+          },
+          {
+            "label": "swapInputDelta",
+            "offset": 0,
+            "slot": "170",
+            "type": "t_uint256",
+            "contract": "BackwardCompatibleOrangeStrykeLPAutomatorV2",
+            "src": "contracts/v2/BackwardCompatibleOrangeStrykeLPAutomatorV2.sol:106"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_bytes32)dyn_storage": {
+            "label": "bytes32[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)45_storage": {
+            "label": "uint256[45]",
+            "numberOfBytes": "1440"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IBalancerVault)8874": {
+            "label": "contract IBalancerVault",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IDopexV2PositionManager)8950": {
+            "label": "contract IDopexV2PositionManager",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IERC20)1298": {
+            "label": "contract IERC20",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IOrangeQuoter)6348": {
+            "label": "contract IOrangeQuoter",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IUniswapV3Pool)4281": {
+            "label": "contract IUniswapV3Pool",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IUniswapV3SingleTickLiquidityHandlerV2)9280": {
+            "label": "contract IUniswapV3SingleTickLiquidityHandlerV2",
+            "numberOfBytes": "20"
+          },
+          "t_int24": {
+            "label": "int24",
+            "numberOfBytes": "3"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
+            "label": "mapping(address => mapping(address => uint256))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_uint256)": {
+            "label": "mapping(bytes32 => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_string_storage": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_struct(Set)3647_storage": {
+            "label": "struct EnumerableSet.Set",
+            "members": [
+              {
+                "label": "_values",
+                "type": "t_array(t_bytes32)dyn_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_indexes",
+                "type": "t_mapping(t_bytes32,t_uint256)",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(UintSet)4119_storage": {
+            "label": "struct EnumerableSet.UintSet",
+            "members": [
+              {
+                "label": "_inner",
+                "type": "t_struct(Set)3647_storage",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint24": {
+            "label": "uint24",
+            "numberOfBytes": "3"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      },
+      "allAddresses": [
+        "0x701437C0fe899c5e983Db01EDee3c631788624c3",
+        "0x86D029B41983c5396C861b4Cbb78468d4E486ba1"
       ]
     }
   }
