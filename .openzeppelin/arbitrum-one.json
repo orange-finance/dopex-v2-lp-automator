@@ -54,10 +54,6 @@
       "kind": "uups"
     },
     {
-      "address": "0x3D2692Bb38686d0Fb9B1FAa2A3e2e5620EF112A9",
-      "kind": "uups"
-    },
-    {
       "address": "0xa7a4C165c2BFb5e969dB6C58A613bad1c0cC0a21",
       "kind": "uups"
     },
@@ -147,6 +143,22 @@
     },
     {
       "address": "0x5f6D5a7e8eccA2A53C6322a96e9a48907A8284e0",
+      "kind": "uups"
+    },
+    {
+      "address": "0x3D2692Bb38686d0Fb9B1FAa2A3e2e5620EF112A9",
+      "kind": "uups"
+    },
+    {
+      "address": "0x708790D732c5886D56b0cBBEd7b60ABF47848FaA",
+      "kind": "uups"
+    },
+    {
+      "address": "0x01E371c500C49beA2fa985334f46A8Dc906253Ea",
+      "kind": "uups"
+    },
+    {
+      "address": "0xe1B68841E764Cc31be1Eb1e59d156a4ED1217c2C",
       "kind": "uups"
     }
   ],
@@ -2158,7 +2170,10 @@
         },
         "namespaces": {}
       },
-      "allAddresses": ["0x701437C0fe899c5e983Db01EDee3c631788624c3"]
+      "allAddresses": [
+        "0x701437C0fe899c5e983Db01EDee3c631788624c3",
+        "0x86D029B41983c5396C861b4Cbb78468d4E486ba1"
+      ]
     }
   }
 }
