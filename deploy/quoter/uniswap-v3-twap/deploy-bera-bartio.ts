@@ -19,15 +19,15 @@ function pairId(
 }
 
 const func: DeployFunction = async function (hre) {
-  const ORACLE = '0x534166c5a52A548786D2F51A0a3Bc026e48Dda11'
+  const ORACLE = '0x0A4d3aEE7eE3628bC96d57715ccD034De312e884'
   const TWAP_CONFIG = {
-    'boop-weth': {
+    'honey-usdc': {
       pairId: pairId(
         hre,
-        '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1', // WETH
-        '0x13A7DeDb7169a17bE92B0E3C7C2315B46f4772B3', // BOOP
+        '0x0E4aaF1351de4c0264C5c7056Ef3777b41BD8e03', // HONEY
+        '0xd6D83aF58a19Cd14eF3CF6fe848C9A4d21e5727c', // USDC
       ),
-      pool: '0xe24F62341D84D11078188d83cA3be118193D6389',
+      pool: '0x64F18443596880Df5237411591Afe7Ae69f9e9B9',
       duration: 600, // 10 minutes
     },
   }
@@ -50,13 +50,13 @@ const func: DeployFunction = async function (hre) {
       address,
     )
 
-    await quoter.setTWAPConfig(TWAP_CONFIG['boop-weth'].pairId, {
-      pool: TWAP_CONFIG['boop-weth'].pool,
-      duration: TWAP_CONFIG['boop-weth'].duration,
+    await quoter.setTWAPConfig(TWAP_CONFIG['honey-usdc'].pairId, {
+      pool: TWAP_CONFIG['honey-usdc'].pool,
+      duration: TWAP_CONFIG['honey-usdc'].duration,
     })
   }
 }
 
-func.tags = ['base_arbitrum', 'twap-quoter']
+func.tags = ['base-berachain_bartio', 'twap-quoter']
 
 export default func

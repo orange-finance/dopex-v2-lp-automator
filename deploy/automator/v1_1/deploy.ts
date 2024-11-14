@@ -134,7 +134,6 @@ const func: DeployFunction = async function (hre) {
   }
 }
 
-func.tags = ['v1-vault']
-func.dependencies = ['base']
+func.tags = ['v1_1-vault']
 
 export default func

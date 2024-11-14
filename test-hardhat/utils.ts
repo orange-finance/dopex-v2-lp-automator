@@ -1,7 +1,7 @@
 import hre from 'hardhat'
 
 export function ensureForkNetwork() {
-  if (hre.network.name !== 'hardhat') {
+  if (!['hardhat', 'berachain_bartio'].includes(hre.network.name)) {
     throw new Error('This test must be run on a hardhat network')
   }
 
