@@ -18,7 +18,7 @@ const func: DeployFunction = async function (hre) {
     log: true,
   })
 
-  if (hre.network.name !== 'hardhat') {
+  if (!['hardhat', 'berachain_bartio'].includes(hre.network.name)) {
     await hre.tenderly.verify({
       name: 'StrykeVaultInspector',
       address: v1,
@@ -31,6 +31,6 @@ const func: DeployFunction = async function (hre) {
   }
 }
 
-func.tags = ['periphery', 'base', 'inspector']
+func.tags = ['periphery', 'inspector']
 
 export default func

@@ -21,7 +21,10 @@ const func: DeployFunction = async function (hre) {
     await import(paramsPath).then((m) => m.default),
   )
 
-  const proxy = await deployments.get('OrangeKyberswapProxy')
+  const proxy =
+    network.name === 'berachain_bartio'
+      ? { address: '0x0000000000000000000000000000000000000001' } // dummy address for berachain bartio
+      : await deployments.get('OrangeKyberswapProxy')
 
   const vaultDeployed = await deployments.get(params.id)
 
@@ -82,6 +85,5 @@ const func: DeployFunction = async function (hre) {
 }
 
 func.tags = ['v2-vault']
-func.dependencies = ['base', 'v1-vault']
 
 export default func

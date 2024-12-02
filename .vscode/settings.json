@@ -5,6 +5,8 @@
     "Arbitrum",
     "ARBSCAN",
     "Automator",
+    "Bartio",
+    "Berachain",
     "boop",
     "camelcase",
     "Chainlink",
@@ -30,7 +32,9 @@
     "nomicfoundation",
     "NOSWAP",
     "odpx",
+    "osyk",
     "osykpcs",
+    "Pyth",
     "rebalance",
     "rebalancing",
     "reentrancy",
@@ -53,5 +57,6 @@
   "solidity.compileUsingRemoteVersion": "0.8.19",
   "[solidity]": {
     "editor.defaultFormatter": "JuanBlanco.solidity"
-  }
+  },
+  "makefile.configureOnOpen": false
 }

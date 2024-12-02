@@ -32,6 +32,10 @@ const func: DeployFunction = async function (hre) {
     },
   )
 
+  const poolAdapter = await deployments.get(
+    `${params.poolAdapterType}PoolAdapter_${params.id}_${params.poolFee}`,
+  )
+
   const { address, implementation, newlyDeployed } = await deploy(params.id, {
     contract: 'OrangeStrykeLPAutomatorV2_1',
     from: deployer,
@@ -41,7 +45,7 @@ const func: DeployFunction = async function (hre) {
       implementationName: `${params.id}V2_1_Implementation`,
       execute: {
         methodName: 'initializeV2_1',
-        args: [params.poolAdapter],
+        args: [poolAdapter.address],
       },
     },
     log: true,
@@ -60,7 +64,7 @@ const func: DeployFunction = async function (hre) {
   )
 
   // configurations
-  if (network.name === 'prod' && deployer !== params.admin) {
+  if (network.name.includes('prod') && deployer !== params.admin) {
     // set new owner
     await execute(
       params.id,
@@ -95,6 +99,5 @@ const func: DeployFunction = async function (hre) {
 }
 
 func.tags = ['v2_1-vault']
-func.dependencies = ['base', 'v2-vault']
 
 export default func

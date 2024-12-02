@@ -86,6 +86,19 @@ const config: HardhatUserConfig = {
       chainId: 42161,
       accounts: [DEV_ACCOUNT || ''],
     },
+    berachain_bartio: {
+      url: 'https://bartio.rpc.berachain.com',
+      chainId: 80084,
+      accounts: [DEV_ACCOUNT || ''],
+      verify: {
+        etherscan: {
+          apiUrl:
+            'https://api.routescan.io/v2/network/testnet/evm/80084/etherscan/api/',
+          apiKey: 'dummy',
+        },
+      },
+      gasPrice: 1000000000,
+    },
   },
   paths: {
     tests: './test-hardhat',
@@ -97,7 +110,19 @@ const config: HardhatUserConfig = {
   etherscan: {
     apiKey: {
       arbitrumOne: process.env.ARBSCAN_API_KEY ?? '',
+      berachain_bartio: 'dummy',
     },
+    customChains: [
+      {
+        network: 'berachain_bartio',
+        chainId: 80084,
+        urls: {
+          apiURL:
+            'https://api.routescan.io/v2/network/testnet/evm/80084/etherscan',
+          browserURL: 'https://bartio.beratrail.io',
+        },
+      },
+    ],
   },
 }
 

@@ -37,6 +37,6 @@ const func: DeployFunction = async function (hre) {
   }
 }
 
-func.tags = ['chainlink-quoter', 'base']
+func.tags = ['chainlink-quoter', 'base_arbitrum']
 
 export default func

@@ -36,6 +36,6 @@ const func: DeployFunction = async function (hre) {
   }
 }
 
-func.tags = ['swapProxy', 'base']
+func.tags = ['swapProxy', 'base_arbitrum']
 
 export default func
