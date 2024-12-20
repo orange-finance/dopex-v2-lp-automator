@@ -52,7 +52,8 @@
     "Unburnable",
     "unuse",
     "USDC",
-    "UUPS"
+    "UUPS",
+    "WBERA"
   ],
   "solidity.compileUsingRemoteVersion": "0.8.19",
   "[solidity]": {

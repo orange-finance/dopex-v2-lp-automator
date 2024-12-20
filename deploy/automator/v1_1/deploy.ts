@@ -71,6 +71,8 @@ const func: DeployFunction = async function (hre) {
     log: true,
   })
 
+  console.log('deployed')
+
   // if already deployed, skip
   if (!newlyDeployed) return
 
@@ -84,6 +86,7 @@ const func: DeployFunction = async function (hre) {
   )
 
   // configurations
+  console.log('setDepositCap')
   await execute(
     params.id,
     {
@@ -94,6 +97,7 @@ const func: DeployFunction = async function (hre) {
     '115792089237316195423570985008687907853269984665640564039457584007913129639935',
   )
 
+  console.log('setOwner')
   await execute(
     params.id,
     {
@@ -104,6 +108,7 @@ const func: DeployFunction = async function (hre) {
     true,
   )
 
+  console.log('setStrategist')
   await execute(
     params.id,
     {
@@ -115,6 +120,7 @@ const func: DeployFunction = async function (hre) {
     true,
   )
 
+  console.log('setDepositFeePips')
   await execute(
     params.id,
     {

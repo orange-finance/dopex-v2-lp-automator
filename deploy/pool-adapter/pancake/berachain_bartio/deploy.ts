@@ -12,6 +12,12 @@ const func: DeployFunction = async function (hre) {
     from: deployer,
     log: true,
   })
+  await deploy('PancakeV3PoolAdapter_WBERA-HONEY_3000', {
+    contract: 'PancakeV3PoolAdapter',
+    args: ['0x8a960A6e5f224D0a88BaD10463bDAD161b68C144'],
+    from: deployer,
+    log: true,
+  })
 }
 
 func.tags = ['base-berachain_bartio']

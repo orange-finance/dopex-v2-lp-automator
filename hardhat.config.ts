@@ -97,7 +97,7 @@ const config: HardhatUserConfig = {
           apiKey: 'dummy',
         },
       },
-      gasPrice: 1000000000,
+      gasPrice: 19105717617,
     },
   },
   paths: {

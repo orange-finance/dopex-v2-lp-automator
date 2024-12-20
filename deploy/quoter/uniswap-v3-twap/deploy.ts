@@ -57,6 +57,6 @@ const func: DeployFunction = async function (hre) {
   }
 }
 
-func.tags = ['base_arbitrum', 'twap-quoter']
+func.tags = ['base_arbitrum', 'twap-quoter_arbitrum']
 
 export default func

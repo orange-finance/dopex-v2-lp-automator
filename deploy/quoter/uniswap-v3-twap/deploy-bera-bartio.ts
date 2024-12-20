@@ -30,10 +30,19 @@ const func: DeployFunction = async function (hre) {
       pool: '0x64F18443596880Df5237411591Afe7Ae69f9e9B9',
       duration: 600, // 10 minutes
     },
+    'wbera-honey': {
+      pairId: pairId(
+        hre,
+        '0x7507c1dc16935B82698e4C63f2746A2fCf994dF8', // WBERA
+        '0x0E4aaF1351de4c0264C5c7056Ef3777b41BD8e03', // HONEY
+      ),
+      pool: '0x8a960A6e5f224D0a88BaD10463bDAD161b68C144',
+      duration: 600, // 10 minutes
+    },
   }
 
   const { deployments, getNamedAccounts } = hre
-  const { deploy } = deployments
+  const { deploy, execute } = deployments
 
   const { deployer } = await getNamedAccounts()
 
@@ -44,19 +53,23 @@ const func: DeployFunction = async function (hre) {
     log: true,
   })
 
-  if (newlyDeployed) {
-    const quoter = await hre.ethers.getContractAt(
+  for (const [key, value] of Object.entries(TWAP_CONFIG)) {
+    await execute(
       'UniswapV3TWAPQuoter',
-      address,
+      {
+        from: deployer,
+        log: true,
+      },
+      'setTWAPConfig',
+      value.pairId,
+      {
+        pool: value.pool,
+        duration: value.duration,
+      },
     )
-
-    await quoter.setTWAPConfig(TWAP_CONFIG['honey-usdc'].pairId, {
-      pool: TWAP_CONFIG['honey-usdc'].pool,
-      duration: TWAP_CONFIG['honey-usdc'].duration,
-    })
   }
 }
 
-func.tags = ['base-berachain_bartio', 'twap-quoter']
+func.tags = ['base_bartio', 'twap-quoter_bartio']
 
 export default func
