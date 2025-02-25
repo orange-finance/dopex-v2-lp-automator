@@ -1,3 +1,4 @@
+import { network } from 'hardhat'
 import { DeployFunction } from 'hardhat-deploy/types'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 
@@ -32,6 +33,10 @@ const func: DeployFunction = async function (hre) {
     },
   }
 
+  const params = (await import(`./params/${network.name}.ts`)) as {
+    admin: string
+  }
+
   const { deployments, getNamedAccounts } = hre
   const { deploy } = deployments
 
@@ -54,6 +59,13 @@ const func: DeployFunction = async function (hre) {
       pool: TWAP_CONFIG['boop-weth'].pool,
       duration: TWAP_CONFIG['boop-weth'].duration,
     })
+
+    await quoter.setAdmin(params.admin, true)
+
+    // renounce admin role for deployer
+    if (deployer !== params.admin) {
+      await quoter.setAdmin(deployer, false)
+    }
   }
 }
 

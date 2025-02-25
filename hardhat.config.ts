@@ -124,6 +124,11 @@ const config: HardhatUserConfig = {
       },
     ],
   },
+  verify: {
+    etherscan: {
+      apiKey: process.env.ARBSCAN_API_KEY ?? '',
+    },
+  },
 }
 
 subtask(TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS).setAction(

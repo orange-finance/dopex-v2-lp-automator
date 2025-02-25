@@ -2,8 +2,8 @@ import { z } from 'zod'
 
 export const V2_1Parameters = z.object({
   id: z.string(),
-  poolAdapterType: z.union([z.literal('UniswapV3'), z.literal('PancakeV3')]),
-  poolFee: z.union([z.literal('500'), z.literal('3000'), z.literal('10000')]),
+  poolAdapterId: z.string(),
+  // poolFee: z.union([z.literal('500'), z.literal('3000'), z.literal('10000')]),
   admin: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
 })
 

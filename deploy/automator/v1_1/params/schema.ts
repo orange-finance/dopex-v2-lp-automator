@@ -14,7 +14,6 @@ export const V1_1Parameters = z.object({
   unit: z.number(),
   assetUsdFeed: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
   counterAssetUsdFeed: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
-  admin: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
   strategist: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
   depositFeePips: z.string(),
   quoterType: z.enum(['chainlink', 'twap']),

@@ -32,9 +32,7 @@ const func: DeployFunction = async function (hre) {
     },
   )
 
-  const poolAdapter = await deployments.get(
-    `${params.poolAdapterType}PoolAdapter_${params.id}_${params.poolFee}`,
-  )
+  const poolAdapter = await deployments.get(params.poolAdapterId)
 
   const { address, implementation, newlyDeployed } = await deploy(params.id, {
     contract: 'OrangeStrykeLPAutomatorV2_1',
@@ -64,7 +62,7 @@ const func: DeployFunction = async function (hre) {
   )
 
   // configurations
-  if (network.name.includes('prod') && deployer !== params.admin) {
+  if (deployer !== params.admin) {
     // set new owner
     await execute(
       params.id,

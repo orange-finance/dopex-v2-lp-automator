@@ -24,3 +24,6 @@
 [submodule "lib/oracle"]
 	path = lib/oracle
 	url = https://github.com/orange-finance/oracle
+[submodule "lib/openzeppelin-foundry-upgrades"]
+	path = lib/openzeppelin-foundry-upgrades
+	url = https://github.com/OpenZeppelin/openzeppelin-foundry-upgrades

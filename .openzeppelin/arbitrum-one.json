@@ -160,6 +160,46 @@
     {
       "address": "0xe1B68841E764Cc31be1Eb1e59d156a4ED1217c2C",
       "kind": "uups"
+    },
+    {
+      "address": "0x30D4927bec8D8313463A72A05a40968C289F0878",
+      "kind": "uups"
+    },
+    {
+      "address": "0x5B14Ed8961271A7eA163B065320a1fc7A485762c",
+      "kind": "uups"
+    },
+    {
+      "address": "0x2178595ca26845820220A49D7291c26827109785",
+      "kind": "uups"
+    },
+    {
+      "address": "0xb01f88407bB460FF6267Af553Cc5c4aDa25AB56D",
+      "kind": "uups"
+    },
+    {
+      "address": "0x60668948A7c7377450f30AAEBA09137dFA3F8285",
+      "kind": "uups"
+    },
+    {
+      "address": "0x1279858c57ddBf6C677Ea8ddbFe858aC79A9B50C",
+      "kind": "uups"
+    },
+    {
+      "address": "0x815A496f4d292B6c263C5435eBA3Fd45861c384f",
+      "kind": "uups"
+    },
+    {
+      "address": "0x8b20087Bb0580bCB827d3ebDF06485aF86ea16cB",
+      "kind": "uups"
+    },
+    {
+      "address": "0x9338a4c3De7082E27802DCB6AC5A4502C93D1808",
+      "kind": "uups"
+    },
+    {
+      "address": "0xa3899444a955Fb1DdDbd7Aea385771DB0a67fB12",
+      "kind": "uups"
     }
   ],
   "impls": {
@@ -317,7 +357,7 @@
             "label": "_activeTicks",
             "offset": 0,
             "slot": "158",
-            "type": "t_struct(UintSet)4303_storage",
+            "type": "t_struct(UintSet)5169_storage",
             "contract": "OrangeStrykeLPAutomatorV1_1",
             "src": "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol:67"
           },
@@ -333,7 +373,7 @@
             "label": "manager",
             "offset": 1,
             "slot": "160",
-            "type": "t_contract(IDopexV2PositionManager)13469",
+            "type": "t_contract(IDopexV2PositionManager)16588",
             "contract": "OrangeStrykeLPAutomatorV1_1",
             "src": "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol:74"
           },
@@ -341,7 +381,7 @@
             "label": "handler",
             "offset": 0,
             "slot": "161",
-            "type": "t_contract(IUniswapV3SingleTickLiquidityHandlerV2)13799",
+            "type": "t_contract(IUniswapV3SingleTickLiquidityHandlerV2)16918",
             "contract": "OrangeStrykeLPAutomatorV1_1",
             "src": "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol:75"
           },
@@ -357,7 +397,7 @@
             "label": "quoter",
             "offset": 0,
             "slot": "163",
-            "type": "t_contract(IOrangeQuoter)7835",
+            "type": "t_contract(IOrangeQuoter)8900",
             "contract": "OrangeStrykeLPAutomatorV1_1",
             "src": "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol:81"
           },
@@ -381,7 +421,7 @@
             "label": "pool",
             "offset": 0,
             "slot": "166",
-            "type": "t_contract(IUniswapV3Pool)4477",
+            "type": "t_contract(IUniswapV3Pool)5343",
             "contract": "OrangeStrykeLPAutomatorV1_1",
             "src": "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol:88"
           },
@@ -389,7 +429,7 @@
             "label": "router",
             "offset": 0,
             "slot": "167",
-            "type": "t_contract(ISwapRouter)5772",
+            "type": "t_contract(ISwapRouter)6638",
             "contract": "OrangeStrykeLPAutomatorV1_1",
             "src": "contracts/v1_1/OrangeStrykeLPAutomatorV1_1.sol:89"
           },
@@ -427,7 +467,7 @@
             "label": "bytes32",
             "numberOfBytes": "32"
           },
-          "t_contract(IDopexV2PositionManager)13469": {
+          "t_contract(IDopexV2PositionManager)16588": {
             "label": "contract IDopexV2PositionManager",
             "numberOfBytes": "20"
           },
@@ -435,19 +475,19 @@
             "label": "contract IERC20",
             "numberOfBytes": "20"
           },
-          "t_contract(IOrangeQuoter)7835": {
+          "t_contract(IOrangeQuoter)8900": {
             "label": "contract IOrangeQuoter",
             "numberOfBytes": "20"
           },
-          "t_contract(ISwapRouter)5772": {
+          "t_contract(ISwapRouter)6638": {
             "label": "contract ISwapRouter",
             "numberOfBytes": "20"
           },
-          "t_contract(IUniswapV3Pool)4477": {
+          "t_contract(IUniswapV3Pool)5343": {
             "label": "contract IUniswapV3Pool",
             "numberOfBytes": "20"
           },
-          "t_contract(IUniswapV3SingleTickLiquidityHandlerV2)13799": {
+          "t_contract(IUniswapV3SingleTickLiquidityHandlerV2)16918": {
             "label": "contract IUniswapV3SingleTickLiquidityHandlerV2",
             "numberOfBytes": "20"
           },
@@ -475,7 +515,7 @@
             "label": "string",
             "numberOfBytes": "32"
           },
-          "t_struct(Set)3831_storage": {
+          "t_struct(Set)4697_storage": {
             "label": "struct EnumerableSet.Set",
             "members": [
               {
@@ -493,12 +533,12 @@
             ],
             "numberOfBytes": "64"
           },
-          "t_struct(UintSet)4303_storage": {
+          "t_struct(UintSet)5169_storage": {
             "label": "struct EnumerableSet.UintSet",
             "members": [
               {
                 "label": "_inner",
-                "type": "t_struct(Set)3831_storage",
+                "type": "t_struct(Set)4697_storage",
                 "offset": 0,
                 "slot": "0"
               }
@@ -522,6 +562,16 @@
       },
       "allAddresses": [
         "0x072a890FBE70F5B57445BDA60bccE44642568C95",
+        "0xb116300D876C94811765ABdFFa444f20c0Dce4B0",
+        "0x0eAb41aF3A586780fA6071F5067cA6ed56475531",
+        "0xc5FC246bC47647d89060F2263cE1fF9f0B655385",
+        "0xA4101e5FA847d6C997cd77a82E381D9F061f22cd",
+        "0xb98FD1BE0966169790f66d490b442671d00f65f6",
+        "0xa66124773D36B2248E44627f6895E9Ee201BD267",
+        "0xE50A9C196a97e82738e62626aB0A9Ff5718C6cD7",
+        "0xCfA932340e2E5D2027794Ee5Ac74D59aad6F74E1",
+        "0xfF7e0c2A9B24FC7981EEe439463069fDAB6FBAD3",
+        "0x02FE7F9Fd2D8a8ccE37450Ee84871EaD3bE779Da",
         "0xe370B3Ee3a0b2148B58Fa49ebEb9C6988a68CE53",
         "0x3B890ab23FcbE7F144B28610502708458E069Ccc",
         "0x035aF6b3295dB28c6A20aabd9848A5969F36b0a0",
@@ -941,6 +991,16 @@
       },
       "allAddresses": [
         "0x8c5DaA7CAA1fFC627b4B9E1872cccBefa2975361",
+        "0x17FB68b159806642CD66CFd422541c3022f834Ec",
+        "0x9CF98DA1D33ddD95D3E22e6D853517eE6F3AA44F",
+        "0x972E081b75346e4BCda00c651B6Cb9bAfEED5dAc",
+        "0x7814e0E4aBba010B43A11Da900dE57A8C3b08f17",
+        "0xA6916F05ad67f54D2b4c4A098778afDaAb364838",
+        "0xa13295D699fdC1A5E8486Cb69F75A0259AC11EFA",
+        "0x495317462Dd1AEbAa3e9437cf74Cd3D068b8e27E",
+        "0x82c0b66779976Dab2D0edC7b4e74B542c5A07321",
+        "0x5331857C8Abc4ECaD10C92D3E04b1085704c8e08",
+        "0x2A3D763B5411bcEC8a7837312a11C6CA38E8c67A",
         "0x13cbcB12F151ffb8109ba443DE1932C6C8534eC0",
         "0xcA50C50bb7eA2176Da3dcDA6EE7a5BAc1007C1d0",
         "0xACF41A898C33CA124BE7F7940D20c6cA40f2fA1E",
@@ -1777,6 +1837,16 @@
       },
       "allAddresses": [
         "0xcC593e53A79ce40C705Df220Beec65e3deC4B25E",
+        "0x043Aa83590EDec449F0B7Ddf5d631058AaA4fa5d",
+        "0xb528e3D6019F9D0eE652d428Aa68118aaBa9eBC8",
+        "0x19dfe92308Bb2FBad95e26B76020db3EB50A338C",
+        "0xb8395c8d4b3b6c9974BE713da7babB1EDB8B382C",
+        "0x237454f13eBF27774a43A9db882D7e7DE3680190",
+        "0x6F5cAC0ae3D1127484B72f53eEAC8485482A6255",
+        "0x3A1D3963D062656878279Bd6eBAB6e598F4B028d",
+        "0xaFC49bb5c0ed6640BE6C94c882a3f15C40b4831F",
+        "0xE193b7cddaAe9c877251368b1b45b3a815Ae321C",
+        "0xE1191ecf6a48246C343EFD36d4469dB7198C7fc4",
         "0x4dC5baA7A96245F7c0C8C46aA90FF8259454A95c",
         "0xc07af135d0944C7ee0FBa226D322B2E2cECd442C",
         "0xe401c9A46B4804Ee3807D31e09C31E4e88BafEbf",

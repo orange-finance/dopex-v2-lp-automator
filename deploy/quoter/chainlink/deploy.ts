@@ -26,7 +26,9 @@ const func: DeployFunction = async function (hre) {
     }
 
     // Transfer ownership to admin
-    if (network.name === 'prod') await quoter.transferOwnership(params.admin)
+    if (params.admin != deployer) {
+      await quoter.transferOwnership(params.admin)
+    }
   }
 
   if (network.name !== 'hardhat') {
