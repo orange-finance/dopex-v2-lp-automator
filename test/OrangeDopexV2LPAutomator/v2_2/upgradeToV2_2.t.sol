@@ -92,12 +92,11 @@ contract UpgradeToV2_2 is Test {
         OrangeStrykeLPAutomatorV2_1 automatorV2_1 = OrangeStrykeLPAutomatorV2_1(automator);
         assertEq(address(automatorV2_1.manager()), oldManager, "!old manager");
 
-        automatorV2_1.upgradeToAndCall(
-            address(new OrangeStrykeLPAutomatorV2_2()),
-            abi.encodeCall(OrangeStrykeLPAutomatorV2_2.initializeV2_2, (newManagerMock))
-        );
+        automatorV2_1.upgradeTo(address(new OrangeStrykeLPAutomatorV2_2()));
 
         OrangeStrykeLPAutomatorV2_2 automatorV2_2 = OrangeStrykeLPAutomatorV2_2(automator);
+        automatorV2_2.setPositionManager(newManagerMock);
+
         // check if upgrade is successful
         assertEq(address(automatorV2_2.manager()), newManagerMock, "!new manager");
 
