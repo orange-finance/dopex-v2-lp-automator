@@ -13,7 +13,7 @@ tenderly.setup({
   automaticVerifications: false,
 })
 
-const { ARB_RPC_URL, DEV_ACCOUNT, PROD_ACCOUNT } = process.env
+const { ARB_RPC_URL, DEV_ACCOUNT, PROD_ACCOUNT, BERASCAN_API_KEY } = process.env
 
 function viaIR(version: string, runs: number) {
   return {
@@ -99,6 +99,17 @@ const config: HardhatUserConfig = {
       },
       gasPrice: 19105717617,
     },
+    berachain_mainnet: {
+      url: 'https://rpc.berachain.com/',
+      chainId: 80094,
+      accounts: [PROD_ACCOUNT || ''],
+      verify: {
+        etherscan: {
+          apiUrl: 'https://api.berascan.com',
+          apiKey: BERASCAN_API_KEY || '',
+        },
+      },
+    },
   },
   paths: {
     tests: './test-hardhat',
@@ -111,6 +122,7 @@ const config: HardhatUserConfig = {
     apiKey: {
       arbitrumOne: process.env.ARBSCAN_API_KEY ?? '',
       berachain_bartio: 'dummy',
+      berachain_mainnet: BERASCAN_API_KEY || '',
     },
     customChains: [
       {
@@ -120,6 +132,14 @@ const config: HardhatUserConfig = {
           apiURL:
             'https://api.routescan.io/v2/network/testnet/evm/80084/etherscan',
           browserURL: 'https://bartio.beratrail.io',
+        },
+      },
+      {
+        network: 'berachain_mainnet',
+        chainId: 80094,
+        urls: {
+          apiURL: 'https://api.berascan.com/api',
+          browserURL: 'https://berascan.com',
         },
       },
     ],

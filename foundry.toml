@@ -14,6 +14,10 @@ extra_output = ["storageLayout"]
 
 [rpc_endpoints]
 arb = "${ARB_RPC_URL}"
+berachain = "https://rpc.berachain.com"
 
 [invariant]
 fail_on_revert = true
+
+[etherscan]
+berachain = {key = "${BERASCAN_API_KEY}", url = "https://api.berascan.com/api", chain = 80094}

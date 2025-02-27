@@ -22,8 +22,8 @@ const func: DeployFunction = async function (hre) {
   )
 
   const proxy =
-    network.name === 'berachain_bartio'
-      ? { address: '0x0000000000000000000000000000000000000001' } // dummy address for berachain bartio
+    network.name === 'berachain_mainnet' || network.name === 'berachain_bartio'
+      ? { address: '0x0000000000000000000000000000000000000001' } // dummy address for berachain mainnet
       : await deployments.get('OrangeKyberswapProxy')
 
   const vaultDeployed = await deployments.get(params.id)

@@ -7,6 +7,7 @@ node_modules
 /deployments/*
 !/deployments/arbitrum
 !/deployments/berachain_bartio
+!/deployments/berachain_mainnet
 
 # TypeChain files
 /typechain
