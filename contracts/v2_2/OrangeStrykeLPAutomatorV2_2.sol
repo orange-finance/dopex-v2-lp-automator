@@ -148,6 +148,13 @@ contract OrangeStrykeLPAutomatorV2_2 is
     // solhint-disable-next-line no-empty-blocks
     function _authorizeUpgrade(address) internal override onlyOwner {}
 
+    /**
+     * @dev used for upgrade from v2_1 to v2.2. This is a one-time operation.
+     */
+    function initializeV2_2(address newPositionManager) external reinitializer(4) onlyOwner {
+        manager = IDopexV2PositionManager(newPositionManager);
+    }
+
     /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                     ADMIN FUNCTIONS
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -216,15 +223,6 @@ contract OrangeStrykeLPAutomatorV2_2 is
         }
 
         emit SetProxyWhitelist(swapProxy, approve);
-    }
-
-    /**
-     * @dev Sets the position manager for the automator.
-     * @notice This function is only used when there are contract changes on the Stryke side. Since PositionManager is stateless, replacing the contract will not cause any functional disruption.
-     * @param newPositionManager The address of the new position manager.
-     */
-    function setPositionManager(address newPositionManager) external onlyOwner {
-        manager = IDopexV2PositionManager(newPositionManager);
     }
 
     function decimals() public view override returns (uint8) {
